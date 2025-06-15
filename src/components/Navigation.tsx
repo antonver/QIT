@@ -11,7 +11,7 @@ import ProfileCard from './ProfileCard';
 import SettingsPage from '../pages/Settings';
 import SecondPage from '../pages/SecondPage';
 import ThirdPage from '../pages/ThirdPage';
-import {Grid} from "@mui/material";
+import Grid from '@mui/material/Grid';
 
 // Define the props interface for DashboardLayoutBasic
 interface DashboardLayoutBasicProps {
@@ -61,9 +61,14 @@ export default function DashboardLayoutBasic({ window }: DashboardLayoutBasicPro
         >
             <DashboardLayout sx={{ height: '100vh' }}>
                 <Routes>
-                    <Route path="/profile" element={<Grid container justifyContent="center" sx={{ height: '100%' }}>
-                        <Grid item xs={12} md={8} component="div">
-                            <ProfileCard/>pe
+                    <Route path="/profile" element={
+                        <Grid container  direction="row"
+                              sx={{
+                                  justifyContent: "center",
+                                  alignItems: "center",
+                              }}>
+                            <Grid size={{ xs: 12, sm: 8 }}>
+                            <ProfileCard />
                         </Grid>
                     </Grid>}/>
                     <Route path="/settings" element={<SettingsPage />} />
