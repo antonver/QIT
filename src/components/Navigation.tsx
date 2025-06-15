@@ -1,18 +1,25 @@
 import SettingsApplicationsRoundedIcon from '@mui/icons-material/SettingsApplicationsRounded';
 import AlignVerticalCenterRoundedIcon from '@mui/icons-material/AlignVerticalCenterRounded';
 import AlignVerticalBottomRoundedIcon from '@mui/icons-material/AlignVerticalBottomRounded';
-import { AppProvider } from '@toolpad/core/AppProvider';
+import { AppProvider, Navigation } from '@toolpad/core/AppProvider';
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
 import { PageContainer } from '@toolpad/core/PageContainer';
 import Grid from '@mui/material/Grid';
 import { Routes, Route } from 'react-router-dom';
-import baseTheme from "../themes/baseTheme.tsx";
+import baseTheme from '../themes/baseTheme';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import ProfileCard from "./ProfileCard.tsx";
-import SettingsPage from "../pages/Settings.tsx";
-import SecondPage from "../pages/SecondPage.tsx";
-import ThirdPage from "../pages/ThirdPage.tsx";
-const NAVIGATION = [
+import ProfileCard from './ProfileCard';
+import SettingsPage from '../pages/Settings';
+import SecondPage from '../pages/SecondPage';
+import ThirdPage from '../pages/ThirdPage';
+
+// Define the props interface for DashboardLayoutBasic
+interface DashboardLayoutBasicProps {
+    window?: () => Window;
+}
+
+// Define the navigation array with explicit types
+const NAVIGATION: Navigation = [
     {
         kind: 'header',
         title: '',
@@ -21,31 +28,25 @@ const NAVIGATION = [
         segment: 'profile',
         title: 'Profile',
         icon: <PersonOutlineIcon />,
-        link: '/profile',
     },
     {
         segment: 'second',
         title: 'Second',
         icon: <AlignVerticalBottomRoundedIcon />,
-        link: '/second',
     },
     {
         segment: 'third',
         title: 'Third',
-        icon: <AlignVerticalCenterRoundedIcon/>,
-        link: '/third',
+        icon: <AlignVerticalCenterRoundedIcon />,
     },
     {
         segment: 'settings',
         title: 'Integrations',
         icon: <SettingsApplicationsRoundedIcon />,
-        link: '/settings',
     },
 ];
 
-
-export default function DashboardLayoutBasic(props) {
-    const { window } = props;
+export default function DashboardLayoutBasic({ window }: DashboardLayoutBasicProps) {
     const demoWindow = window ? window() : undefined;
 
     return (
@@ -54,7 +55,7 @@ export default function DashboardLayoutBasic(props) {
             theme={baseTheme}
             window={demoWindow}
             branding={{
-                logo: "",
+                logo: '',
                 title: 'QIP mini',
             }}
         >
@@ -65,7 +66,7 @@ export default function DashboardLayoutBasic(props) {
                         element={
                             <PageContainer sx={{ height: '100%', overflowY: 'auto' }}>
                                 <Grid container justifyContent="center" sx={{ height: '100%' }}>
-                                    <Grid item xs={12} md={8}>
+                                    <Grid item component="div" xs={12} md={8}>
                                         <ProfileCard sx={{ width: '100%', height: 'auto' }} />
                                     </Grid>
                                 </Grid>
