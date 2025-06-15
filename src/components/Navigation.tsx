@@ -1,10 +1,9 @@
 import SettingsApplicationsRoundedIcon from '@mui/icons-material/SettingsApplicationsRounded';
 import AlignVerticalCenterRoundedIcon from '@mui/icons-material/AlignVerticalCenterRounded';
 import AlignVerticalBottomRoundedIcon from '@mui/icons-material/AlignVerticalBottomRounded';
-import { AppProvider, Navigation } from '@toolpad/core/AppProvider';
+import { AppProvider } from '@toolpad/core/AppProvider';
+import type { Navigation } from '@toolpad/core/AppProvider';
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
-import { PageContainer } from '@toolpad/core/PageContainer';
-import Grid from '@mui/material/Grid';
 import { Routes, Route } from 'react-router-dom';
 import baseTheme from '../themes/baseTheme';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
@@ -12,6 +11,7 @@ import ProfileCard from './ProfileCard';
 import SettingsPage from '../pages/Settings';
 import SecondPage from '../pages/SecondPage';
 import ThirdPage from '../pages/ThirdPage';
+import {Grid} from "@mui/material";
 
 // Define the props interface for DashboardLayoutBasic
 interface DashboardLayoutBasicProps {
@@ -61,18 +61,11 @@ export default function DashboardLayoutBasic({ window }: DashboardLayoutBasicPro
         >
             <DashboardLayout sx={{ height: '100vh' }}>
                 <Routes>
-                    <Route
-                        path="/profile"
-                        element={
-                            <PageContainer sx={{ height: '100%', overflowY: 'auto' }}>
-                                <Grid container justifyContent="center" sx={{ height: '100%' }}>
-                                    <Grid item component="div" xs={12} md={8}>
-                                        <ProfileCard sx={{ width: '100%', height: 'auto' }} />
-                                    </Grid>
-                                </Grid>
-                            </PageContainer>
-                        }
-                    />
+                    <Route path="/profile" element={<Grid container justifyContent="center" sx={{ height: '100%' }}>
+                        <Grid item xs={12} md={8} component="div">
+                            <ProfileCard/>pe
+                        </Grid>
+                    </Grid>}/>
                     <Route path="/settings" element={<SettingsPage />} />
                     <Route path="/second" element={<SecondPage />} />
                     <Route path="/third" element={<ThirdPage />} />
