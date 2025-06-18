@@ -1,4 +1,4 @@
-export default function extractNumberAndWord(str) {
+export default function extractNumberAndWord(str: string) {
     // Match a number (with optional %) and a word
     const regex = /^(\d+(?:\.\d+)?)(?:%)?\s*(\w+)$/;
     const match = str.match(regex);
