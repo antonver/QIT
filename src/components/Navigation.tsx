@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { AppProvider } from '@toolpad/core/AppProvider';
 import type { Navigation } from '@toolpad/core/AppProvider';
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import {Routes, Route, useLocation, useNavigate} from 'react-router-dom';
 import ProfileCard from './ProfileCard.tsx';
 import Grid from '@mui/material/Grid';
 import Home from '../pages/Home';
@@ -28,8 +28,9 @@ import General from "../pages/General.tsx";
 import Politics from "../pages/Politics.tsx";
 import NewTheme from "../pages/NewTheme.tsx";
 import Design from "../pages/Design.tsx";
-import UploadAvatars from "./Avatar.tsx";
-import {Box} from "@mui/material";
+import {Box, Button} from "@mui/material";
+import Avatar from "@mui/material/Avatar";
+import {deepPurple} from "@mui/material/colors";
 
 interface DashboardLayoutBasicProps {
     window?: () => Window;
@@ -99,9 +100,12 @@ const NAVIGATION = [
 ];
 
 function SidebarFooter() {
+    const navigate = useNavigate();
     return(
         <Box sx={{justifyContent: "left" , display: "flex", alignItems: "center", padding: "1em"}}>
-            <UploadAvatars/>
+            <Button onClick={() => navigate('/profile')}>
+                <Avatar sx={{ bgcolor: deepPurple[500] }}>OP</Avatar>
+            </Button>
         </Box>
     )
 }
