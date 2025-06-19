@@ -31,7 +31,7 @@ export default function UploadAvatars() {
                 },
             }}
         >
-            <Avatar alt="Upload new avatar" src={avatarSrc} sx={{width: 100, height: 100}}/>
+            <Avatar alt="Upload new avatar" src={avatarSrc}/>
             <input
                 type="file"
                 accept="image/*"
