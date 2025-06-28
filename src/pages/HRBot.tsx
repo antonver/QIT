@@ -27,9 +27,9 @@ const HRBot: React.FC = () => {
           const token = localStorage.getItem('aeon_token');
           if (token) {
             const session = await getSession(token);
-            if (session.role === 'hr' && location.pathname === '/hr/bot/panel') {
+            if (session.user?.role === 'hr' && location.pathname === '/hr/bot/panel') {
               setCurrentView('hr-panel');
-            } else if (session.role === 'hr' && location.pathname === '/hr/bot') {
+            } else if (session.user?.role === 'hr' && location.pathname === '/hr/bot') {
               navigate('/hr/bot/panel');
             }
           }

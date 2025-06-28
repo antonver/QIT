@@ -41,7 +41,7 @@ export const useAuth = () => {
       const sessionData = await getSession(token);
       setAuthState(prev => ({
         ...prev,
-        user: sessionData.user || { id: 'user', role: 'user' },
+        user: sessionData.user || { id: 'user', role: 'user' as 'user' | 'hr' },
         isAuthenticated: true
       }));
     } catch (error) {
@@ -54,7 +54,7 @@ export const useAuth = () => {
   const createNewSession = useCallback(async () => {
     try {
       const sessionData = await createSession();
-      const token = sessionData.token || sessionData.session_token;
+      const token = sessionData.token;
       
       if (token) {
         localStorage.setItem('aeon_token', token);
@@ -62,7 +62,7 @@ export const useAuth = () => {
           ...prev,
           isAuthenticated: true,
           token,
-          user: sessionData.user || { id: 'user', role: 'user' }
+          user: sessionData.user || { id: 'user', role: 'user' as 'user' | 'hr' }
         }));
         return token;
       }

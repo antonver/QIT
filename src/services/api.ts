@@ -1,8 +1,22 @@
 import axios from 'axios';
+import type {
+  Test,
+  SubmitAnswersRequest,
+  SubmitAnswersResponse,
+  GetResultResponse,
+  Session,
+  Stats,
+  AdminStats,
+  Candidate,
+  GlyphData,
+  AeonQuestion,
+  AeonSummary,
+  AeonTask
+} from '../types/api';
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: import.meta.env.VITE_API_URL || 'https://aeon-hr-25586f51bf65.herokuapp.com',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -37,109 +51,108 @@ api.interceptors.response.use(
 );
 
 // Session API
-export const createSession = async () => {
-  const response = await api.post('/session');
+export const createSession = async (): Promise<Session> => {
+  const response = await api.post<Session>('/session');
   return response.data;
 };
 
-export const getSession = async (token: string) => {
-  const response = await api.get(`/session/${token}`);
+export const getSession = async (token: string): Promise<Session> => {
+  const response = await api.get<Session>(`/session/${token}`);
   return response.data;
 };
 
-export const saveAnswer = async (token: string, answer: any) => {
+export const saveAnswer = async (token: string, answer: any): Promise<any> => {
   const response = await api.post(`/session/${token}/answer`, answer);
   return response.data;
 };
 
-export const completeSession = async (token: string) => {
+export const completeSession = async (token: string): Promise<any> => {
   const response = await api.post(`/session/${token}/complete`);
   return response.data;
 };
 
 // Test API
-export const getTest = async (testId: number, lang: 'ru' | 'en' = 'ru') => {
-  const response = await api.get(`/test/${testId}`, {
-    params: { lang }
-  });
+export const getTest = async (testId: number, lang: 'ru' | 'en' = 'ru'): Promise<Test> => {
+  const response = await api.get<Test>(`/test/${testId}?lang=${lang}`);
   return response.data;
 };
 
-export const submitTestAnswer = async (testId: number, answers: any[]) => {
-  const response = await api.post(`/test/${testId}/submit`, { answers });
+export const submitTestAnswer = async (testId: number, answers: any[]): Promise<SubmitAnswersResponse> => {
+  const request: SubmitAnswersRequest = { answers };
+  const response = await api.post<SubmitAnswersResponse>(`/test/${testId}/submit`, request);
   return response.data;
 };
 
-export const autosaveTest = async (testId: number, answers: any[]) => {
-  const response = await api.post(`/test/${testId}/autosave`, { answers });
-  return response.data;
+export const autosaveTest = async (testId: number, answers: any[]): Promise<void> => {
+  const request: SubmitAnswersRequest = { answers };
+  await api.post(`/test/${testId}/autosave`, request);
 };
 
-export const getTestResult = async (resultId: number) => {
-  const response = await api.get(`/result/${resultId}`);
+export const getTestResult = async (resultId: number): Promise<GetResultResponse> => {
+  const response = await api.get<GetResultResponse>(`/result/${resultId}`);
   return response.data;
 };
 
 // Glyph API
-export const generateGlyph = async (data: any) => {
-  const response = await api.post('/aeon/glyph', data);
+export const generateGlyph = async (data: any): Promise<GlyphData> => {
+  const response = await api.post<GlyphData>('/aeon/glyph', data);
   return response.data;
 };
 
 // Aeon API
-export const aeonNextQuestion = async (data: any) => {
-  const response = await api.post('/aeon/question', data);
+export const aeonNextQuestion = async (data: any): Promise<AeonQuestion> => {
+  const response = await api.post<AeonQuestion>('/aeon/question', data);
   return response.data;
 };
 
-export const aeonSummary = async (data: any) => {
-  const response = await api.post('/aeon/summary', data);
+export const aeonSummary = async (data: any): Promise<AeonSummary> => {
+  const response = await api.post<AeonSummary>('/aeon/summary', data);
   return response.data;
 };
 
-export const aeonTask = async (data: any) => {
-  const response = await api.post('/aeon/task', data);
+export const aeonTask = async (data: any): Promise<AeonTask> => {
+  const response = await api.post<AeonTask>('/aeon/task', data);
   return response.data;
 };
 
 // Stats API
-export const getStats = async () => {
-  const response = await api.get('/stats');
+export const getStats = async (): Promise<Stats> => {
+  const response = await api.get<Stats>('/stats');
   return response.data;
 };
 
 // Admin API
-export const getAdminStats = async () => {
-  const response = await api.get('/admin/stats');
+export const getAdminStats = async (): Promise<AdminStats> => {
+  const response = await api.get<AdminStats>('/admin/stats');
   return response.data;
 };
 
-export const getAdminSessions = async () => {
-  const response = await api.get('/admin');
+export const getAdminSessions = async (): Promise<Candidate[]> => {
+  const response = await api.get<Candidate[]>('/admin');
   return response.data;
 };
 
-export const getAdminSessionDetail = async (token: string) => {
+export const getAdminSessionDetail = async (token: string): Promise<any> => {
   const response = await api.get(`/admin/session/${token}`);
   return response.data;
 };
 
-export const deleteAdminSession = async (token: string) => {
+export const deleteAdminSession = async (token: string): Promise<any> => {
   const response = await api.post(`/admin/session/${token}/delete`);
   return response.data;
 };
 
-export const getAdminLog = async () => {
+export const getAdminLog = async (): Promise<any> => {
   const response = await api.get('/admin/log');
   return response.data;
 };
 
-export const exportSessions = async () => {
+export const exportSessions = async (): Promise<any> => {
   const response = await api.get('/admin/export/sessions');
   return response.data;
 };
 
-export const exportLog = async () => {
+export const exportLog = async (): Promise<any> => {
   const response = await api.get('/admin/export/log');
   return response.data;
 };

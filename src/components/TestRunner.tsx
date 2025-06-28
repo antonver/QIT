@@ -11,26 +11,11 @@ import {
   CardContent,
   Chip
 } from '@mui/material';
+import { getTest, submitTestAnswer } from '../services/api';
+import type { Test, Question, Answer } from '../types/api';
 
 interface TestRunnerProps {
   onComplete: (result: any) => void;
-}
-
-interface TestOption {
-  id: number;
-  text: string;
-}
-
-interface TestQuestion {
-  id: number;
-  text: string;
-  options: TestOption[];
-}
-
-interface Test {
-  id: number;
-  title: string;
-  questions: TestQuestion[];
 }
 
 const TestRunner: React.FC<TestRunnerProps> = ({ onComplete }) => {
@@ -46,10 +31,9 @@ const TestRunner: React.FC<TestRunnerProps> = ({ onComplete }) => {
     const loadTest = async () => {
       try {
         setIsLoading(true);
-        // For now, use test ID 1 - you can make this configurable
-        const testData = await fetch('/api/test/1?lang=ru');
-        const testJson = await testData.json();
-        setTest(testJson);
+        // Use test ID 1 - you can make this configurable
+        const testData = await getTest(1);
+        setTest(testData);
       } catch (error) {
         console.error('Failed to load test:', error);
         setError('Failed to load test. Please try again.');
@@ -94,20 +78,8 @@ const TestRunner: React.FC<TestRunnerProps> = ({ onComplete }) => {
         answer_id: answerId
       }));
 
-      // Submit answers
-      const response = await fetch(`/api/test/${test.id}/submit`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ answers: answersArray })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to submit test');
-      }
-
-      const result = await response.json();
+      // Submit answers using the API service
+      const result = await submitTestAnswer(test.id, answersArray);
       onComplete(result);
     } catch (error) {
       console.error('Failed to submit test:', error);
@@ -172,12 +144,12 @@ const TestRunner: React.FC<TestRunnerProps> = ({ onComplete }) => {
             value={answers[currentQuestion.id]?.toString() || ''}
             onChange={(e) => handleAnswerSelect(e.target.value)}
           >
-            {currentQuestion.options.map((option: TestOption) => (
+            {currentQuestion.answers.map((answer: Answer) => (
               <FormControlLabel
-                key={option.id}
-                value={option.id.toString()}
+                key={answer.id}
+                value={answer.id.toString()}
                 control={<Radio />}
-                label={option.text}
+                label={answer.text}
                 sx={{ 
                   mb: 1, 
                   p: 2, 

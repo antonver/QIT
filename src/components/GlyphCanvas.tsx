@@ -14,22 +14,22 @@ const GlyphCanvas: React.FC<GlyphCanvasProps> = ({ score }) => {
 
   // Generate glyph on mount
   useEffect(() => {
-    const fetchGlyph = async () => {
-      setIsLoading(true);
-      setError('');
-      
+    const generateGlyphData = async () => {
       try {
-        const glyph = await generateGlyph(score);
-        setGlyphData(glyph);
-      } catch (err) {
+        setIsLoading(true);
+        const glyph = await generateGlyph({ score });
+        setGlyphData(typeof glyph === 'string' ? glyph : glyph.svg || '');
+      } catch (error) {
+        console.error('Failed to generate glyph:', error);
         setError('Failed to generate glyph');
-        console.error('Glyph generation failed:', err);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchGlyph();
+    if (score > 0) {
+      generateGlyphData();
+    }
   }, [score]);
 
   // Handle export to Figma

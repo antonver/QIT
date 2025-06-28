@@ -129,6 +129,13 @@ export default function DashboardLayoutBasic() {
     const handleDrawerToggle = () => {
             setIsClosing(!isClosing);
     };
+
+    const handleMainClick = () => {
+        if (isClosing) {
+            setIsClosing(false);
+        }
+    };
+
     useEffect(() => {
         const pathname = location.pathname.replace('/', '');
         const currentNavItem = NAVIGATION.find(
@@ -160,14 +167,14 @@ export default function DashboardLayoutBasic() {
     }, [location.pathname]);
 
     return (
-        <Box sx={{ display: 'flex', height: '100vh', backgroundColor: 'background.paper' }}>
+        <Box sx={{ display: 'flex', height: '100vh', backgroundColor: 'transparent', overflowY: 'hidden' }}>
             <CssBaseline />
             <AppBar
                 position="fixed"
                 sx={{
-                    zIndex: (theme) => theme.zIndex.drawer + 1,
+                    zIndex: 1201,
                     backgroundColor: 'background.paper',
-                    maxHeight:"60px"
+                    boxShadow: 'none',
                 }}
             >
                 <Toolbar>
@@ -187,6 +194,7 @@ export default function DashboardLayoutBasic() {
             <Drawer
                 variant="temporary"
                 open={isClosing}
+                onClose={() => setIsClosing(false)}
                 sx={{
                     width: 240,
                     flexShrink: 0,
@@ -239,14 +247,16 @@ export default function DashboardLayoutBasic() {
             </Drawer>
             <Box
                 component="main"
+                onClick={handleMainClick}
                 sx={{
                     flexGrow: 1,
-                    p: 3,
-                    mt: '64px', // Account for AppBar height
+                    pt: '64px',
+                    minHeight: '100vh',
                     backgroundImage: `url(${backgroundImage})`,
-                    backgroundRepeat: 'no-repeat',
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
+                    backgroundAttachment: 'fixed',
+                    overflowY: 'auto',
                 }}
             >
                 <Routes>
