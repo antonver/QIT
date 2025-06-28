@@ -1,34 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getTest, submitTestAnswer, autosaveTest } from '../services/api';
 
-interface TestQuestion {
-  id: string;
-  number: number;
-  text: string;
-  description?: string;
-  options: Array<{
-    id: string;
-    text: string;
-  }>;
-}
-
-interface Test {
-  id: string;
-  totalQuestions: number;
-  timeLimit: number; // in seconds
-  currentQuestion: TestQuestion;
-}
-
-interface TestAnswer {
-  questionId: string;
-  answerId: string;
-  timestamp: string;
-}
-
 interface TestState {
-  test: Test | null;
-  currentQuestion: TestQuestion | null;
-  answers: TestAnswer[];
+  test: any | null;
+  currentQuestion: any | null;
+  answers: any[];
   progress: number;
   timeLeft: number;
   isLoading: boolean;
@@ -41,91 +17,64 @@ export const useTest = () => {
     currentQuestion: null,
     answers: [],
     progress: 0,
-    timeLeft: 1200, // 20 minutes default
+    timeLeft: 3600, // 1 hour
     isLoading: false,
     error: null
   });
 
-  // Start test
-  const startTest = useCallback(async () => {
+  const startTest = useCallback(async (testId: number = 1) => {
     try {
       setTestState(prev => ({ ...prev, isLoading: true, error: null }));
-      
-      const testData = await getTest();
+      const testData = await getTest(testId);
       
       setTestState(prev => ({
         ...prev,
         test: testData,
-        currentQuestion: testData.currentQuestion,
-        timeLeft: testData.timeLimit || 1200,
+        currentQuestion: testData.questions[0],
         isLoading: false
       }));
     } catch (error) {
+      console.error('Failed to start test:', error);
       setTestState(prev => ({
         ...prev,
         error: 'Failed to load test',
         isLoading: false
       }));
-      console.error('Failed to start test:', error);
     }
   }, []);
 
-  // Submit answer
-  const submitAnswer = useCallback(async (answerId: string): Promise<any> => {
-    if (!testState.currentQuestion) {
-      throw new Error('No current question');
-    }
+  const submitAnswer = useCallback(async (answer: any) => {
+    if (!testState.test) return;
 
     try {
-      const answer: TestAnswer = {
-        questionId: testState.currentQuestion.id,
-        answerId,
-        timestamp: new Date().toISOString()
-      };
-
-      // Add answer to local state
+      const result = await submitTestAnswer(testState.test.id, answer);
+      
+      // Update answers
+      const newAnswers = [...testState.answers, answer];
+      const progress = (newAnswers.length / testState.test.questions.length) * 100;
+      
       setTestState(prev => ({
         ...prev,
-        answers: [...prev.answers, answer]
+        answers: newAnswers,
+        progress
       }));
-
-      // Submit to backend
-      const result = await submitTestAnswer(testState.test!.id, answer);
-
-      // Check if test is complete
-      if (result.isComplete) {
-        return result;
-      }
-
-      // Move to next question
-      if (result.nextQuestion) {
-        setTestState(prev => ({
-          ...prev,
-          currentQuestion: result.nextQuestion,
-          progress: ((prev.answers.length + 1) / prev.test!.totalQuestions) * 100
-        }));
-      }
 
       return result;
     } catch (error) {
       console.error('Failed to submit answer:', error);
       throw error;
     }
-  }, [testState.currentQuestion, testState.test, testState.answers]);
+  }, [testState.test, testState.answers]);
 
-  // Autosave function
-  const autosave = useCallback(async () => {
-    if (!testState.test || testState.answers.length === 0) return;
+  const saveProgress = useCallback(async () => {
+    if (!testState.test) return;
 
     try {
-      await autosaveTest(testState.test.id, {
-        answers: testState.answers,
-        currentQuestion: testState.currentQuestion
-      });
+      await autosaveTest(testState.test.id, testState.answers);
     } catch (error) {
-      console.error('Autosave failed:', error);
+      console.error('Failed to save progress:', error);
     }
-  }, [testState.test, testState.answers, testState.currentQuestion]);
+  }, [testState.test, testState.answers]);
 
   // Countdown timer
   useEffect(() => {
@@ -162,6 +111,6 @@ export const useTest = () => {
     ...testState,
     startTest,
     submitAnswer,
-    autosave
+    saveProgress
   };
 }; 

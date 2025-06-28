@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { createSession, getSession } from '../services/api';
 
 interface User {
   id: string;
@@ -37,57 +38,56 @@ export const useAuth = () => {
   // Validate token with backend
   const validateToken = async (token: string) => {
     try {
-      const response = await fetch('/api/session', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (response.ok) {
-        const userData = await response.json();
-        setAuthState(prev => ({
-          ...prev,
-          user: userData,
-          isAuthenticated: true
-        }));
-      } else {
-        // Token is invalid, clear it
-        logout();
-      }
+      const sessionData = await getSession(token);
+      setAuthState(prev => ({
+        ...prev,
+        user: sessionData.user || { id: 'user', role: 'user' },
+        isAuthenticated: true
+      }));
     } catch (error) {
       console.error('Token validation failed:', error);
       logout();
     }
   };
 
-  // Login function
-  const login = useCallback(async (token: string) => {
+  // Create new session
+  const createNewSession = useCallback(async () => {
     try {
-      // For development/testing - accept any token
-      if (import.meta.env.DEV && token === 'test-token') {
+      const sessionData = await createSession();
+      const token = sessionData.token || sessionData.session_token;
+      
+      if (token) {
         localStorage.setItem('aeon_token', token);
         setAuthState(prev => ({
           ...prev,
           isAuthenticated: true,
           token,
-          user: { id: 'test-user', role: 'user', name: 'Test User' }
+          user: sessionData.user || { id: 'user', role: 'user' }
         }));
-        return;
+        return token;
       }
-      
-      // Store token
-      localStorage.setItem('aeon_token', token);
-      
-      // Validate token and get user data
-      await validateToken(token);
-      
-      // Reload page to ensure all components recognize the new auth state
-      window.location.reload();
+    } catch (error) {
+      console.error('Failed to create session:', error);
+      throw error;
+    }
+  }, []);
+
+  // Login function
+  const login = useCallback(async (token?: string) => {
+    try {
+      if (token) {
+        // Use provided token
+        localStorage.setItem('aeon_token', token);
+        await validateToken(token);
+      } else {
+        // Create new session
+        await createNewSession();
+      }
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
     }
-  }, []);
+  }, [createNewSession]);
 
   // Logout function
   const logout = useCallback(() => {
@@ -118,6 +118,7 @@ export const useAuth = () => {
     ...authState,
     login,
     logout,
+    createNewSession,
     isTelegramWebApp,
     getTelegramUserId
   };

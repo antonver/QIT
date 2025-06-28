@@ -11,93 +11,113 @@ import {
   CardContent,
   Chip
 } from '@mui/material';
-import { useTest } from '../hooks/useTest';
-import { useAutosave } from '../hooks/useAutosave';
 
 interface TestRunnerProps {
   onComplete: (result: any) => void;
 }
 
 interface TestOption {
-  id: string;
+  id: number;
   text: string;
 }
 
+interface TestQuestion {
+  id: number;
+  text: string;
+  options: TestOption[];
+}
+
+interface Test {
+  id: number;
+  title: string;
+  questions: TestQuestion[];
+}
+
 const TestRunner: React.FC<TestRunnerProps> = ({ onComplete }) => {
-  const { 
-    test, 
-    currentQuestion, 
-    answers, 
-    progress, 
-    timeLeft, 
-    isLoading, 
-    error,
-    submitAnswer, 
-    startTest 
-  } = useTest();
-  
-  const { saveProgress, loadProgress } = useAutosave();
-  const [selectedAnswer, setSelectedAnswer] = useState<string>('');
+  const [test, setTest] = useState<Test | null>(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [answers, setAnswers] = useState<{ [key: number]: number }>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
-  // Load saved progress on mount
+  // Load test data
   useEffect(() => {
-    const saved = loadProgress();
-    if (saved) {
-      // Restore test state from localStorage
-      console.log('Loaded saved progress:', saved);
-    }
-  }, [loadProgress]);
-
-  // Start test on mount
-  useEffect(() => {
-    if (!test && !isLoading) {
-      startTest();
-    }
-  }, [test, isLoading, startTest]);
-
-  // Autosave every 15 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (test && answers.length > 0) {
-        saveProgress({ test, answers, currentQuestion });
+    const loadTest = async () => {
+      try {
+        setIsLoading(true);
+        // For now, use test ID 1 - you can make this configurable
+        const testData = await fetch('/api/test/1?lang=ru');
+        const testJson = await testData.json();
+        setTest(testJson);
+      } catch (error) {
+        console.error('Failed to load test:', error);
+        setError('Failed to load test. Please try again.');
+      } finally {
+        setIsLoading(false);
       }
-    }, 15000);
+    };
 
-    return () => clearInterval(interval);
-  }, [test, answers, currentQuestion, saveProgress]);
+    loadTest();
+  }, []);
 
-  // Handle answer selection
+  const currentQuestion = test?.questions[currentQuestionIndex];
+
   const handleAnswerSelect = (answerId: string) => {
-    setSelectedAnswer(answerId);
-    // Autosave on answer change
-    if (test) {
-      saveProgress({ test, answers, currentQuestion });
+    setAnswers(prev => ({
+      ...prev,
+      [currentQuestion!.id]: parseInt(answerId)
+    }));
+  };
+
+  const handleNext = () => {
+    if (currentQuestionIndex < (test?.questions.length || 0) - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
     }
   };
 
-  // Handle answer submission
-  const handleSubmitAnswer = async () => {
-    if (!selectedAnswer) return;
+  const handlePrevious = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!test) return;
 
     try {
-      const result = await submitAnswer(selectedAnswer);
-      setSelectedAnswer('');
+      setIsSubmitting(true);
       
-      // Check if test is complete
-      if (result.isComplete) {
-        onComplete(result);
+      // Convert answers to the format expected by the API
+      const answersArray = Object.entries(answers).map(([questionId, answerId]) => ({
+        question_id: parseInt(questionId),
+        answer_id: answerId
+      }));
+
+      // Submit answers
+      const response = await fetch(`/api/test/${test.id}/submit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ answers: answersArray })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit test');
       }
+
+      const result = await response.json();
+      onComplete(result);
     } catch (error) {
-      console.error('Failed to submit answer:', error);
+      console.error('Failed to submit test:', error);
+      setError('Failed to submit test. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // Format time display
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
+  const progress = test ? ((currentQuestionIndex + 1) / test.questions.length) * 100 : 0;
 
   if (isLoading) {
     return (
@@ -109,11 +129,9 @@ const TestRunner: React.FC<TestRunnerProps> = ({ onComplete }) => {
 
   if (error) {
     return (
-      <Box sx={{ textAlign: 'center', py: 4 }}>
-        <Typography color="error" gutterBottom>
-          Error loading test: {error}
-        </Typography>
-        <Button variant="contained" onClick={startTest}>
+      <Box sx={{ textAlign: 'center', p: 3 }}>
+        <Typography color="error" gutterBottom>{error}</Typography>
+        <Button variant="contained" onClick={() => window.location.reload()}>
           Retry
         </Button>
       </Box>
@@ -122,67 +140,42 @@ const TestRunner: React.FC<TestRunnerProps> = ({ onComplete }) => {
 
   if (!test || !currentQuestion) {
     return (
-      <Box sx={{ textAlign: 'center', py: 4 }}>
+      <Box sx={{ textAlign: 'center', p: 3 }}>
         <Typography>No test available</Typography>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ maxWidth: 800, mx: 'auto' }}>
-      {/* Header with progress and timer */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6">
-              Question {currentQuestion.number} of {test.totalQuestions}
-            </Typography>
-            <Chip 
-              label={formatTime(timeLeft)} 
-              color={timeLeft < 300 ? 'error' : 'primary'}
-              variant="outlined"
-            />
-          </Box>
-          
-          <LinearProgress 
-            variant="determinate" 
-            value={progress} 
-            sx={{ height: 8, borderRadius: 4 }}
-          />
-          
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              {Math.round(progress)}% Complete
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {timeLeft < 300 ? 'Time running out!' : 'Time remaining'}
-            </Typography>
-          </Box>
-        </CardContent>
-      </Card>
+    <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
+      <Typography variant="h4" gutterBottom>
+        {test.title}
+      </Typography>
 
-      {/* Question */}
+      <Box sx={{ mb: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+          <Typography variant="body2">
+            Question {currentQuestionIndex + 1} of {test.questions.length}
+          </Typography>
+          <Chip label={`${Math.round(progress)}%`} color="primary" size="small" />
+        </Box>
+        <LinearProgress variant="determinate" value={progress} />
+      </Box>
+
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Typography variant="h5" gutterBottom>
+          <Typography variant="h6" gutterBottom>
             {currentQuestion.text}
           </Typography>
-          
-          {currentQuestion.description && (
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-              {currentQuestion.description}
-            </Typography>
-          )}
 
-          {/* Answer options */}
           <RadioGroup
-            value={selectedAnswer}
+            value={answers[currentQuestion.id]?.toString() || ''}
             onChange={(e) => handleAnswerSelect(e.target.value)}
           >
             {currentQuestion.options.map((option: TestOption) => (
               <FormControlLabel
                 key={option.id}
-                value={option.id}
+                value={option.id.toString()}
                 control={<Radio />}
                 label={option.text}
                 sx={{ 
@@ -198,23 +191,38 @@ const TestRunner: React.FC<TestRunnerProps> = ({ onComplete }) => {
         </CardContent>
       </Card>
 
-      {/* Navigation buttons */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-        <Button 
-          variant="outlined" 
-          disabled={currentQuestion.number === 1}
-          onClick={() => {/* Handle previous question */}}
+        <Button
+          variant="outlined"
+          onClick={handlePrevious}
+          disabled={currentQuestionIndex === 0}
         >
           Previous
         </Button>
-        
-        <Button 
-          variant="contained" 
-          disabled={!selectedAnswer}
-          onClick={handleSubmitAnswer}
-        >
-          {currentQuestion.number === test.totalQuestions ? 'Finish Test' : 'Next Question'}
-        </Button>
+
+        {currentQuestionIndex === test.questions.length - 1 ? (
+          <Button
+            variant="contained"
+            onClick={handleSubmit}
+            disabled={isSubmitting || Object.keys(answers).length < test.questions.length}
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit Test'}
+          </Button>
+        ) : (
+          <Button
+            variant="contained"
+            onClick={handleNext}
+            disabled={!answers[currentQuestion.id]}
+          >
+            Next
+          </Button>
+        )}
+      </Box>
+
+      <Box sx={{ mt: 2, textAlign: 'center' }}>
+        <Typography variant="body2" color="text.secondary">
+          {Object.keys(answers).length} of {test.questions.length} questions answered
+        </Typography>
       </Box>
     </Box>
   );

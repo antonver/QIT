@@ -1,33 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Box, Typography, Container, CircularProgress, TextField, Button, Alert, Tabs, Tab } from '@mui/material';
+import { Box, Typography, Container, CircularProgress, Button, Alert } from '@mui/material';
 import TestRunner from '../components/TestRunner';
 import GlyphCanvas from '../components/GlyphCanvas';
 import HRPanel from '../components/HRPanel';
 import AeonBadge from '../components/AeonBadge';
 import { useAuth } from '../hooks/useAuth';
-import { getSession, createTokenByEmail } from '../services/api';
+import { getSession } from '../services/api';
 
 // Main HRBot page component
 const HRBot: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, login, user } = useAuth();
+  const { isAuthenticated, createNewSession, user } = useAuth();
   const [currentView, setCurrentView] = useState<'test' | 'result' | 'glyph' | 'hr-panel'>('test');
   const [testResult, setTestResult] = useState<any>(null);
   const [score, setScore] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
   // Check if user is HR and redirect accordingly
   useEffect(() => {
     const checkUserRole = async () => {
       if (isAuthenticated && user) {
         try {
-          const session = await getSession();
-          if (session.role === 'hr' && location.pathname === '/hr/bot/panel') {
-            setCurrentView('hr-panel');
-          } else if (session.role === 'hr' && location.pathname === '/hr/bot') {
-            navigate('/hr/bot/panel');
+          const token = localStorage.getItem('aeon_token');
+          if (token) {
+            const session = await getSession(token);
+            if (session.role === 'hr' && location.pathname === '/hr/bot/panel') {
+              setCurrentView('hr-panel');
+            } else if (session.role === 'hr' && location.pathname === '/hr/bot') {
+              navigate('/hr/bot/panel');
+            }
           }
         } catch (error) {
           console.error('Failed to check user role:', error);
@@ -51,6 +55,18 @@ const HRBot: React.FC = () => {
     setCurrentView('glyph');
   };
 
+  // Handle start test
+  const handleStartTest = async () => {
+    try {
+      setError('');
+      await createNewSession();
+      setCurrentView('test');
+    } catch (error) {
+      console.error('Failed to start test:', error);
+      setError('Failed to start test. Please try again.');
+    }
+  };
+
   // Show loading state
   if (isLoading) {
     return (
@@ -67,9 +83,9 @@ const HRBot: React.FC = () => {
     );
   }
 
-  // Show login form if not authenticated
+  // Show welcome screen if not authenticated
   if (!isAuthenticated) {
-    return <LoginForm onLogin={login} />;
+    return <WelcomeScreen onStart={handleStartTest} error={error} />;
   }
 
   // Render appropriate view based on current state
@@ -86,9 +102,9 @@ const HRBot: React.FC = () => {
           </Typography>
           <AeonBadge score={score} />
           <Box sx={{ mt: 2 }}>
-            <button onClick={handleGlyphGenerated}>
+            <Button variant="contained" onClick={handleGlyphGenerated}>
               Generate Glyph
-            </button>
+            </Button>
           </Box>
         </Box>
       )}
@@ -104,65 +120,8 @@ const HRBot: React.FC = () => {
   );
 };
 
-// Login form component
-const LoginForm: React.FC<{ onLogin: (token: string) => void }> = ({ onLogin }) => {
-  const [token, setToken] = useState('');
-  const [email, setEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [tabValue, setTabValue] = useState(0);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
-    setSuccess('');
-    
-    try {
-      // Check if running in Telegram WebApp
-      if (window.Telegram?.WebApp) {
-        const userId = window.Telegram.WebApp.initDataUnsafe?.user?.id;
-        if (userId) {
-          // Send POST /session with Telegram user ID
-          const response = await fetch('/api/session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ telegramUserId: userId })
-          });
-          const data = await response.json();
-          onLogin(data.token);
-          return;
-        }
-      }
-      
-      // Regular token-based login
-      onLogin(token);
-    } catch (error) {
-      console.error('Login failed:', error);
-      setError('Login failed. Please check your token.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleEmailSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
-    setSuccess('');
-    
-    try {
-      await createTokenByEmail(email);
-      setSuccess('Token has been sent to your email. Please check your inbox.');
-    } catch (error) {
-      console.error('Failed to send token:', error);
-      setError('Failed to send token. Please check your email address.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+// Welcome screen component
+const WelcomeScreen: React.FC<{ onStart: () => void; error: string }> = ({ onStart, error }) => {
   return (
     <Box sx={{ 
       display: 'flex', 
@@ -177,81 +136,40 @@ const LoginForm: React.FC<{ onLogin: (token: string) => void }> = ({ onLogin }) 
         bgcolor: 'background.paper', 
         borderRadius: 2, 
         boxShadow: 3,
-        minWidth: 400
+        minWidth: 400,
+        textAlign: 'center'
       }}>
-        <Typography variant="h5" gutterBottom align="center">
-          HRBot Access
+        <Typography variant="h4" gutterBottom>
+          Welcome to HRBot
         </Typography>
         
-        <Tabs value={tabValue} onChange={(_, newValue) => setTabValue(newValue)} sx={{ mb: 3 }}>
-          <Tab label="Token Login" />
-          <Tab label="Get Token" />
-        </Tabs>
+        <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary' }}>
+          Take the assessment test to get your personalized results and ÆON badge.
+        </Typography>
 
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
 
-        {tabValue === 0 && (
-          <form onSubmit={handleSubmit}>
-            <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-              Enter your access token to sign in to HRBot
-            </Typography>
-            <TextField
-              fullWidth
-              label="Access Token"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              sx={{ mb: 2 }}
-              placeholder="Enter your access token"
-            />
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              disabled={isLoading || !token}
-            >
-              {isLoading ? 'Signing In...' : 'Sign In'}
-            </Button>
-          </form>
-        )}
-
-        {tabValue === 1 && (
-          <form onSubmit={handleEmailSubmit}>
-            <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-              Enter your email to receive an access token
-            </Typography>
-            <TextField
-              fullWidth
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              sx={{ mb: 2 }}
-              placeholder="your.email@example.com"
-            />
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              disabled={isLoading || !email}
-            >
-              {isLoading ? 'Sending...' : 'Send Token'}
-            </Button>
-          </form>
-        )}
+        <Button
+          variant="contained"
+          size="large"
+          onClick={onStart}
+          sx={{ minWidth: 200 }}
+        >
+          Start Test
+        </Button>
 
         <Box sx={{ mt: 3, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
           <Typography variant="body2" color="text.secondary">
-            <strong>How to get access token:</strong>
+            <strong>What to expect:</strong>
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            1. Contact your HR administrator
+            • Multiple choice questions
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            2. Use the "Get Token" tab to receive via email
+            • Personalized results
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            3. If using Telegram, token is generated automatically
+            • ÆON badge generation
           </Typography>
         </Box>
       </Box>

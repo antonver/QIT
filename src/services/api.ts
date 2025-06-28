@@ -36,65 +36,111 @@ api.interceptors.response.use(
   }
 );
 
-// Authentication API
-export const createSession = async (telegramUserId?: number) => {
-  const response = await api.post('/session', { telegramUserId });
+// Session API
+export const createSession = async () => {
+  const response = await api.post('/session');
   return response.data;
 };
 
-export const createToken = async (email: string, password: string) => {
-  const response = await api.post('/auth/token', { email, password });
+export const getSession = async (token: string) => {
+  const response = await api.get(`/session/${token}`);
   return response.data;
 };
 
-export const createTokenByEmail = async (email: string) => {
-  const response = await api.post('/auth/token/email', { email });
+export const saveAnswer = async (token: string, answer: any) => {
+  const response = await api.post(`/session/${token}/answer`, answer);
   return response.data;
 };
 
-export const getSession = async () => {
-  const response = await api.get('/session');
+export const completeSession = async (token: string) => {
+  const response = await api.post(`/session/${token}/complete`);
   return response.data;
 };
 
 // Test API
-export const getTest = async (testId?: string, lang: 'ru' | 'en' = 'ru') => {
-  const url = testId ? `/test/${testId}` : '/test';
-  const response = await api.get(url, {
+export const getTest = async (testId: number, lang: 'ru' | 'en' = 'ru') => {
+  const response = await api.get(`/test/${testId}`, {
     params: { lang }
   });
   return response.data;
 };
 
-export const submitTestAnswer = async (testId: string, answer: any) => {
-  const response = await api.post(`/test/${testId}/submit`, answer);
+export const submitTestAnswer = async (testId: number, answers: any[]) => {
+  const response = await api.post(`/test/${testId}/submit`, { answers });
   return response.data;
 };
 
-export const autosaveTest = async (testId: string, data: any) => {
-  const response = await api.post(`/test/${testId}/autosave`, data);
+export const autosaveTest = async (testId: number, answers: any[]) => {
+  const response = await api.post(`/test/${testId}/autosave`, { answers });
   return response.data;
 };
 
-export const getTestResult = async (resultId: string) => {
+export const getTestResult = async (resultId: number) => {
   const response = await api.get(`/result/${resultId}`);
   return response.data;
 };
 
 // Glyph API
-export const generateGlyph = async (score: number) => {
-  const response = await api.post('/aeon/glyph', { score });
-  return response.data.glyph; // SVG or base64 data
+export const generateGlyph = async (data: any) => {
+  const response = await api.post('/aeon/glyph', data);
+  return response.data;
 };
 
-// HR Panel API
+// Aeon API
+export const aeonNextQuestion = async (data: any) => {
+  const response = await api.post('/aeon/question', data);
+  return response.data;
+};
+
+export const aeonSummary = async (data: any) => {
+  const response = await api.post('/aeon/summary', data);
+  return response.data;
+};
+
+export const aeonTask = async (data: any) => {
+  const response = await api.post('/aeon/task', data);
+  return response.data;
+};
+
+// Stats API
 export const getStats = async () => {
   const response = await api.get('/stats');
   return response.data;
 };
 
+// Admin API
 export const getAdminStats = async () => {
+  const response = await api.get('/admin/stats');
+  return response.data;
+};
+
+export const getAdminSessions = async () => {
   const response = await api.get('/admin');
+  return response.data;
+};
+
+export const getAdminSessionDetail = async (token: string) => {
+  const response = await api.get(`/admin/session/${token}`);
+  return response.data;
+};
+
+export const deleteAdminSession = async (token: string) => {
+  const response = await api.post(`/admin/session/${token}/delete`);
+  return response.data;
+};
+
+export const getAdminLog = async () => {
+  const response = await api.get('/admin/log');
+  return response.data;
+};
+
+export const exportSessions = async () => {
+  const response = await api.get('/admin/export/sessions');
+  return response.data;
+};
+
+export const exportLog = async () => {
+  const response = await api.get('/admin/export/log');
   return response.data;
 };
 
