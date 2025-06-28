@@ -12,7 +12,7 @@ import {
   Chip
 } from '@mui/material';
 import { getTest, submitTestAnswer } from '../services/api';
-import type { Test, Question, Answer } from '../types/api';
+import type { Test, Answer } from '../types/api';
 
 interface TestRunnerProps {
   onComplete: (result: any) => void;
@@ -129,75 +129,4 @@ const TestRunner: React.FC<TestRunnerProps> = ({ onComplete }) => {
           <Typography variant="body2">
             Question {currentQuestionIndex + 1} of {test.questions.length}
           </Typography>
-          <Chip label={`${Math.round(progress)}%`} color="primary" size="small" />
-        </Box>
-        <LinearProgress variant="determinate" value={progress} />
-      </Box>
-
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            {currentQuestion.text}
-          </Typography>
-
-          <RadioGroup
-            value={answers[currentQuestion.id]?.toString() || ''}
-            onChange={(e) => handleAnswerSelect(e.target.value)}
-          >
-            {currentQuestion.answers.map((answer: Answer) => (
-              <FormControlLabel
-                key={answer.id}
-                value={answer.id.toString()}
-                control={<Radio />}
-                label={answer.text}
-                sx={{ 
-                  mb: 1, 
-                  p: 2, 
-                  border: '1px solid #e0e0e0', 
-                  borderRadius: 1,
-                  '&:hover': { backgroundColor: '#f5f5f5' }
-                }}
-              />
-            ))}
-          </RadioGroup>
-        </CardContent>
-      </Card>
-
-      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-        <Button
-          variant="outlined"
-          onClick={handlePrevious}
-          disabled={currentQuestionIndex === 0}
-        >
-          Previous
-        </Button>
-
-        {currentQuestionIndex === test.questions.length - 1 ? (
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            disabled={isSubmitting || Object.keys(answers).length < test.questions.length}
-          >
-            {isSubmitting ? 'Submitting...' : 'Submit Test'}
-          </Button>
-        ) : (
-          <Button
-            variant="contained"
-            onClick={handleNext}
-            disabled={!answers[currentQuestion.id]}
-          >
-            Next
-          </Button>
-        )}
-      </Box>
-
-      <Box sx={{ mt: 2, textAlign: 'center' }}>
-        <Typography variant="body2" color="text.secondary">
-          {Object.keys(answers).length} of {test.questions.length} questions answered
-        </Typography>
-      </Box>
-    </Box>
-  );
-};
-
-export default TestRunner; 
+          <Chip label={`
