@@ -153,7 +153,7 @@ const LoginForm: React.FC<{ onLogin: (token: string) => void }> = ({ onLogin }) 
     setSuccess('');
     
     try {
-      const response = await createTokenByEmail(email);
+      await createTokenByEmail(email);
       setSuccess('Token has been sent to your email. Please check your inbox.');
     } catch (error) {
       console.error('Failed to send token:', error);
@@ -183,7 +183,7 @@ const LoginForm: React.FC<{ onLogin: (token: string) => void }> = ({ onLogin }) 
           HRBot Access
         </Typography>
         
-        <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)} sx={{ mb: 3 }}>
+        <Tabs value={tabValue} onChange={(_, newValue) => setTabValue(newValue)} sx={{ mb: 3 }}>
           <Tab label="Token Login" />
           <Tab label="Get Token" />
         </Tabs>
