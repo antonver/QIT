@@ -20,6 +20,7 @@ export const useAuth = () => {
     user: null,
     token: null
   });
+  const [initializing, setInitializing] = useState(true);
 
   // Check for existing token on mount
   useEffect(() => {
@@ -30,13 +31,15 @@ export const useAuth = () => {
         isAuthenticated: true,
         token
       }));
-      // Optionally validate token with backend
-      validateToken(token);
+      validateToken(token, true);
+    } else {
+      // No token, create new session
+      createNewSession().finally(() => setInitializing(false));
     }
   }, []);
 
   // Validate token with backend
-  const validateToken = async (token: string) => {
+  const validateToken = async (token: string, isInit = false) => {
     try {
       const sessionData = await getSession(token);
       setAuthState(prev => ({
@@ -46,13 +49,20 @@ export const useAuth = () => {
       }));
     } catch (error) {
       console.error('Token validation failed:', error);
-      // Instead of just logging out, try to create a new session
-      try {
-        await createNewSession();
-      } catch (createError) {
-        console.error('Failed to create new session:', createError);
+      localStorage.removeItem('aeon_token');
+      if (isInit) {
+        // Try to create a new session if initial validation fails
+        try {
+          await createNewSession();
+        } catch (createError) {
+          console.error('Failed to create new session:', createError);
+          logout();
+        }
+      } else {
         logout();
       }
+    } finally {
+      setInitializing(false);
     }
   };
 
@@ -126,6 +136,7 @@ export const useAuth = () => {
     logout,
     createNewSession,
     isTelegramWebApp,
-    getTelegramUserId
+    getTelegramUserId,
+    initializing
   };
 }; 

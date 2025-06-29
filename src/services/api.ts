@@ -45,9 +45,13 @@ api.interceptors.response.use(
       // Token expired or invalid - let useAuth handle this
       localStorage.removeItem('aeon_token');
       // Don't reload page, let the auth hook handle it
-    } else if (error.response?.status === 404 && error.response?.data?.detail === 'Сессия не найдена') {
-      // Session not found - clear token and let useAuth handle this
-      localStorage.removeItem('aeon_token');
+    } else if (error.response?.status === 404) {
+      // Only clear token for session-specific 404 errors
+      const isSessionError = error.response?.data?.detail === 'Сессия не найдена' ||
+                           error.config?.url?.includes('/session/');
+      if (isSessionError) {
+        localStorage.removeItem('aeon_token');
+      }
     }
     return Promise.reject(error);
   }

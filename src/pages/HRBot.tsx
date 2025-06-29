@@ -12,7 +12,7 @@ import { getSession } from '../services/api';
 const HRBot: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, createNewSession, user } = useAuth();
+  const { isAuthenticated, createNewSession, user, initializing } = useAuth();
   const [currentView, setCurrentView] = useState<'test' | 'result' | 'glyph' | 'hr-panel'>('test');
   const [testResult, setTestResult] = useState<any>(null);
   const [score, setScore] = useState<number>(0);
@@ -22,6 +22,11 @@ const HRBot: React.FC = () => {
   // Check if user is HR and redirect accordingly
   useEffect(() => {
     const checkUserRole = async () => {
+      // Wait for auth to finish initializing
+      if (initializing) {
+        return;
+      }
+
       if (isAuthenticated && user) {
         try {
           const token = localStorage.getItem('aeon_token');
@@ -35,21 +40,14 @@ const HRBot: React.FC = () => {
           }
         } catch (error) {
           console.error('Failed to check user role:', error);
-        }
-      } else if (!isAuthenticated) {
-        // Auto-create session if not authenticated
-        try {
-          await createNewSession();
-        } catch (error) {
-          console.error('Failed to auto-create session:', error);
-          setError('Failed to initialize session. Please refresh the page.');
+          // Don't show error to user if session was recreated successfully
         }
       }
       setIsLoading(false);
     };
 
     checkUserRole();
-  }, [isAuthenticated, user, location.pathname, navigate, createNewSession]);
+  }, [isAuthenticated, user, location.pathname, navigate, initializing]);
 
   // Handle test completion
   const handleTestComplete = (result: any) => {
@@ -75,8 +73,8 @@ const HRBot: React.FC = () => {
     }
   };
 
-  // Show loading state
-  if (isLoading) {
+  // Show loading state during initialization
+  if (initializing || isLoading) {
     return (
       <Box sx={{ 
         display: 'flex', 
