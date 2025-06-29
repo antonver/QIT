@@ -30,7 +30,8 @@ const HRBot: React.FC = () => {
       if (isAuthenticated && user) {
         try {
           const token = localStorage.getItem('aeon_token');
-          if (token) {
+          // Only check user role if we have a valid token
+          if (token && token.length > 0) {
             const session = await getSession(token);
             if (session.user?.role === 'hr' && location.pathname === '/hr/bot/panel') {
               setCurrentView('hr-panel');

@@ -21,6 +21,7 @@ export const useAuth = () => {
     token: null
   });
   const [initializing, setInitializing] = useState(true);
+  const [validating, setValidating] = useState(false);
 
   // Check for existing token on mount
   useEffect(() => {
@@ -40,6 +41,12 @@ export const useAuth = () => {
 
   // Validate token with backend
   const validateToken = async (token: string, isInit = false) => {
+    // Prevent multiple simultaneous validations
+    if (validating) {
+      return;
+    }
+    
+    setValidating(true);
     try {
       const sessionData = await getSession(token);
       setAuthState(prev => ({
@@ -62,6 +69,7 @@ export const useAuth = () => {
         logout();
       }
     } finally {
+      setValidating(false);
       setInitializing(false);
     }
   };
