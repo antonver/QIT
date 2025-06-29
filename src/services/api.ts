@@ -42,9 +42,12 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
+      // Token expired or invalid - let useAuth handle this
       localStorage.removeItem('aeon_token');
-      window.location.reload();
+      // Don't reload page, let the auth hook handle it
+    } else if (error.response?.status === 404 && error.response?.data?.detail === 'Сессия не найдена') {
+      // Session not found - clear token and let useAuth handle this
+      localStorage.removeItem('aeon_token');
     }
     return Promise.reject(error);
   }

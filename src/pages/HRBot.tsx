@@ -36,12 +36,20 @@ const HRBot: React.FC = () => {
         } catch (error) {
           console.error('Failed to check user role:', error);
         }
+      } else if (!isAuthenticated) {
+        // Auto-create session if not authenticated
+        try {
+          await createNewSession();
+        } catch (error) {
+          console.error('Failed to auto-create session:', error);
+          setError('Failed to initialize session. Please refresh the page.');
+        }
       }
       setIsLoading(false);
     };
 
     checkUserRole();
-  }, [isAuthenticated, user, location.pathname, navigate]);
+  }, [isAuthenticated, user, location.pathname, navigate, createNewSession]);
 
   // Handle test completion
   const handleTestComplete = (result: any) => {

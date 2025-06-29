@@ -46,7 +46,13 @@ export const useAuth = () => {
       }));
     } catch (error) {
       console.error('Token validation failed:', error);
-      logout();
+      // Instead of just logging out, try to create a new session
+      try {
+        await createNewSession();
+      } catch (createError) {
+        console.error('Failed to create new session:', createError);
+        logout();
+      }
     }
   };
 
