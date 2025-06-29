@@ -198,14 +198,16 @@ const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
         
         <Button 
           variant="contained" 
+          color="primary"
           onClick={() => {
             setResult(null);
             setAnswers({});
             setCurrentQuestionIndex(0);
             fetchTest();
           }}
+          sx={{ mt: 2 }}
         >
-          Take Test Again
+          Начать тест заново
         </Button>
       </Box>
     );
