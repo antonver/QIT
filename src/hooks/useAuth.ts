@@ -26,20 +26,22 @@ export const useAuth = () => {
   // Check for existing token on mount
   useEffect(() => {
     const token = localStorage.getItem('aeon_token');
-    if (token) {
+    if (token && token.length > 0) {
+      // Set token as valid initially, validate only when needed
       setAuthState(prev => ({
         ...prev,
         isAuthenticated: true,
-        token
+        token,
+        user: { id: 'user', role: 'user' as 'user' | 'hr' }
       }));
-      validateToken(token, true);
     } else {
       // No token, create new session
       createNewSession().finally(() => setInitializing(false));
     }
+    setInitializing(false);
   }, []);
 
-  // Validate token with backend
+  // Validate token with backend (only when explicitly called)
   const validateToken = async (token: string, isInit = false) => {
     // Prevent multiple simultaneous validations
     if (validating) {
@@ -70,7 +72,6 @@ export const useAuth = () => {
       }
     } finally {
       setValidating(false);
-      setInitializing(false);
     }
   };
 

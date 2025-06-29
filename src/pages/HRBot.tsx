@@ -6,7 +6,6 @@ import GlyphCanvas from '../components/GlyphCanvas';
 import HRPanel from '../components/HRPanel';
 import AeonBadge from '../components/AeonBadge';
 import { useAuth } from '../hooks/useAuth';
-import { getSession } from '../services/api';
 
 // Main HRBot page component
 const HRBot: React.FC = () => {
@@ -28,20 +27,11 @@ const HRBot: React.FC = () => {
       }
 
       if (isAuthenticated && user) {
-        try {
-          const token = localStorage.getItem('aeon_token');
-          // Only check user role if we have a valid token
-          if (token && token.length > 0) {
-            const session = await getSession(token);
-            if (session.user?.role === 'hr' && location.pathname === '/hr/bot/panel') {
-              setCurrentView('hr-panel');
-            } else if (session.user?.role === 'hr' && location.pathname === '/hr/bot') {
-              navigate('/hr/bot/panel');
-            }
-          }
-        } catch (error) {
-          console.error('Failed to check user role:', error);
-          // Don't show error to user if session was recreated successfully
+        // Use user data from auth state instead of making additional API calls
+        if (user.role === 'hr' && location.pathname === '/hr/bot/panel') {
+          setCurrentView('hr-panel');
+        } else if (user.role === 'hr' && location.pathname === '/hr/bot') {
+          navigate('/hr/bot/panel');
         }
       }
       setIsLoading(false);
