@@ -43,6 +43,7 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
   const [showGlyph, setShowGlyph] = useState(false);
   const [showRules, setShowRules] = useState(false);
   const [currentAnswer, setCurrentAnswer] = useState<string>('');
+  const [questionNumber, setQuestionNumber] = useState<number>(1);
   
   // Timer state
   const [timeLeft, setTimeLeft] = useState<number>(90);
@@ -91,7 +92,7 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
       setError('');
       
       // Check if we've reached 10 questions
-      if (Object.keys(answers).length >= 10) {
+      if (questionNumber > 10) {
         await handleGenerateSummary();
         return;
       }
@@ -126,7 +127,7 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
     } finally {
       setIsLoadingQuestion(false);
     }
-  }, [sessionToken, answers]);
+  }, [sessionToken, answers, questionNumber]);
 
   // Save answer
   const saveCurrentAnswer = useCallback(async (answer: string) => {
@@ -155,6 +156,9 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
       // Clear the form
       setCurrentAnswer('');
       
+      // Increment question number
+      setQuestionNumber(prev => prev + 1);
+      
       // Get next question after saving
       setTimeout(() => {
         fetchNextQuestion();
@@ -168,6 +172,7 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
         [currentQuestion.question]: answer
       }));
       setCurrentAnswer('');
+      setQuestionNumber(prev => prev + 1);
       setTimeout(() => {
         fetchNextQuestion();
       }, 500);
@@ -367,17 +372,17 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <LinearProgress 
             variant="determinate" 
-            value={(Object.keys(answers).length / 10) * 100} 
+            value={(questionNumber - 1) / 10 * 100} 
             sx={{ flexGrow: 1, mr: 2 }}
           />
           <Typography variant="body2" color="text.secondary" sx={{ minWidth: '60px' }}>
-            {Object.keys(answers).length}/10
+            {questionNumber - 1}/10
           </Typography>
         </Box>
         
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="body2" color="text.secondary">
-            Question {Object.keys(answers).length + 1} of 10
+            Question {questionNumber} of 10
           </Typography>
           <Typography 
             variant="body2" 
