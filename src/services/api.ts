@@ -160,6 +160,32 @@ export const aeonTask = async (data: {
   }
 };
 
+export const aeonGlyph = async (data: {
+  session_token: string;
+  answers: { [key: string]: string };
+}): Promise<GlyphData> => {
+  try {
+    const response = await api.post<GlyphData>('/aeon/glyph', data);
+    return response.data;
+  } catch (error) {
+    console.error('ÆON glyph error:', error);
+    // Return a mock glyph if the endpoint is not available
+    return {
+      svg: `<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="mockGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#40C4FF;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#2196F3;stop-opacity:1" />
+          </linearGradient>
+        </defs>
+        <circle cx="150" cy="150" r="120" fill="none" stroke="url(#mockGradient)" stroke-width="4"/>
+        <circle cx="150" cy="150" r="80" fill="none" stroke="#40C4FF" stroke-width="2" opacity="0.6"/>
+        <text x="150" y="200" text-anchor="middle" fill="#40C4FF" font-size="16" font-weight="bold">ÆON</text>
+      </svg>`
+    };
+  }
+};
+
 // Stats API
 export const getStats = async (): Promise<Stats> => {
   const response = await api.get<Stats>('/stats');

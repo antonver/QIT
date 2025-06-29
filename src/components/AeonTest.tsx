@@ -23,9 +23,9 @@ import {
 import { 
   aeonNextQuestion, 
   aeonSummary, 
-  generateGlyph,
   saveAnswer,
-  completeSession
+  completeSession,
+  aeonGlyph
 } from '../services/api';
 import type { AeonQuestion, AeonSummary, GlyphData } from '../types/api';
 
@@ -196,69 +196,158 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
       setSummary(summaryData);
     } catch (err) {
       console.error('Failed to generate summary:', err);
-      // Create a beautiful mock summary if the endpoint fails
-      setSummary({
-        summary: `🎯 **Assessment Complete!**
+      
+      // Analyze answer quality for more realistic results
+      const answerEntries = Object.entries(answers);
+      const totalAnswers = answerEntries.length;
+      
+      // Count short answers (less than 10 characters)
+      const shortAnswers = answerEntries.filter(([_, answer]) => answer.length < 10).length;
+      const shortAnswerPercentage = totalAnswers > 0 ? (shortAnswers / totalAnswers) * 100 : 0;
+      
+      // Count very short answers (1-3 characters)
+      const veryShortAnswers = answerEntries.filter(([_, answer]) => answer.length <= 3).length;
+      const veryShortPercentage = totalAnswers > 0 ? (veryShortAnswers / totalAnswers) * 100 : 0;
+      
+      // Determine assessment quality
+      let summaryText = '';
+      
+      if (veryShortPercentage > 50) {
+        summaryText = `⚠️ **Assessment Quality: Limited**
 
-You have successfully completed the ÆON assessment, answering ${Object.keys(answers).length} thoughtful questions about your professional approach and personality.
+You completed the ÆON assessment with ${totalAnswers} questions, but many of your responses were very brief (${veryShortPercentage.toFixed(0)}% were 3 characters or less).
+
+**Analysis:**
+• Your responses suggest you may not have fully engaged with the assessment
+• Brief answers limit the depth of personality and skill analysis
+• Consider retaking the assessment with more detailed responses for better insights
+
+**Recommendation:**
+For a more accurate ÆON profile, try answering questions with more detail and thoughtfulness.`;
+      } else if (shortAnswerPercentage > 30) {
+        summaryText = `📊 **Assessment Quality: Fair**
+
+You completed the ÆON assessment with ${totalAnswers} questions. While you provided responses, many were quite brief (${shortAnswerPercentage.toFixed(0)}% were under 10 characters).
+
+**Analysis:**
+• Your responses show some engagement but could be more detailed
+• Brief answers provide limited insight into your personality and skills
+• Some key traits may not be fully captured
+
+**Recommendation:**
+Consider providing more detailed responses for a more comprehensive ÆON profile.`;
+      } else {
+        summaryText = `🎯 **Assessment Quality: Excellent**
+
+You have successfully completed the ÆON assessment with ${totalAnswers} thoughtful and detailed responses.
 
 **Key Insights:**
-• Your responses demonstrate a thoughtful and analytical approach to problem-solving
-• You show strong adaptability and resilience in challenging situations
-• Your communication style reflects clarity and precision
-• You exhibit natural leadership qualities and team collaboration skills
+• Your responses demonstrate thoughtful and analytical thinking
+• You show strong communication skills and self-awareness
+• Your detailed answers provide rich data for personality analysis
+• You exhibit natural leadership qualities and adaptability
 
 **Your ÆON Profile:**
-Based on your responses, you possess a balanced combination of analytical thinking and creative problem-solving. Your approach to challenges shows both strategic planning and practical execution.
+Based on your comprehensive responses, you possess a balanced combination of analytical thinking and creative problem-solving. Your approach to challenges shows both strategic planning and practical execution.
 
-Your unique ÆON glyph is ready to be generated, representing your consciousness level and professional signature.`
+Your unique ÆON glyph is ready to be generated, representing your consciousness level and professional signature.`;
+      }
+      
+      // Create a beautiful mock summary if the endpoint fails
+      setSummary({
+        summary: summaryText
       });
     }
   }, [sessionToken, answers]);
 
   // Generate glyph
   const handleGenerateGlyph = useCallback(async () => {
-    if (!summary) return;
     try {
+      setError('');
       setIsGeneratingGlyph(true);
-      const glyph = await generateGlyph({ 
+      const glyphData = await aeonGlyph({
         session_token: sessionToken,
-        summary: summary.summary 
+        answers: answers
       });
-      setGlyphData(glyph);
+      setGlyphData(glyphData);
       setShowGlyph(true);
     } catch (err) {
       console.error('Failed to generate glyph:', err);
-      // Create a beautiful mock glyph if the endpoint fails
-      const mockSvg = `<svg width="300" height="300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
-        <defs>
-          <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#40C4FF;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#2196F3;stop-opacity:1" />
-          </linearGradient>
-          <filter id="glow">
-            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-            <feMerge> 
-              <feMergeNode in="coloredBlur"/>
-              <feMergeNode in="SourceGraphic"/>
-            </feMerge>
-          </filter>
-        </defs>
-        <circle cx="150" cy="150" r="120" fill="none" stroke="url(#grad1)" stroke-width="4" filter="url(#glow)"/>
-        <circle cx="150" cy="150" r="80" fill="none" stroke="url(#grad1)" stroke-width="2" opacity="0.6"/>
-        <path d="M100 150 L130 180 L200 120" stroke="url(#grad1)" stroke-width="4" fill="none" filter="url(#glow)"/>
-        <circle cx="150" cy="150" r="20" fill="url(#grad1)" opacity="0.8"/>
-        <text x="150" y="200" text-anchor="middle" fill="#40C4FF" font-size="16" font-weight="bold" font-family="Arial, sans-serif">ÆON</text>
-        <text x="150" y="220" text-anchor="middle" fill="#40C4FF" font-size="12" font-family="Arial, sans-serif">CONSCIOUSNESS</text>
-      </svg>`;
       
-      console.log('Generated mock SVG:', mockSvg);
-      setGlyphData({ svg: mockSvg });
+      // Analyze answer quality for more realistic glyph generation
+      const answerEntries = Object.entries(answers);
+      const totalAnswers = answerEntries.length;
+      
+      // Count short answers (less than 10 characters)
+      const shortAnswers = answerEntries.filter(([_, answer]) => answer.length < 10).length;
+      const shortAnswerPercentage = totalAnswers > 0 ? (shortAnswers / totalAnswers) * 100 : 0;
+      
+      // Count very short answers (1-3 characters)
+      const veryShortAnswers = answerEntries.filter(([_, answer]) => answer.length <= 3).length;
+      const veryShortPercentage = totalAnswers > 0 ? (veryShortAnswers / totalAnswers) * 100 : 0;
+      
+      // Generate SVG based on answer quality
+      let svgContent = '';
+      
+      if (veryShortPercentage > 50) {
+        // Poor quality - simple, basic glyph
+        svgContent = `<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="poorGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#ff6b6b;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#ee5a52;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <circle cx="150" cy="150" r="120" fill="url(#poorGradient)" opacity="0.3"/>
+          <circle cx="150" cy="150" r="80" fill="none" stroke="#ff6b6b" stroke-width="2" opacity="0.6"/>
+          <text x="150" y="160" text-anchor="middle" fill="#ff6b6b" font-size="24" font-weight="bold">Æ</text>
+          <text x="150" y="180" text-anchor="middle" fill="#ff6b6b" font-size="12">Limited</text>
+        </svg>`;
+      } else if (shortAnswerPercentage > 30) {
+        // Fair quality - moderate complexity
+        svgContent = `<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="fairGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#feca57;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#ff9ff3;stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <circle cx="150" cy="150" r="120" fill="url(#fairGradient)" opacity="0.2"/>
+          <circle cx="150" cy="150" r="100" fill="none" stroke="#feca57" stroke-width="3" opacity="0.7"/>
+          <circle cx="150" cy="150" r="60" fill="none" stroke="#ff9ff3" stroke-width="2" opacity="0.5"/>
+          <text x="150" y="160" text-anchor="middle" fill="#feca57" font-size="28" font-weight="bold">Æ</text>
+          <text x="150" y="180" text-anchor="middle" fill="#feca57" font-size="14">Fair</text>
+        </svg>`;
+      } else {
+        // Excellent quality - complex, beautiful glyph
+        svgContent = `<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="excellentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#40C4FF;stop-opacity:1" />
+              <stop offset="50%" style="stop-color:#2196F3;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#1976D2;stop-opacity:1" />
+            </linearGradient>
+            <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" style="stop-color:#40C4FF;stop-opacity:0.8" />
+              <stop offset="100%" style="stop-color:#40C4FF;stop-opacity:0" />
+            </radialGradient>
+          </defs>
+          <circle cx="150" cy="150" r="140" fill="url(#glow)" opacity="0.3"/>
+          <circle cx="150" cy="150" r="120" fill="none" stroke="url(#excellentGradient)" stroke-width="4" opacity="0.8"/>
+          <circle cx="150" cy="150" r="90" fill="none" stroke="#40C4FF" stroke-width="2" opacity="0.6"/>
+          <circle cx="150" cy="150" r="60" fill="none" stroke="#2196F3" stroke-width="3" opacity="0.7"/>
+          <polygon points="150,50 170,90 210,90 180,120 190,160 150,140 110,160 120,120 90,90 130,90" fill="url(#excellentGradient)" opacity="0.8"/>
+          <text x="150" y="200" text-anchor="middle" fill="#40C4FF" font-size="16" font-weight="bold">ÆON</text>
+          <text x="150" y="220" text-anchor="middle" fill="#2196F3" font-size="12">Excellence</text>
+        </svg>`;
+      }
+      
+      setGlyphData({ svg: svgContent });
       setShowGlyph(true);
     } finally {
       setIsGeneratingGlyph(false);
     }
-  }, [summary, sessionToken]);
+  }, [sessionToken, answers]);
 
   // Complete session
   const handleCompleteSession = useCallback(async () => {
@@ -449,7 +538,7 @@ Your unique ÆON glyph is ready to be generated, representing your consciousness
             }}>
               {/* Debug info */}
               <Box sx={{ position: 'absolute', top: 10, right: 10, fontSize: '12px', color: 'gray' }}>
-                SVG Length: {glyphData.svg.length}
+                SVG Length: {glyphData?.svg?.length || 0}
               </Box>
               
               {/* SVG Display */}
@@ -465,37 +554,41 @@ Your unique ÆON glyph is ready to be generated, representing your consciousness
                 }}
               >
                 {/* Method 1: Direct SVG rendering */}
-                <Box
-                  component="div"
-                  dangerouslySetInnerHTML={{ __html: glyphData.svg }}
-                  sx={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                />
-                
-                {/* Method 2: Image fallback */}
-                <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
-                  <img
-                    src={`data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(glyphData.svg)))}`}
-                    alt="ÆON Glyph"
-                    style={{
+                {glyphData?.svg && (
+                  <Box
+                    component="div"
+                    dangerouslySetInnerHTML={{ __html: glyphData.svg }}
+                    sx={{
                       width: '100%',
                       height: '100%',
-                      objectFit: 'contain'
-                    }}
-                    onError={(e) => {
-                      console.log('Image failed to load, showing fallback');
-                      e.currentTarget.style.display = 'none';
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
                     }}
                   />
-                </Box>
+                )}
+                
+                {/* Method 2: Image fallback */}
+                {glyphData?.svg && (
+                  <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
+                    <img
+                      src={`data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(glyphData.svg)))}`}
+                      alt="ÆON Glyph"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain'
+                      }}
+                      onError={(e) => {
+                        console.log('Image failed to load, showing fallback');
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </Box>
+                )}
                 
                 {/* Fallback if SVG doesn't render */}
-                {!glyphData.svg.includes('<svg') && (
+                {!glyphData?.svg || !glyphData.svg.includes('<svg') && (
                   <Box sx={{
                     width: 200,
                     height: 200,
@@ -535,7 +628,7 @@ Your unique ÆON glyph is ready to be generated, representing your consciousness
             {/* Debug section */}
             <Box sx={{ mt: 2, p: 2, bgcolor: 'rgba(0,0,0,0.05)', borderRadius: 1, fontSize: '12px' }}>
               <Typography variant="caption" color="text.secondary">
-                Debug: SVG Content Preview (first 200 chars): {glyphData.svg.substring(0, 200)}...
+                Debug: SVG Content Preview (first 200 chars): {glyphData?.svg?.substring(0, 200) || 'No SVG content'}...
               </Typography>
             </Box>
           </Paper>
