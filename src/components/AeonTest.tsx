@@ -230,29 +230,30 @@ Your unique ÆON glyph is ready to be generated, representing your consciousness
     } catch (err) {
       console.error('Failed to generate glyph:', err);
       // Create a beautiful mock glyph if the endpoint fails
-      setGlyphData({
-        svg: `<svg width="300" height="300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
-          <defs>
-            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#40C4FF;stop-opacity:1" />
-              <stop offset="100%" style="stop-color:#2196F3;stop-opacity:1" />
-            </linearGradient>
-            <filter id="glow">
-              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-              <feMerge> 
-                <feMergeNode in="coloredBlur"/>
-                <feMergeNode in="SourceGraphic"/>
-              </feMerge>
-            </filter>
-          </defs>
-          <circle cx="150" cy="150" r="120" fill="none" stroke="url(#grad1)" stroke-width="4" filter="url(#glow)"/>
-          <circle cx="150" cy="150" r="80" fill="none" stroke="url(#grad1)" stroke-width="2" opacity="0.6"/>
-          <path d="M100 150 L130 180 L200 120" stroke="url(#grad1)" stroke-width="4" fill="none" filter="url(#glow)"/>
-          <circle cx="150" cy="150" r="20" fill="url(#grad1)" opacity="0.8"/>
-          <text x="150" y="200" text-anchor="middle" fill="#40C4FF" font-size="16" font-weight="bold" font-family="Arial, sans-serif">ÆON</text>
-          <text x="150" y="220" text-anchor="middle" fill="#40C4FF" font-size="12" font-family="Arial, sans-serif">CONSCIOUSNESS</text>
-        </svg>`
-      });
+      const mockSvg = `<svg width="300" height="300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+        <defs>
+          <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#40C4FF;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#2196F3;stop-opacity:1" />
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+            <feMerge> 
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+        <circle cx="150" cy="150" r="120" fill="none" stroke="url(#grad1)" stroke-width="4" filter="url(#glow)"/>
+        <circle cx="150" cy="150" r="80" fill="none" stroke="url(#grad1)" stroke-width="2" opacity="0.6"/>
+        <path d="M100 150 L130 180 L200 120" stroke="url(#grad1)" stroke-width="4" fill="none" filter="url(#glow)"/>
+        <circle cx="150" cy="150" r="20" fill="url(#grad1)" opacity="0.8"/>
+        <text x="150" y="200" text-anchor="middle" fill="#40C4FF" font-size="16" font-weight="bold" font-family="Arial, sans-serif">ÆON</text>
+        <text x="150" y="220" text-anchor="middle" fill="#40C4FF" font-size="12" font-family="Arial, sans-serif">CONSCIOUSNESS</text>
+      </svg>`;
+      
+      console.log('Generated mock SVG:', mockSvg);
+      setGlyphData({ svg: mockSvg });
       setShowGlyph(true);
     } finally {
       setIsGeneratingGlyph(false);
@@ -443,8 +444,15 @@ Your unique ÆON glyph is ready to be generated, representing your consciousness
               p: 3,
               background: 'rgba(64, 196, 255, 0.05)',
               borderRadius: 2,
-              border: '2px solid rgba(64, 196, 255, 0.2)'
+              border: '2px solid rgba(64, 196, 255, 0.2)',
+              minHeight: 350
             }}>
+              {/* Debug info */}
+              <Box sx={{ position: 'absolute', top: 10, right: 10, fontSize: '12px', color: 'gray' }}>
+                SVG Length: {glyphData.svg.length}
+              </Box>
+              
+              {/* SVG Display */}
               <Box
                 sx={{
                   width: 300,
@@ -452,10 +460,58 @@ Your unique ÆON glyph is ready to be generated, representing your consciousness
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  filter: 'drop-shadow(0 0 20px rgba(64, 196, 255, 0.3))'
+                  filter: 'drop-shadow(0 0 20px rgba(64, 196, 255, 0.3))',
+                  position: 'relative'
                 }}
-                dangerouslySetInnerHTML={{ __html: glyphData.svg }}
-              />
+              >
+                {/* Method 1: Direct SVG rendering */}
+                <Box
+                  component="div"
+                  dangerouslySetInnerHTML={{ __html: glyphData.svg }}
+                  sx={{
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                />
+                
+                {/* Method 2: Image fallback */}
+                <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
+                  <img
+                    src={`data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(glyphData.svg)))}`}
+                    alt="ÆON Glyph"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain'
+                    }}
+                    onError={(e) => {
+                      console.log('Image failed to load, showing fallback');
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </Box>
+                
+                {/* Fallback if SVG doesn't render */}
+                {!glyphData.svg.includes('<svg') && (
+                  <Box sx={{
+                    width: 200,
+                    height: 200,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(45deg, #40C4FF, #2196F3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    fontSize: '24px',
+                    fontWeight: 'bold'
+                  }}>
+                    ÆON
+                  </Box>
+                )}
+              </Box>
             </Box>
             
             <Button
@@ -475,6 +531,13 @@ Your unique ÆON glyph is ready to be generated, representing your consciousness
             >
               📥 Download Glyph
             </Button>
+            
+            {/* Debug section */}
+            <Box sx={{ mt: 2, p: 2, bgcolor: 'rgba(0,0,0,0.05)', borderRadius: 1, fontSize: '12px' }}>
+              <Typography variant="caption" color="text.secondary">
+                Debug: SVG Content Preview (first 200 chars): {glyphData.svg.substring(0, 200)}...
+              </Typography>
+            </Box>
           </Paper>
         )}
 
