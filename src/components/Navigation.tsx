@@ -11,11 +11,12 @@ import {
     Avatar,
     CssBaseline,
     IconButton,
-    Typography
+    Typography,
+    useTheme,
+    useMediaQuery
 } from '@mui/material';
 import { deepPurple } from '@mui/material/colors';
 import ProfileCard from './ProfileCard.tsx';
-import Grid from '@mui/material/Grid';
 import Home from '../pages/Home';
 import RoutineTracker from '../pages/RoutineTracker.tsx';
 import backgroundImage from '../assets/background.png';
@@ -39,7 +40,9 @@ import Politics from '../pages/Politics.tsx';
 import NewTheme from '../pages/NewTheme.tsx';
 import Design from '../pages/Design.tsx';
 import HRBot from '../pages/HRBot.tsx';
+import TestPage from '../pages/TestPage.tsx';
 import MenuIcon from '@mui/icons-material/Menu';
+import PageTransition from './PageTransition.tsx';
 
 const NAVIGATION = [
     {
@@ -107,6 +110,13 @@ const NAVIGATION = [
             <span style={{ fontSize: '1.5em' }}>🤖</span>
         </div>,
     },
+    {
+        segment: 'test',
+        title: 'Test Page',
+        icon: <div style={{ width: '2em', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <span style={{ fontSize: '1.5em' }}>🧪</span>
+        </div>,
+    },
 ];
 
 function SidebarFooter() {
@@ -121,13 +131,16 @@ function SidebarFooter() {
 }
 
 export default function DashboardLayoutBasic() {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const [brand, setBrand] = useState<string>('QIP mini');
     const [logo, setLogo] = useState<React.ReactNode>('');
     const location = useLocation();
     const navigate = useNavigate();
     const [isClosing, setIsClosing] = React.useState(false);
+    
     const handleDrawerToggle = () => {
-            setIsClosing(!isClosing);
+        setIsClosing(!isClosing);
     };
 
     const handleMainClick = () => {
@@ -167,17 +180,28 @@ export default function DashboardLayoutBasic() {
     }, [location.pathname]);
 
     return (
-        <Box sx={{ display: 'flex', height: '100vh', backgroundColor: 'transparent', overflowY: 'hidden' }}>
+        <Box sx={{ 
+            display: 'flex', 
+            height: '100vh', 
+            backgroundColor: 'transparent', 
+            overflowY: 'hidden',
+            backgroundImage: `url(${backgroundImage})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundAttachment: 'fixed'
+        }}>
             <CssBaseline />
             <AppBar
                 position="fixed"
                 sx={{
                     zIndex: 1201,
-                    backgroundColor: 'background.paper',
+                    backgroundColor: 'rgba(18, 18, 18, 0.8)',
+                    backdropFilter: 'blur(10px)',
                     boxShadow: 'none',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                 }}
             >
-                <Toolbar>
+                <Toolbar sx={{ minHeight: isMobile ? '56px' : '64px' }}>
                     <IconButton
                         color="inherit"
                         aria-label="open drawer"
@@ -188,7 +212,14 @@ export default function DashboardLayoutBasic() {
                         <MenuIcon />
                     </IconButton>
                     {logo}
-                    <Box sx={{ ml: 2, color: 'white', fontSize: '1.5rem' }}>{brand}</Box>
+                    <Box sx={{ 
+                        ml: 2, 
+                        color: 'white', 
+                        fontSize: isMobile ? '1.2rem' : '1.5rem',
+                        fontWeight: 500
+                    }}>
+                        {brand}
+                    </Box>
                 </Toolbar>
             </AppBar>
             <Drawer
@@ -196,96 +227,128 @@ export default function DashboardLayoutBasic() {
                 open={isClosing}
                 onClose={() => setIsClosing(false)}
                 sx={{
-                    width: 240,
+                    width: isMobile ? '100%' : 240,
                     flexShrink: 0,
                     '& .MuiDrawer-paper': {
-                        width: 240,
+                        width: isMobile ? '100%' : 240,
                         boxSizing: 'border-box',
-                        backgroundColor: 'background.paper',
+                        backgroundColor: 'rgba(18, 18, 18, 0.95)',
+                        backdropFilter: 'blur(20px)',
+                        borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+                        color: 'white',
+                        overflowY: 'auto',
+                        scrollBehavior: 'smooth',
+                        '&::-webkit-scrollbar': {
+                            width: '6px',
+                        },
+                        '&::-webkit-scrollbar-track': {
+                            background: 'rgba(255, 255, 255, 0.1)',
+                        },
+                        '&::-webkit-scrollbar-thumb': {
+                            background: 'rgba(255, 255, 255, 0.3)',
+                            borderRadius: '3px',
+                            '&:hover': {
+                                background: 'rgba(255, 255, 255, 0.5)',
+                            },
+                        },
                     },
                 }}
             >
-                <Toolbar /> {/* Spacer for AppBar */}
-                <List
-                    sx={{
-                        '& .MuiListItem-root': {
-                            transition: 'border-left 0.3s ease',
-                            '&:hover': {
-                                borderLeft: '4px solid #40C4FF',
-                            },
-                        },
-                    }}
-                >
-                    {NAVIGATION.map((item, index) =>
-                        item.kind === 'header' ? null : (
-                            <Box
-                                key={index}
-                                onClick={() => navigate(`/${item.segment}`)}
-                                sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    padding: '12px 16px',
-                                    cursor: 'pointer',
-                                    maxHeight: '50px',
-                                    borderLeft: location.pathname === `/${item.segment}` ? '4px solid #40C4FF' : '4px solid transparent',
-                                    backgroundColor: location.pathname === `/${item.segment}` ? 'rgba(64,196,255,0.08)' : 'transparent',
-                                    transition: 'border-left 0.3s ease, background-color 0.3s ease',
-                                    '&:hover': {
-                                        borderLeft: '4px solid #40C4FF',
-                                        backgroundColor: 'rgba(64,196,255,0.04)',
-                                    },
-                                }}
-                            >
-                                <Box sx={{ marginRight: 2 }}>{item.icon}</Box>
-                                <Typography>{item.title}</Typography>
-                            </Box>
-                        )
-                    )}
-                </List>
-                <Box sx={{ flexGrow: 1 }} />
-                <SidebarFooter />
+                <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    height: '100%',
+                    pt: isMobile ? 8 : 0
+                }}>
+                    <List sx={{ flexGrow: 1, pt: 2 }}>
+                        {NAVIGATION.map((item, index) => {
+                            if (item.kind === 'header') {
+                                return (
+                                    <Box key={index} sx={{ 
+                                        p: 2, 
+                                        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                                        mb: 2
+                                    }}>
+                                        <Typography variant="h6" sx={{ color: 'white', fontWeight: 600 }}>
+                                            Navigation
+                                        </Typography>
+                                    </Box>
+                                );
+                            }
+
+                            const isActive = location.pathname === `/${item.segment}`;
+                            
+                            return (
+                                <Button
+                                    key={item.segment}
+                                    onClick={() => {
+                                        navigate(`/${item.segment}`);
+                                        if (isMobile) {
+                                            setIsClosing(false);
+                                        }
+                                    }}
+                                    sx={{
+                                        width: '100%',
+                                        justifyContent: 'flex-start',
+                                        px: 3,
+                                        py: 2,
+                                        mb: 1,
+                                        mx: 1,
+                                        borderRadius: 2,
+                                        backgroundColor: isActive ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                                        color: 'white',
+                                        '&:hover': {
+                                            backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                                            transform: 'translateX(4px)',
+                                            transition: 'all 0.2s ease-in-out'
+                                        },
+                                        transition: 'all 0.2s ease-in-out',
+                                        border: isActive ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid transparent'
+                                    }}
+                                >
+                                    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+                                        {item.icon}
+                                        <Typography sx={{ ml: 2, fontSize: isMobile ? '1rem' : '0.9rem' }}>
+                                            {item.title}
+                                        </Typography>
+                                    </Box>
+                                </Button>
+                            );
+                        })}
+                    </List>
+                    <SidebarFooter />
+                </Box>
             </Drawer>
             <Box
                 component="main"
-                onClick={handleMainClick}
                 sx={{
                     flexGrow: 1,
-                    pt: '64px',
-                    minHeight: '100vh',
-                    backgroundImage: `url(${backgroundImage})`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                    backgroundAttachment: 'fixed',
-                    overflowY: 'auto',
+                    pt: isMobile ? '56px' : '64px',
+                    height: '100vh',
+                    overflow: 'hidden',
+                    position: 'relative'
                 }}
+                onClick={handleMainClick}
             >
-                <Routes>
-                    <Route
-                        path="/profile"
-                        element={
-                            <Grid container direction="row" sx={{ justifyContent: 'center', alignItems: 'center' }}>
-                                <Grid size={{ xs: 12, sm: 8 }}>
-                                    <ProfileCard />
-                                </Grid>
-                            </Grid>
-                        }
-                    />
-                    <Route path="/" element={<Home />} />
-                    <Route path="/routine" element={<RoutineTracker />} />
-                    <Route path="/messages" element={<Messages />} />
-                    <Route path="/drops" element={<Drops />} />
-                    <Route path="/temporary" element={<Temporary />} />
-                    <Route path="/devlog" element={<DevLog />} />
-                    <Route path="/marketing" element={<Marketing />} />
-                    <Route path="/music" element={<Music />} />
-                    <Route path="/general" element={<General />} />
-                    <Route path="/politics" element={<Politics />} />
-                    <Route path="/newtheme" element={<NewTheme />} />
-                    <Route path="/design" element={<Design />} />
-                    <Route path="/hrbot" element={<HRBot />} />
-                    <Route path="/hr/bot" element={<HRBot />} />
-                    <Route path="/hr/bot/panel" element={<HRBot />} />
-                </Routes>
+                <PageTransition>
+                    <Routes>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/messages" element={<Messages />} />
+                        <Route path="/drops" element={<Drops />} />
+                        <Route path="/temporary" element={<Temporary />} />
+                        <Route path="/devlog" element={<DevLog />} />
+                        <Route path="/marketing" element={<Marketing />} />
+                        <Route path="/music" element={<Music />} />
+                        <Route path="/design" element={<Design />} />
+                        <Route path="/general" element={<General />} />
+                        <Route path="/politics" element={<Politics />} />
+                        <Route path="/newtheme" element={<NewTheme />} />
+                        <Route path="/hrbot" element={<HRBot />} />
+                        <Route path="/test" element={<TestPage />} />
+                        <Route path="/profile" element={<ProfileCard />} />
+                        <Route path="/routine" element={<RoutineTracker />} />
+                    </Routes>
+                </PageTransition>
             </Box>
         </Box>
     );

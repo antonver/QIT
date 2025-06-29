@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -11,7 +11,9 @@ import {
   Card,
   CardContent,
   LinearProgress,
-  Chip
+  Chip,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import { getTest, submitTestAnswer, autosaveTest, getTestResult } from '../services/api';
 import type { Test, UserAnswer, SubmitAnswersResponse, GetResultResponse } from '../types/api';
@@ -22,6 +24,10 @@ interface HRBotProps {
 }
 
 const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const questionRef = useRef<HTMLDivElement>(null);
+  
   // State management
   const [test, setTest] = useState<Test | null>(null);
   const [answers, setAnswers] = useState<{ [questionId: number]: number }>({});
@@ -36,6 +42,16 @@ const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
   
   // Error states
   const [error, setError] = useState<string>('');
+
+  // Smooth scroll to question
+  const scrollToQuestion = useCallback(() => {
+    if (questionRef.current) {
+      questionRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  }, []);
 
   // Fetch test details
   const fetchTest = useCallback(async () => {
@@ -120,16 +136,20 @@ const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
     }));
   };
 
-  // Handle navigation
+  // Handle navigation with smooth scroll
   const handleNext = () => {
     if (test && currentQuestionIndex < test.questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
+      // Smooth scroll to next question after state update
+      setTimeout(scrollToQuestion, 100);
     }
   };
 
   const handlePrevious = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(prev => prev - 1);
+      // Smooth scroll to previous question after state update
+      setTimeout(scrollToQuestion, 100);
     }
   };
 
@@ -156,7 +176,13 @@ const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
   // Loading state
   if (isLoadingTest) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '50vh',
+        minHeight: isMobile ? '60vh' : '50vh'
+      }}>
         <Box sx={{ textAlign: 'center' }}>
           <CircularProgress sx={{ mb: 2 }} />
           <Typography>Loading test...</Typography>
@@ -168,7 +194,7 @@ const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
   // Error state
   if (error && !test) {
     return (
-      <Box sx={{ textAlign: 'center', p: 3 }}>
+      <Box sx={{ textAlign: 'center', p: isMobile ? 2 : 3 }}>
         <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
         <Button variant="contained" onClick={fetchTest}>
           Retry
@@ -180,35 +206,50 @@ const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
   // Results display
   if (result) {
     return (
-      <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
-        <Typography variant="h4" gutterBottom>
+      <Box sx={{ 
+        maxWidth: 800, 
+        mx: 'auto', 
+        p: isMobile ? 2 : 3,
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center'
+      }}>
+        <Typography variant={isMobile ? "h5" : "h4"} gutterBottom align="center">
           Test Results
         </Typography>
         
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Typography variant="h5" gutterBottom>
+        <Card sx={{ mb: 3, mx: isMobile ? 0 : 'auto' }}>
+          <CardContent sx={{ textAlign: 'center' }}>
+            <Typography variant={isMobile ? "h6" : "h5"} gutterBottom>
               Score: {result.score}%
             </Typography>
-            <Typography variant="body1">
+            <Typography variant="body1" sx={{ mt: 2 }}>
               {result.details}
             </Typography>
           </CardContent>
         </Card>
         
-        <Button 
-          variant="contained" 
-          color="primary"
-          onClick={() => {
-            setResult(null);
-            setAnswers({});
-            setCurrentQuestionIndex(0);
-            fetchTest();
-          }}
-          sx={{ mt: 2 }}
-        >
-          Начать тест заново
-        </Button>
+        <Box sx={{ textAlign: 'center' }}>
+          <Button 
+            variant="contained" 
+            color="primary"
+            size={isMobile ? "large" : "medium"}
+            fullWidth={isMobile}
+            onClick={() => {
+              setResult(null);
+              setAnswers({});
+              setCurrentQuestionIndex(0);
+              fetchTest();
+            }}
+            sx={{ 
+              mt: 2,
+              maxWidth: isMobile ? '100%' : 300
+            }}
+          >
+            Начать тест заново
+          </Button>
+        </Box>
       </Box>
     );
   }
@@ -216,7 +257,7 @@ const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
   // No test available
   if (!test) {
     return (
-      <Box sx={{ textAlign: 'center', p: 3 }}>
+      <Box sx={{ textAlign: 'center', p: isMobile ? 2 : 3 }}>
         <Typography>No test available</Typography>
       </Box>
     );
@@ -225,19 +266,40 @@ const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
   const currentQuestion = test.questions[currentQuestionIndex];
 
   return (
-    <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
+    <Box sx={{ 
+      maxWidth: 800, 
+      mx: 'auto', 
+      p: isMobile ? 1 : 3,
+      minHeight: '100vh'
+    }}>
       {/* Test Header */}
-      <Typography variant="h4" gutterBottom>
+      <Typography 
+        variant={isMobile ? "h5" : "h4"} 
+        gutterBottom 
+        align="center"
+        sx={{ mb: isMobile ? 2 : 3 }}
+      >
         {test.title}
       </Typography>
 
       {/* Progress Bar */}
-      <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+      <Box sx={{ mb: isMobile ? 2 : 3 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          mb: 1,
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: isMobile ? 1 : 0
+        }}>
           <Typography variant="body2">
             Question {currentQuestionIndex + 1} of {test.questions.length}
           </Typography>
-          <Chip label={`${Math.round(progress)}%`} color="primary" size="small" />
+          <Chip 
+            label={`${Math.round(progress)}%`} 
+            color="primary" 
+            size="small" 
+            sx={{ alignSelf: isMobile ? 'flex-start' : 'center' }}
+          />
         </Box>
         <LinearProgress variant="determinate" value={progress} />
         <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
@@ -247,20 +309,30 @@ const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
 
       {/* Error Display */}
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>
+        <Alert severity="error" sx={{ mb: isMobile ? 2 : 3 }}>{error}</Alert>
       )}
 
       {/* Autosave Indicator */}
       {isAutosaving && (
-        <Alert severity="info" sx={{ mb: 3 }}>
+        <Alert severity="info" sx={{ mb: isMobile ? 2 : 3 }}>
           Autosaving your progress...
         </Alert>
       )}
 
       {/* Question Card */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
+      <Card 
+        ref={questionRef}
+        sx={{ 
+          mb: isMobile ? 2 : 3,
+          transition: 'all 0.3s ease-in-out'
+        }}
+      >
+        <CardContent sx={{ p: isMobile ? 2 : 3 }}>
+          <Typography 
+            variant={isMobile ? "h6" : "h6"} 
+            gutterBottom
+            sx={{ mb: isMobile ? 2 : 3 }}
+          >
             {currentQuestion.text}
           </Typography>
 
@@ -275,11 +347,19 @@ const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
                 control={<Radio />}
                 label={answer.text}
                 sx={{ 
-                  mb: 1, 
-                  p: 2, 
+                  mb: isMobile ? 1.5 : 1, 
+                  p: isMobile ? 1.5 : 2, 
                   border: '1px solid #e0e0e0', 
                   borderRadius: 1,
-                  '&:hover': { backgroundColor: '#f5f5f5' }
+                  '&:hover': { 
+                    backgroundColor: '#f5f5f5',
+                    transform: 'translateY(-1px)',
+                    transition: 'all 0.2s ease-in-out'
+                  },
+                  '&.Mui-checked': {
+                    borderColor: theme.palette.primary.main,
+                    backgroundColor: theme.palette.primary.light + '20'
+                  }
                 }}
               />
             ))}
@@ -288,11 +368,19 @@ const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
       </Card>
 
       {/* Navigation Buttons */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        mb: isMobile ? 2 : 3,
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: isMobile ? 2 : 0
+      }}>
         <Button
           variant="outlined"
           onClick={handlePrevious}
           disabled={currentQuestionIndex === 0}
+          fullWidth={isMobile}
+          size={isMobile ? "large" : "medium"}
         >
           Previous
         </Button>
@@ -302,6 +390,8 @@ const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
             variant="contained"
             onClick={submitAnswers}
             disabled={isSubmitting || isLoadingResult || answeredCount < test.questions.length}
+            fullWidth={isMobile}
+            size={isMobile ? "large" : "medium"}
           >
             {isSubmitting ? 'Submitting...' : isLoadingResult ? 'Loading Results...' : 'Submit Test'}
           </Button>
@@ -310,6 +400,8 @@ const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
             variant="contained"
             onClick={handleNext}
             disabled={!answers[currentQuestion.id]}
+            fullWidth={isMobile}
+            size={isMobile ? "large" : "medium"}
           >
             Next
           </Button>
