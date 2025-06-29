@@ -6,18 +6,22 @@ import GlyphCanvas from '../components/GlyphCanvas';
 import HRPanel from '../components/HRPanel';
 import AeonBadge from '../components/AeonBadge';
 import HRBotComponent from '../components/HRBot';
+import AeonTest from '../components/AeonTest';
 import { useAuth } from '../hooks/useAuth';
+import { createSession } from '../services/api';
+import type { AeonSummary, GlyphData } from '../types/api';
 
 // Main HRBot page component
 const HRBot: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, user, initializing } = useAuth();
-  const [currentView, setCurrentView] = useState<'welcome' | 'test' | 'result' | 'glyph' | 'hr-panel' | 'new-test'>('welcome');
+  const [currentView, setCurrentView] = useState<'welcome' | 'test' | 'result' | 'glyph' | 'hr-panel' | 'new-test' | 'aeon-test'>('welcome');
   const [testResult, setTestResult] = useState<any>(null);
   const [score, setScore] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [error] = useState('');
+  const [error, setError] = useState('');
+  const [sessionToken, setSessionToken] = useState<string>('');
 
   // Check if user is HR and redirect accordingly
   useEffect(() => {
@@ -58,11 +62,33 @@ const HRBot: React.FC = () => {
     setCurrentView('new-test');
   };
 
+  // Handle start ÆON test
+  const handleStartAeonTest = async () => {
+    try {
+      setError('');
+      // Create a new session for the ÆON test
+      const session = await createSession();
+      setSessionToken(session.token);
+      setCurrentView('aeon-test');
+    } catch (err) {
+      console.error('Failed to create session:', err);
+      setError('Failed to start ÆON test');
+    }
+  };
+
+  // Handle ÆON test completion
+  const handleAeonTestComplete = (summary: AeonSummary, glyph: GlyphData) => {
+    setTestResult({ summary, glyph });
+    setCurrentView('result');
+  };
+
   // Handle back to welcome
   const handleBackToWelcome = () => {
     setCurrentView('welcome');
     setTestResult(null);
     setScore(0);
+    setSessionToken('');
+    setError('');
   };
 
   // Show loading state during initialization
@@ -83,14 +109,14 @@ const HRBot: React.FC = () => {
 
   // Show welcome screen if not authenticated
   if (!isAuthenticated) {
-    return <WelcomeScreen onStart={handleStartNewTest} error={error} />;
+    return <WelcomeScreen onStart={handleStartNewTest} onStartAeon={handleStartAeonTest} error={error} />;
   }
 
   // Render appropriate view based on current state
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {currentView === 'welcome' && (
-        <WelcomeScreen onStart={handleStartNewTest} error={error} />
+        <WelcomeScreen onStart={handleStartNewTest} onStartAeon={handleStartAeonTest} error={error} />
       )}
       
       {currentView === 'test' && (
@@ -110,17 +136,58 @@ const HRBot: React.FC = () => {
         </Box>
       )}
       
+      {currentView === 'aeon-test' && sessionToken && (
+        <Box>
+          <Button 
+            variant="outlined" 
+            onClick={handleBackToWelcome}
+            sx={{ mb: 3 }}
+          >
+            ← Back to Welcome
+          </Button>
+          <AeonTest 
+            sessionToken={sessionToken}
+            onComplete={handleAeonTestComplete}
+          />
+        </Box>
+      )}
+      
       {currentView === 'result' && testResult && (
         <Box>
           <Typography variant="h4" gutterBottom>
             Test Results
           </Typography>
-          <AeonBadge score={score} />
-          <Box sx={{ mt: 2 }}>
-            <Button variant="contained" onClick={handleGlyphGenerated}>
-              Generate Glyph
-            </Button>
-          </Box>
+          {testResult.summary ? (
+            // ÆON test results
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                Your Summary
+              </Typography>
+              <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', mb: 3 }}>
+                {testResult.summary.summary}
+              </Typography>
+              {testResult.glyph && (
+                <Box sx={{ textAlign: 'center', mb: 3 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Your ÆON Glyph
+                  </Typography>
+                  <Box sx={{ mb: 2 }}>
+                    <div dangerouslySetInnerHTML={{ __html: testResult.glyph.svg }} />
+                  </Box>
+                </Box>
+              )}
+            </Box>
+          ) : (
+            // Standard test results
+            <Box>
+              <AeonBadge score={score} />
+              <Box sx={{ mt: 2 }}>
+                <Button variant="contained" onClick={handleGlyphGenerated}>
+                  Generate Glyph
+                </Button>
+              </Box>
+            </Box>
+          )}
         </Box>
       )}
       
@@ -135,8 +202,12 @@ const HRBot: React.FC = () => {
   );
 };
 
-// Welcome screen component
-const WelcomeScreen: React.FC<{ onStart: () => void; error: string }> = ({ onStart, error }) => {
+// Updated WelcomeScreen component
+const WelcomeScreen: React.FC<{ 
+  onStart: () => void; 
+  onStartAeon: () => void;
+  error: string 
+}> = ({ onStart, onStartAeon, error }) => {
   return (
     <Box sx={{ 
       display: 'flex', 
@@ -159,19 +230,30 @@ const WelcomeScreen: React.FC<{ onStart: () => void; error: string }> = ({ onSta
         </Typography>
         
         <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary' }}>
-          Take the assessment test to get your personalized results and ÆON badge.
+          Choose your assessment type:
         </Typography>
 
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-        <Button
-          variant="contained"
-          size="large"
-          onClick={onStart}
-          sx={{ minWidth: 200, mb: 3 }}
-        >
-          Start Test
-        </Button>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
+          <Button
+            variant="contained"
+            size="large"
+            onClick={onStart}
+            sx={{ minWidth: 200 }}
+          >
+            Standard Test
+          </Button>
+          
+          <Button
+            variant="outlined"
+            size="large"
+            onClick={onStartAeon}
+            sx={{ minWidth: 200 }}
+          >
+            ÆON AI Assessment
+          </Button>
+        </Box>
 
         <Box sx={{ 
           p: 2, 
@@ -180,16 +262,16 @@ const WelcomeScreen: React.FC<{ onStart: () => void; error: string }> = ({ onSta
           border: '1px solid rgba(255, 255, 255, 0.1)'
         }}>
           <Typography variant="body2" color="white" sx={{ fontWeight: 600, mb: 1 }}>
-            What to expect:
+            Test Types:
           </Typography>
           <Typography variant="body2" color="rgba(255, 255, 255, 0.8)" sx={{ mb: 0.5 }}>
-            • Multiple choice questions
+            • Standard: Multiple choice questions
           </Typography>
           <Typography variant="body2" color="rgba(255, 255, 255, 0.8)" sx={{ mb: 0.5 }}>
-            • Personalized results
+            • ÆON: AI-powered open questions
           </Typography>
           <Typography variant="body2" color="rgba(255, 255, 255, 0.8)" sx={{ mb: 0.5 }}>
-            • ÆON badge generation
+            • Both provide personalized results & ÆON badges
           </Typography>
         </Box>
       </Box>
