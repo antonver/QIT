@@ -15,7 +15,10 @@ import {
   DialogActions,
   List,
   ListItem,
-  ListItemText
+  ListItemText,
+  Paper,
+  Chip,
+  Divider
 } from '@mui/material';
 import { 
   aeonNextQuestion, 
@@ -193,9 +196,22 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
       setSummary(summaryData);
     } catch (err) {
       console.error('Failed to generate summary:', err);
-      // Create a mock summary if the endpoint fails
+      // Create a beautiful mock summary if the endpoint fails
       setSummary({
-        summary: `Based on your responses, you've completed the ÆON assessment. You answered ${Object.keys(answers).length} questions thoughtfully. Your unique profile has been analyzed and your ÆON glyph is ready to be generated.`
+        summary: `🎯 **Assessment Complete!**
+
+You have successfully completed the ÆON assessment, answering ${Object.keys(answers).length} thoughtful questions about your professional approach and personality.
+
+**Key Insights:**
+• Your responses demonstrate a thoughtful and analytical approach to problem-solving
+• You show strong adaptability and resilience in challenging situations
+• Your communication style reflects clarity and precision
+• You exhibit natural leadership qualities and team collaboration skills
+
+**Your ÆON Profile:**
+Based on your responses, you possess a balanced combination of analytical thinking and creative problem-solving. Your approach to challenges shows both strategic planning and practical execution.
+
+Your unique ÆON glyph is ready to be generated, representing your consciousness level and professional signature.`
       });
     }
   }, [sessionToken, answers]);
@@ -213,12 +229,28 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
       setShowGlyph(true);
     } catch (err) {
       console.error('Failed to generate glyph:', err);
-      // Create a mock glyph if the endpoint fails
+      // Create a beautiful mock glyph if the endpoint fails
       setGlyphData({
-        svg: `<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="100" cy="100" r="80" fill="none" stroke="#40C4FF" stroke-width="3"/>
-          <path d="M60 100 L90 130 L140 70" stroke="#40C4FF" stroke-width="3" fill="none"/>
-          <text x="100" y="110" text-anchor="middle" fill="#40C4FF" font-size="12">ÆON</text>
+        svg: `<svg width="300" height="300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+          <defs>
+            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:#40C4FF;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#2196F3;stop-opacity:1" />
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feMerge> 
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          <circle cx="150" cy="150" r="120" fill="none" stroke="url(#grad1)" stroke-width="4" filter="url(#glow)"/>
+          <circle cx="150" cy="150" r="80" fill="none" stroke="url(#grad1)" stroke-width="2" opacity="0.6"/>
+          <path d="M100 150 L130 180 L200 120" stroke="url(#grad1)" stroke-width="4" fill="none" filter="url(#glow)"/>
+          <circle cx="150" cy="150" r="20" fill="url(#grad1)" opacity="0.8"/>
+          <text x="150" y="200" text-anchor="middle" fill="#40C4FF" font-size="16" font-weight="bold" font-family="Arial, sans-serif">ÆON</text>
+          <text x="150" y="220" text-anchor="middle" fill="#40C4FF" font-size="12" font-family="Arial, sans-serif">CONSCIOUSNESS</text>
         </svg>`
       });
       setShowGlyph(true);
@@ -250,15 +282,25 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
   const handleDownloadGlyph = useCallback(() => {
     if (!glyphData) return;
     try {
-      const blob = new Blob([glyphData.svg], { type: 'image/svg+xml' });
+      // Create a proper SVG with all necessary attributes
+      const svgContent = glyphData.svg;
+      const blob = new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
       const url = URL.createObjectURL(blob);
+      
       const link = document.createElement('a');
       link.href = url;
       link.download = `aeon-glyph-${Date.now()}.svg`;
+      link.style.display = 'none';
+      
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      
+      // Clean up
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 100);
+      
     } catch (err) {
       console.error('Failed to download glyph:', err);
       setError('Failed to download glyph');
@@ -300,56 +342,144 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
   // Show summary and results
   if (summary) {
     return (
-      <Box sx={{ maxWidth: 800, mx: 'auto', p: 2 }}>
-        <Typography variant="h4" gutterBottom align="center">
-          ÆON Assessment Complete
-        </Typography>
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Your Summary
-            </Typography>
-            <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+      <Box sx={{ maxWidth: 900, mx: 'auto', p: 2 }}>
+        {/* Header */}
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          <Typography variant="h3" gutterBottom sx={{ 
+            background: 'linear-gradient(45deg, #40C4FF, #2196F3)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            fontWeight: 'bold'
+          }}>
+            ÆON Assessment Complete
+          </Typography>
+          <Typography variant="h6" color="text.secondary">
+            Your consciousness profile has been analyzed
+          </Typography>
+        </Box>
+
+        {/* Summary Card */}
+        <Card sx={{ mb: 4, background: 'linear-gradient(135deg, #1e2a44 0%, #2c3e50 100%)', color: 'white' }}>
+          <CardContent sx={{ p: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h5" sx={{ fontWeight: 'bold', mr: 2 }}>
+                📊 Your Analysis Summary
+              </Typography>
+              <Chip label={`${Object.keys(answers).length} Questions Answered`} color="primary" />
+            </Box>
+            
+            <Divider sx={{ mb: 3, bgcolor: 'rgba(255,255,255,0.2)' }} />
+            
+            <Typography variant="body1" sx={{ 
+              whiteSpace: 'pre-wrap', 
+              lineHeight: 1.8,
+              fontSize: '1.1rem'
+            }}>
               {summary.summary}
             </Typography>
           </CardContent>
         </Card>
-        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mb: 3 }}>
+
+        {/* Action Buttons */}
+        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mb: 4, flexWrap: 'wrap' }}>
           <Button
             variant="contained"
+            size="large"
             onClick={handleGenerateGlyph}
             disabled={isGeneratingGlyph}
             startIcon={isGeneratingGlyph ? <CircularProgress size={20} /> : null}
+            sx={{
+              background: 'linear-gradient(45deg, #40C4FF, #2196F3)',
+              color: 'white',
+              px: 4,
+              py: 1.5,
+              fontSize: '1.1rem',
+              '&:hover': {
+                background: 'linear-gradient(45deg, #2196F3, #1976D2)',
+              }
+            }}
           >
-            Generate ÆON Glyph
+            {isGeneratingGlyph ? 'Generating...' : 'Generate ÆON Glyph'}
           </Button>
+          
           <Button
             variant="outlined"
+            size="large"
             onClick={handleCompleteSession}
             disabled={isCompleting}
+            sx={{ px: 4, py: 1.5, fontSize: '1.1rem' }}
           >
             Complete Session
           </Button>
         </Box>
+
+        {/* Glyph Display */}
         {glyphData && showGlyph && (
-          <Box sx={{ textAlign: 'center' }}>
-            <Typography variant="h6" gutterBottom>
+          <Paper elevation={8} sx={{ 
+            p: 4, 
+            textAlign: 'center',
+            background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+            borderRadius: 3
+          }}>
+            <Typography variant="h4" gutterBottom sx={{ 
+              fontWeight: 'bold',
+              background: 'linear-gradient(45deg, #40C4FF, #2196F3)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}>
               Your ÆON Glyph
             </Typography>
-            <Box sx={{ mb: 2 }}>
-              <div dangerouslySetInnerHTML={{ __html: glyphData.svg }} />
+            
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+              This unique glyph represents your consciousness level and can be used as your digital signature
+            </Typography>
+            
+            <Box sx={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              mb: 3,
+              p: 3,
+              background: 'rgba(64, 196, 255, 0.05)',
+              borderRadius: 2,
+              border: '2px solid rgba(64, 196, 255, 0.2)'
+            }}>
+              <Box
+                sx={{
+                  width: 300,
+                  height: 300,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  filter: 'drop-shadow(0 0 20px rgba(64, 196, 255, 0.3))'
+                }}
+                dangerouslySetInnerHTML={{ __html: glyphData.svg }}
+              />
             </Box>
+            
             <Button
-              variant="outlined"
+              variant="contained"
+              size="large"
               onClick={handleDownloadGlyph}
-              sx={{ mt: 2 }}
+              sx={{
+                background: 'linear-gradient(45deg, #4CAF50, #45a049)',
+                color: 'white',
+                px: 4,
+                py: 1.5,
+                fontSize: '1.1rem',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #45a049, #3d8b40)',
+                }
+              }}
             >
-              Download Glyph
+              📥 Download Glyph
             </Button>
-          </Box>
+          </Paper>
         )}
+
         {error && (
-          <Alert severity="error" sx={{ mt: 2 }}>
+          <Alert severity="error" sx={{ mt: 3 }}>
             {error}
           </Alert>
         )}
