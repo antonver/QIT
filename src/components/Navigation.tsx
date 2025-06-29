@@ -40,7 +40,6 @@ import Politics from '../pages/Politics.tsx';
 import NewTheme from '../pages/NewTheme.tsx';
 import Design from '../pages/Design.tsx';
 import HRBot from '../pages/HRBot.tsx';
-import TestPage from '../pages/TestPage.tsx';
 import MenuIcon from '@mui/icons-material/Menu';
 import PageTransition from './PageTransition.tsx';
 
@@ -108,13 +107,6 @@ const NAVIGATION = [
         title: 'HR Bot',
         icon: <div style={{ width: '2em', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <span style={{ fontSize: '1.5em' }}>🤖</span>
-        </div>,
-    },
-    {
-        segment: 'test',
-        title: 'Test Page',
-        icon: <div style={{ width: '2em', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <span style={{ fontSize: '1.5em' }}>🧪</span>
         </div>,
     },
 ];
@@ -195,10 +187,8 @@ export default function DashboardLayoutBasic() {
                 position="fixed"
                 sx={{
                     zIndex: 1201,
-                    backgroundColor: 'rgba(18, 18, 18, 0.8)',
-                    backdropFilter: 'blur(10px)',
+                    backgroundColor: 'background.paper',
                     boxShadow: 'none',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                 }}
             >
                 <Toolbar sx={{ minHeight: isMobile ? '56px' : '64px' }}>
@@ -232,9 +222,7 @@ export default function DashboardLayoutBasic() {
                     '& .MuiDrawer-paper': {
                         width: isMobile ? '100%' : 240,
                         boxSizing: 'border-box',
-                        backgroundColor: 'rgba(18, 18, 18, 0.95)',
-                        backdropFilter: 'blur(20px)',
-                        borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+                        backgroundColor: 'background.paper',
                         color: 'white',
                         overflowY: 'auto',
                         scrollBehavior: 'smooth',
@@ -295,15 +283,15 @@ export default function DashboardLayoutBasic() {
                                         mb: 1,
                                         mx: 1,
                                         borderRadius: 2,
-                                        backgroundColor: isActive ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                                        backgroundColor: isActive ? 'rgba(64,196,255,0.08)' : 'transparent',
                                         color: 'white',
                                         '&:hover': {
-                                            backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                                            backgroundColor: 'rgba(64,196,255,0.04)',
                                             transform: 'translateX(4px)',
                                             transition: 'all 0.2s ease-in-out'
                                         },
                                         transition: 'all 0.2s ease-in-out',
-                                        border: isActive ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid transparent'
+                                        border: isActive ? '1px solid rgba(64,196,255,0.3)' : '1px solid transparent'
                                     }}
                                 >
                                     <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
@@ -344,7 +332,6 @@ export default function DashboardLayoutBasic() {
                         <Route path="/politics" element={<Politics />} />
                         <Route path="/newtheme" element={<NewTheme />} />
                         <Route path="/hrbot" element={<HRBot />} />
-                        <Route path="/test" element={<TestPage />} />
                         <Route path="/profile" element={<ProfileCard />} />
                         <Route path="/routine" element={<RoutineTracker />} />
                     </Routes>

@@ -5,6 +5,7 @@ import TestRunner from '../components/TestRunner';
 import GlyphCanvas from '../components/GlyphCanvas';
 import HRPanel from '../components/HRPanel';
 import AeonBadge from '../components/AeonBadge';
+import HRBotComponent from '../components/HRBot';
 import { useAuth } from '../hooks/useAuth';
 
 // Main HRBot page component
@@ -12,7 +13,7 @@ const HRBot: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, createNewSession, user, initializing } = useAuth();
-  const [currentView, setCurrentView] = useState<'test' | 'result' | 'glyph' | 'hr-panel'>('test');
+  const [currentView, setCurrentView] = useState<'welcome' | 'test' | 'result' | 'glyph' | 'hr-panel' | 'new-test'>('welcome');
   const [testResult, setTestResult] = useState<any>(null);
   const [score, setScore] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,6 +65,18 @@ const HRBot: React.FC = () => {
     }
   };
 
+  // Handle start new test
+  const handleStartNewTest = () => {
+    setCurrentView('new-test');
+  };
+
+  // Handle back to welcome
+  const handleBackToWelcome = () => {
+    setCurrentView('welcome');
+    setTestResult(null);
+    setScore(0);
+  };
+
   // Show loading state during initialization
   if (initializing || isLoading) {
     return (
@@ -88,8 +101,25 @@ const HRBot: React.FC = () => {
   // Render appropriate view based on current state
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
+      {currentView === 'welcome' && (
+        <WelcomeScreen onStart={handleStartTest} onNewTest={handleStartNewTest} error={error} />
+      )}
+      
       {currentView === 'test' && (
         <TestRunner onComplete={handleTestComplete} />
+      )}
+      
+      {currentView === 'new-test' && (
+        <Box>
+          <Button 
+            variant="outlined" 
+            onClick={handleBackToWelcome}
+            sx={{ mb: 3 }}
+          >
+            ← Back to Welcome
+          </Button>
+          <HRBotComponent testId={1} lang="ru" />
+        </Box>
       )}
       
       {currentView === 'result' && testResult && (
@@ -118,7 +148,7 @@ const HRBot: React.FC = () => {
 };
 
 // Welcome screen component
-const WelcomeScreen: React.FC<{ onStart: () => void; error: string }> = ({ onStart, error }) => {
+const WelcomeScreen: React.FC<{ onStart: () => void; onNewTest?: () => void; error: string }> = ({ onStart, onNewTest, error }) => {
   return (
     <Box sx={{ 
       display: 'flex', 
@@ -146,14 +176,27 @@ const WelcomeScreen: React.FC<{ onStart: () => void; error: string }> = ({ onSta
 
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-        <Button
-          variant="contained"
-          size="large"
-          onClick={onStart}
-          sx={{ minWidth: 200 }}
-        >
-          Start Test
-        </Button>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Button
+            variant="contained"
+            size="large"
+            onClick={onStart}
+            sx={{ minWidth: 200 }}
+          >
+            Start Test (Legacy)
+          </Button>
+          
+          {onNewTest && (
+            <Button
+              variant="outlined"
+              size="large"
+              onClick={onNewTest}
+              sx={{ minWidth: 200 }}
+            >
+              Start New Test
+            </Button>
+          )}
+        </Box>
 
         <Box sx={{ mt: 3, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
           <Typography variant="body2" color="text.secondary">
