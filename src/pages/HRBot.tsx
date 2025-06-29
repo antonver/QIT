@@ -12,12 +12,12 @@ import { useAuth } from '../hooks/useAuth';
 const HRBot: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, createNewSession, user, initializing } = useAuth();
+  const { isAuthenticated, user, initializing } = useAuth();
   const [currentView, setCurrentView] = useState<'welcome' | 'test' | 'result' | 'glyph' | 'hr-panel' | 'new-test'>('welcome');
   const [testResult, setTestResult] = useState<any>(null);
   const [score, setScore] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error] = useState('');
 
   // Check if user is HR and redirect accordingly
   useEffect(() => {
@@ -53,18 +53,6 @@ const HRBot: React.FC = () => {
     setCurrentView('glyph');
   };
 
-  // Handle start test
-  const handleStartTest = async () => {
-    try {
-      setError('');
-      await createNewSession();
-      setCurrentView('test');
-    } catch (error) {
-      console.error('Failed to start test:', error);
-      setError('Failed to start test. Please try again.');
-    }
-  };
-
   // Handle start new test
   const handleStartNewTest = () => {
     setCurrentView('new-test');
@@ -95,14 +83,14 @@ const HRBot: React.FC = () => {
 
   // Show welcome screen if not authenticated
   if (!isAuthenticated) {
-    return <WelcomeScreen onStart={handleStartTest} error={error} />;
+    return <WelcomeScreen onStart={handleStartNewTest} error={error} />;
   }
 
   // Render appropriate view based on current state
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {currentView === 'welcome' && (
-        <WelcomeScreen onStart={handleStartTest} onNewTest={handleStartNewTest} error={error} />
+        <WelcomeScreen onStart={handleStartNewTest} error={error} />
       )}
       
       {currentView === 'test' && (
@@ -148,7 +136,7 @@ const HRBot: React.FC = () => {
 };
 
 // Welcome screen component
-const WelcomeScreen: React.FC<{ onStart: () => void; onNewTest?: () => void; error: string }> = ({ onStart, onNewTest, error }) => {
+const WelcomeScreen: React.FC<{ onStart: () => void; error: string }> = ({ onStart, error }) => {
   return (
     <Box sx={{ 
       display: 'flex', 
@@ -176,39 +164,31 @@ const WelcomeScreen: React.FC<{ onStart: () => void; onNewTest?: () => void; err
 
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Button
-            variant="contained"
-            size="large"
-            onClick={onStart}
-            sx={{ minWidth: 200 }}
-          >
-            Start Test (Legacy)
-          </Button>
-          
-          {onNewTest && (
-            <Button
-              variant="outlined"
-              size="large"
-              onClick={onNewTest}
-              sx={{ minWidth: 200 }}
-            >
-              Start New Test
-            </Button>
-          )}
-        </Box>
+        <Button
+          variant="contained"
+          size="large"
+          onClick={onStart}
+          sx={{ minWidth: 200, mb: 3 }}
+        >
+          Start Test
+        </Button>
 
-        <Box sx={{ mt: 3, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
-          <Typography variant="body2" color="text.secondary">
-            <strong>What to expect:</strong>
+        <Box sx={{ 
+          p: 2, 
+          bgcolor: 'rgba(18, 18, 18, 0.8)', 
+          borderRadius: 1,
+          border: '1px solid rgba(255, 255, 255, 0.1)'
+        }}>
+          <Typography variant="body2" color="white" sx={{ fontWeight: 600, mb: 1 }}>
+            What to expect:
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          <Typography variant="body2" color="rgba(255, 255, 255, 0.8)" sx={{ mb: 0.5 }}>
             • Multiple choice questions
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="rgba(255, 255, 255, 0.8)" sx={{ mb: 0.5 }}>
             • Personalized results
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="rgba(255, 255, 255, 0.8)" sx={{ mb: 0.5 }}>
             • ÆON badge generation
           </Typography>
         </Box>

@@ -41,7 +41,6 @@ import NewTheme from '../pages/NewTheme.tsx';
 import Design from '../pages/Design.tsx';
 import HRBot from '../pages/HRBot.tsx';
 import MenuIcon from '@mui/icons-material/Menu';
-import PageTransition from './PageTransition.tsx';
 
 const NAVIGATION = [
     {
@@ -318,24 +317,22 @@ export default function DashboardLayoutBasic() {
                 }}
                 onClick={handleMainClick}
             >
-                <PageTransition>
-                    <Routes>
-                        <Route path="/" element={<Home />} />
-                        <Route path="/messages" element={<Messages />} />
-                        <Route path="/drops" element={<Drops />} />
-                        <Route path="/temporary" element={<Temporary />} />
-                        <Route path="/devlog" element={<DevLog />} />
-                        <Route path="/marketing" element={<Marketing />} />
-                        <Route path="/music" element={<Music />} />
-                        <Route path="/design" element={<Design />} />
-                        <Route path="/general" element={<General />} />
-                        <Route path="/politics" element={<Politics />} />
-                        <Route path="/newtheme" element={<NewTheme />} />
-                        <Route path="/hrbot" element={<HRBot />} />
-                        <Route path="/profile" element={<ProfileCard />} />
-                        <Route path="/routine" element={<RoutineTracker />} />
-                    </Routes>
-                </PageTransition>
+                <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/messages" element={<Messages />} />
+                    <Route path="/drops" element={<Drops />} />
+                    <Route path="/temporary" element={<Temporary />} />
+                    <Route path="/devlog" element={<DevLog />} />
+                    <Route path="/marketing" element={<Marketing />} />
+                    <Route path="/music" element={<Music />} />
+                    <Route path="/design" element={<Design />} />
+                    <Route path="/general" element={<General />} />
+                    <Route path="/politics" element={<Politics />} />
+                    <Route path="/newtheme" element={<NewTheme />} />
+                    <Route path="/hrbot" element={<HRBot />} />
+                    <Route path="/profile" element={<ProfileCard />} />
+                    <Route path="/routine" element={<RoutineTracker />} />
+                </Routes>
             </Box>
         </Box>
     );
