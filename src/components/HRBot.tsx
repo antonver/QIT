@@ -13,10 +13,15 @@ import {
   LinearProgress,
   Chip,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
-import { getTest, submitTestAnswer, autosaveTest, getTestResult } from '../services/api';
-import type { Test, UserAnswer, SubmitAnswersResponse, GetResultResponse } from '../types/api';
+import { getTest, submitTestAnswer, autosaveTest, getTestResult, generateGlyph } from '../services/api';
+import type { Test, UserAnswer, SubmitAnswersResponse, GetResultResponse, GlyphData } from '../types/api';
+import GlyphCanvas from './GlyphCanvas';
 
 interface HRBotProps {
   testId: number;
@@ -33,12 +38,16 @@ const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
   const [answers, setAnswers] = useState<{ [questionId: number]: number }>({});
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [result, setResult] = useState<GetResultResponse | null>(null);
+  const [glyphData, setGlyphData] = useState<GlyphData | null>(null);
+  const [showGlyph, setShowGlyph] = useState(false);
+  const [showRules, setShowRules] = useState(false);
   
   // Loading states
   const [isLoadingTest, setIsLoadingTest] = useState(true);
   const [isAutosaving, setIsAutosaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingResult, setIsLoadingResult] = useState(false);
+  const [isGeneratingGlyph, setIsGeneratingGlyph] = useState(false);
   
   // Error states
   const [error, setError] = useState<string>('');
@@ -88,7 +97,6 @@ const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
       await autosaveTest(testId, answersArray);
     } catch (err) {
       console.error('Autosave error:', err);
-      // Don't show error to user for autosave failures
     } finally {
       setIsAutosaving(false);
     }
@@ -107,10 +115,8 @@ const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
         answer_id: answerId
       }));
       
-      // Submit answers
       const submitData: SubmitAnswersResponse = await submitTestAnswer(testId, answersArray);
       
-      // Fetch results
       setIsLoadingResult(true);
       const resultData: GetResultResponse = await getTestResult(submitData.result_id);
       setResult(resultData);
@@ -128,6 +134,46 @@ const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
     }
   }, [test, answers, testId]);
 
+  // Generate glyph
+  const handleGenerateGlyph = useCallback(async () => {
+    if (!result) return;
+    
+    try {
+      setIsGeneratingGlyph(true);
+      const glyph = await generateGlyph({ score: result.score });
+      setGlyphData(glyph);
+      setShowGlyph(true);
+    } catch (err) {
+      console.error('Failed to generate glyph:', err);
+      setError('Failed to generate glyph');
+    } finally {
+      setIsGeneratingGlyph(false);
+    }
+  }, [result]);
+
+  // Download glyph
+  const handleDownloadGlyph = useCallback(() => {
+    if (!glyphData) return;
+    
+    try {
+      // Create a blob from the SVG
+      const blob = new Blob([glyphData.svg], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      
+      // Create download link
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `aeon-glyph-${result?.score || 'result'}.svg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to download glyph:', err);
+      setError('Failed to download glyph');
+    }
+  }, [glyphData, result]);
+
   // Handle answer selection
   const handleAnswerSelect = (questionId: number, answerId: number) => {
     setAnswers(prev => ({
@@ -140,7 +186,6 @@ const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
   const handleNext = () => {
     if (test && currentQuestionIndex < test.questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
-      // Smooth scroll to next question after state update
       setTimeout(scrollToQuestion, 100);
     }
   };
@@ -148,7 +193,6 @@ const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
   const handlePrevious = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(prev => prev - 1);
-      // Smooth scroll to previous question after state update
       setTimeout(scrollToQuestion, 100);
     }
   };
@@ -203,7 +247,7 @@ const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
     );
   }
 
-  // Results display
+  // Results display with glyph
   if (result) {
     return (
       <Box sx={{ 
@@ -229,8 +273,53 @@ const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
             </Typography>
           </CardContent>
         </Card>
-        
+
+        {/* Glyph Display */}
+        {glyphData && showGlyph && (
+          <Card sx={{ mb: 3, mx: isMobile ? 0 : 'auto' }}>
+            <CardContent sx={{ textAlign: 'center' }}>
+              <Typography variant="h6" gutterBottom>
+                Your ÆON Glyph
+              </Typography>
+              <Box sx={{ mb: 2 }}>
+                <GlyphCanvas score={result.score} />
+              </Box>
+              <Button
+                variant="contained"
+                onClick={handleDownloadGlyph}
+                sx={{ mr: 2 }}
+              >
+                Download Glyph
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => setShowGlyph(false)}
+              >
+                Hide Glyph
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Action Buttons */}
         <Box sx={{ textAlign: 'center' }}>
+          {!glyphData && (
+            <Button 
+              variant="contained"
+              color="secondary"
+              size={isMobile ? "large" : "medium"}
+              fullWidth={isMobile}
+              onClick={handleGenerateGlyph}
+              disabled={isGeneratingGlyph}
+              sx={{ 
+                mb: 2,
+                maxWidth: isMobile ? '100%' : 300
+              }}
+            >
+              {isGeneratingGlyph ? 'Generating...' : 'Generate ÆON Glyph'}
+            </Button>
+          )}
+          
           <Button 
             variant="contained" 
             color="primary"
@@ -240,6 +329,8 @@ const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
               setResult(null);
               setAnswers({});
               setCurrentQuestionIndex(0);
+              setGlyphData(null);
+              setShowGlyph(false);
               fetchTest();
             }}
             sx={{ 
@@ -281,6 +372,17 @@ const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
       >
         {test.title}
       </Typography>
+
+      {/* Rules Button */}
+      <Box sx={{ textAlign: 'center', mb: 3 }}>
+        <Button
+          variant="outlined"
+          onClick={() => setShowRules(true)}
+          size="small"
+        >
+          📋 Test Rules
+        </Button>
+      </Box>
 
       {/* Progress Bar */}
       <Box sx={{ mb: isMobile ? 2 : 3 }}>
@@ -417,6 +519,44 @@ const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
           </Typography>
         </Box>
       )}
+
+      {/* Rules Dialog */}
+      <Dialog 
+        open={showRules} 
+        onClose={() => setShowRules(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Test Rules</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" paragraph>
+            <strong>How to take the test:</strong>
+          </Typography>
+          <Typography variant="body2" paragraph>
+            • Read each question carefully
+          </Typography>
+          <Typography variant="body2" paragraph>
+            • Select only one answer per question
+          </Typography>
+          <Typography variant="body2" paragraph>
+            • You can navigate between questions using Previous/Next buttons
+          </Typography>
+          <Typography variant="body2" paragraph>
+            • Your progress is automatically saved every 30 seconds
+          </Typography>
+          <Typography variant="body2" paragraph>
+            • You must answer all questions before submitting
+          </Typography>
+          <Typography variant="body2" paragraph>
+            • After completion, you'll receive your score and can generate an ÆON glyph
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowRules(false)}>
+            Got it!
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
