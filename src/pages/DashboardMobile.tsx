@@ -33,25 +33,28 @@ const mockMessages = [
   // Можно добавить больше моков
 ];
 
+const SIDEBAR_WIDTH = 56;
+
 const DashboardMobile: React.FC = () => {
   const [selectedSection, setSelectedSection] = useState('General');
 
   return (
     <Box sx={{ bgcolor: '#181c27', minHeight: '100vh', color: 'white', display: 'flex', flexDirection: 'row' }}>
-      {/* Фиксированный вертикальный сайдбар */}
+      {/* Always-visible thin vertical sidebar */}
       <Box sx={{
-        width: 60,
+        width: SIDEBAR_WIDTH,
         bgcolor: '#232b3b',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         py: 1,
-        borderRight: '1px solid #26324a',
+        borderRight: '1.5px solid #26324a',
         minHeight: '100vh',
         position: 'fixed',
         left: 0,
         top: 0,
-        zIndex: 10
+        zIndex: 10,
+        boxShadow: '2px 0 8px 0 #0001',
       }}>
         <Avatar sx={{ width: 36, height: 36, mb: 2, mt: 1 }}>С</Avatar>
         <List sx={{ p: 0 }}>
@@ -63,7 +66,7 @@ const DashboardMobile: React.FC = () => {
                   onClick={() => setSelectedSection(section.label)}
                   sx={{
                     minWidth: 0,
-                    px: 1,
+                    px: 0.5,
                     py: 1.2,
                     borderRadius: 2,
                     display: 'flex',
@@ -82,10 +85,10 @@ const DashboardMobile: React.FC = () => {
         </List>
       </Box>
 
-      {/* Контент справа от сайдбара */}
-      <Box sx={{ flex: 1, ml: '60px', minWidth: 0 }}>
-        {/* Верхняя панель */}
-        <AppBar position="fixed" sx={{ bgcolor: '#232b3b', boxShadow: 'none', left: 60, width: 'calc(100% - 60px)' }}>
+      {/* Main content to the right of sidebar */}
+      <Box sx={{ flex: 1, ml: `${SIDEBAR_WIDTH}px`, minWidth: 0 }}>
+        {/* Top bar */}
+        <AppBar position="fixed" sx={{ bgcolor: '#232b3b', boxShadow: 'none', left: SIDEBAR_WIDTH, width: `calc(100% - ${SIDEBAR_WIDTH}px)` }}>
           <Toolbar>
             <Box sx={{ flexGrow: 1 }}>
               <Typography variant="h6" sx={{ fontWeight: 'bold' }}>Сименс и друзья <span style={{ fontSize: 18 }}>🌵</span></Typography>
@@ -94,9 +97,9 @@ const DashboardMobile: React.FC = () => {
           </Toolbar>
         </AppBar>
 
-        {/* Основной контент */}
+        {/* Main content */}
         <Box sx={{ pt: 8, pb: 7, maxWidth: 480, mx: 'auto' }}>
-          {/* Лента сообщений */}
+          {/* Message feed */}
           {mockMessages.map((msg) => (
             <Paper key={msg.id} sx={{ mb: 2, p: 2, bgcolor: '#232b3b', borderRadius: 3, boxShadow: '0 2px 8px #0002', position: 'relative' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
@@ -120,8 +123,8 @@ const DashboardMobile: React.FC = () => {
           ))}
         </Box>
 
-        {/* Фиксированная строка ввода */}
-        <Box sx={{ position: 'fixed', bottom: 0, left: 60, right: 0, bgcolor: '#232b3b', p: 1, borderTop: '1px solid #26324a', display: 'flex', alignItems: 'center', maxWidth: 480, mx: 'auto', zIndex: 20 }}>
+        {/* Fixed input bar */}
+        <Box sx={{ position: 'fixed', bottom: 0, left: SIDEBAR_WIDTH, right: 0, bgcolor: '#232b3b', p: 1, borderTop: '1px solid #26324a', display: 'flex', alignItems: 'center', maxWidth: 480, mx: 'auto', zIndex: 20 }}>
           <InputBase placeholder="Написать в General" sx={{ flex: 1, color: 'white', pl: 2 }} />
           <Button variant="contained" sx={{ ml: 1, bgcolor: '#40C4FF', color: 'white', borderRadius: 2, fontWeight: 'bold' }}>Отправить</Button>
         </Box>
