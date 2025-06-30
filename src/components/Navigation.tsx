@@ -13,7 +13,11 @@ import {
     IconButton,
     Typography,
     useTheme,
-    useMediaQuery
+    useMediaQuery,
+    ListItemButton,
+    ListItemIcon,
+    Tooltip,
+    ListItem
 } from '@mui/material';
 import { deepPurple } from '@mui/material/colors';
 import ProfileCard from './ProfileCard.tsx';
@@ -37,7 +41,6 @@ import Marketing from '../pages/Marketing.tsx';
 import Music from '../pages/Music.tsx';
 import General from '../pages/General.tsx';
 import Politics from '../pages/Politics.tsx';
-import NewTheme from '../pages/NewTheme.tsx';
 import Design from '../pages/Design.tsx';
 import HRBot from '../pages/HRBot.tsx';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -97,11 +100,6 @@ const NAVIGATION = [
         icon: <div style={{ width: '2em' }}><Lottie animationData={film} /></div>,
     },
     {
-        segment: 'newtheme',
-        title: 'Новая тема',
-        icon: <div style={{ width: '2em' }}><ControlPointIcon style={{ color: 'rgba(39, 168, 245, 0.8)' }} /></div>,
-    },
-    {
         segment: 'hrbot',
         title: 'HR Bot',
         icon: <div style={{ width: '2em', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -110,16 +108,14 @@ const NAVIGATION = [
     },
 ];
 
-function SidebarFooter() {
-    const navigate = useNavigate();
-    return (
-        <Box sx={{ justifyContent: 'left', display: 'flex', alignItems: 'center', padding: '1em' }}>
-            <Button onClick={() => navigate('/profile')}>
-                <Avatar sx={{ bgcolor: deepPurple[500] }}>OP</Avatar>
-            </Button>
-        </Box>
-    );
-}
+const SIDEBAR_WIDTH = 88;
+
+const drawerFooter = {
+    position: 'relative',
+    top: 'auto',
+    bottom: 0,
+    boxSizing: 'border-box'
+};
 
 export default function DashboardLayoutBasic() {
     const theme = useTheme();
@@ -128,17 +124,7 @@ export default function DashboardLayoutBasic() {
     const [logo, setLogo] = useState<React.ReactNode>('');
     const location = useLocation();
     const navigate = useNavigate();
-    const [isClosing, setIsClosing] = React.useState(false);
-    
-    const handleDrawerToggle = () => {
-        setIsClosing(!isClosing);
-    };
-
-    const handleMainClick = () => {
-        if (isClosing) {
-            setIsClosing(false);
-        }
-    };
+    const [drawerOpen, setDrawerOpen] = useState(false);
 
     useEffect(() => {
         const pathname = location.pathname.replace('/', '');
@@ -170,169 +156,161 @@ export default function DashboardLayoutBasic() {
         }
     }, [location.pathname]);
 
+    const navList = (
+        <Box sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100vh',
+            minHeight: 0,
+            p: 0
+        }}>
+            {/* Основное меню */}
+            <List sx={{ p: 0 }}>
+                {NAVIGATION.filter(item => item.segment && item.segment !== 'hrbot').map((item) => (
+                    <ListItem disablePadding sx={{ flexDirection: 'column', alignItems: 'center', mb: 0.5 }} key={item.segment}>
+                        <ListItemButton
+                            selected={location.pathname.replace('/', '') === item.segment}
+                            onClick={() => { navigate(`/${item.segment}`); setDrawerOpen(false); }}
+                            sx={{
+                                minWidth: 0,
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                borderRadius: 3,
+                                bgcolor: location.pathname.replace('/', '') === item.segment ? 'rgba(64,196,255,0.12)' : 'transparent',
+                                py: 1,
+                                px: 0,
+                                width: '100%',
+                            }}
+                        >
+                            <ListItemIcon sx={{ color: 'inherit', minWidth: 0, justifyContent: 'center', mb: 0.2 }}>
+                                <Box sx={{
+                                    fontSize: { xs: 18, sm: 22, md: 26 },
+                                    width: { xs: 22, sm: 26, md: 32 },
+                                    height: { xs: 22, sm: 26, md: 32 },
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center'
+                                }}>{item.icon}</Box>
+                            </ListItemIcon>
+                            <Typography variant="caption" sx={{
+                                color: '#b0bec5',
+                                fontSize: { xs: 8, sm: 9, md: 10 },
+                                mt: 0.1,
+                                textAlign: 'center',
+                                lineHeight: 1.1
+                            }}>{item.title}</Typography>
+                        </ListItemButton>
+                    </ListItem>
+                ))}
+            </List>
+            {/* Футер с аватаром строго внизу */}
+            <List sx={{ mt: 'auto', alignSelf: 'stretch', mb: 0, p: 0 }}>
+                <ListItem disablePadding sx={{ mt: 2, justifyContent: 'center', alignItems: 'center' }}>
+                    <ListItemButton
+                        onClick={() => { navigate('/profile'); setDrawerOpen(false); }}
+                        sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 1 }}
+                    >
+                        <Avatar sx={{ width: 44, height: 44, bgcolor: deepPurple[500], cursor: 'pointer' }}>OP</Avatar>
+                    </ListItemButton>
+                </ListItem>
+            </List>
+        </Box>
+    );
+
     return (
-        <Box sx={{ 
-            display: 'flex', 
-            height: '100vh', 
-            backgroundColor: 'transparent', 
+        <Box sx={{
+            display: 'flex',
+            height: '100vh',
+            backgroundColor: 'transparent',
             overflowY: 'hidden',
             backgroundImage: `url(${backgroundImage})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            backgroundAttachment: 'fixed'
+            backgroundAttachment: 'fixed',
         }}>
             <CssBaseline />
-            <AppBar
-                position="fixed"
-                sx={{
+            {/* Sidebar for desktop */}
+            {!isMobile && (
+                <Box sx={{
+                    width: SIDEBAR_WIDTH,
+                    bgcolor: '#232b3b',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    borderRight: '1.5px solid #26324a',
+                    minHeight: '100vh',
+                    position: 'fixed',
+                    left: 0,
+                    top: 0,
                     zIndex: 1201,
-                    backgroundColor: 'background.paper',
-                    boxShadow: 'none',
-                }}
-            >
-                <Toolbar sx={{ minHeight: isMobile ? '56px' : '64px' }}>
-                    <IconButton
-                        color="inherit"
-                        aria-label="open drawer"
-                        edge="start"
-                        onClick={handleDrawerToggle}
-                        sx={{ mr: 2 }}
-                    >
-                        <MenuIcon />
-                    </IconButton>
-                    {logo}
-                    <Box sx={{ 
-                        ml: 2, 
-                        color: 'white', 
-                        fontSize: isMobile ? '1.2rem' : '1.5rem',
-                        fontWeight: 500
-                    }}>
-                        {brand}
-                    </Box>
-                </Toolbar>
-            </AppBar>
-            <Drawer
-                variant="temporary"
-                open={isClosing}
-                onClose={() => setIsClosing(false)}
-                sx={{
-                    width: isMobile ? '100%' : 240,
-                    flexShrink: 0,
-                    '& .MuiDrawer-paper': {
-                        width: isMobile ? '100%' : 240,
-                        boxSizing: 'border-box',
-                        backgroundColor: 'background.paper',
-                        color: 'white',
-                        overflowY: 'auto',
-                        scrollBehavior: 'smooth',
-                        '&::-webkit-scrollbar': {
-                            width: '6px',
-                        },
-                        '&::-webkit-scrollbar-track': {
-                            background: 'rgba(255, 255, 255, 0.1)',
-                        },
-                        '&::-webkit-scrollbar-thumb': {
-                            background: 'rgba(255, 255, 255, 0.3)',
-                            borderRadius: '3px',
-                            '&:hover': {
-                                background: 'rgba(255, 255, 255, 0.5)',
-                            },
-                        },
-                    },
-                }}
-            >
-                <Box sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    height: '100%',
-                    pt: isMobile ? 8 : 0
+                    boxShadow: '2px 0 8px 0 #0001',
+                    py: 0,
                 }}>
-                    <List sx={{ flexGrow: 1, pt: 2 }}>
-                        {NAVIGATION.map((item, index) => {
-                            if (item.kind === 'header') {
-                                return (
-                                    <Box key={index} sx={{ 
-                                        p: 2, 
-                                        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-                                        mb: 2
-                                    }}>
-                                        <Typography variant="h6" sx={{ color: 'white', fontWeight: 600 }}>
-                                            Navigation
-                                        </Typography>
-                                    </Box>
-                                );
-                            }
-
-                            const isActive = location.pathname === `/${item.segment}`;
-                            
-                            return (
-                                <Button
-                                    key={item.segment}
-                                    onClick={() => {
-                                        navigate(`/${item.segment}`);
-                                        if (isMobile) {
-                                            setIsClosing(false);
-                                        }
-                                    }}
-                                    sx={{
-                                        width: '100%',
-                                        justifyContent: 'flex-start',
-                                        px: 3,
-                                        py: 2,
-                                        mb: 1,
-                                        mx: 1,
-                                        borderRadius: 2,
-                                        backgroundColor: isActive ? 'rgba(64,196,255,0.08)' : 'transparent',
-                                        color: 'white',
-                                        '&:hover': {
-                                            backgroundColor: 'rgba(64,196,255,0.04)',
-                                            transform: 'translateX(4px)',
-                                            transition: 'all 0.2s ease-in-out'
-                                        },
-                                        transition: 'all 0.2s ease-in-out',
-                                        border: isActive ? '1px solid rgba(64,196,255,0.3)' : '1px solid transparent'
-                                    }}
-                                >
-                                    <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                                        {item.icon}
-                                        <Typography sx={{ ml: 2, fontSize: isMobile ? '1rem' : '0.9rem' }}>
-                                            {item.title}
-                                        </Typography>
-                                    </Box>
-                                </Button>
-                            );
-                        })}
-                    </List>
-                    <SidebarFooter />
+                    {navList}
                 </Box>
-            </Drawer>
-            <Box
-                component="main"
-                sx={{
-                    flexGrow: 1,
-                    pt: isMobile ? '56px' : '64px',
-                    height: '100vh',
-                    overflow: 'hidden',
-                    position: 'relative'
-                }}
-                onClick={handleMainClick}
-            >
-                <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/messages" element={<Messages />} />
-                    <Route path="/drops" element={<Drops />} />
-                    <Route path="/temporary" element={<Temporary />} />
-                    <Route path="/devlog" element={<DevLog />} />
-                    <Route path="/marketing" element={<Marketing />} />
-                    <Route path="/music" element={<Music />} />
-                    <Route path="/design" element={<Design />} />
-                    <Route path="/general" element={<General />} />
-                    <Route path="/politics" element={<Politics />} />
-                    <Route path="/newtheme" element={<NewTheme />} />
-                    <Route path="/hrbot" element={<HRBot />} />
-                    <Route path="/profile" element={<ProfileCard />} />
-                    <Route path="/routine" element={<RoutineTracker />} />
-                </Routes>
+            )}
+            {/* Drawer for mobile */}
+            {isMobile && (
+                <Drawer
+                    anchor="left"
+                    open={drawerOpen}
+                    onClose={() => setDrawerOpen(false)}
+                    PaperProps={{
+                        sx: {
+                            width: SIDEBAR_WIDTH + 32,
+                            bgcolor: '#232b3b',
+                            pt: 0,
+                            top: '56px',
+                            height: 'calc(100% - 56px)'
+                        }
+                    }}
+                >
+                    {navList}
+                </Drawer>
+            )}
+            <Box sx={{ flex: 1, ml: !isMobile ? `${SIDEBAR_WIDTH}px` : 0, minWidth: 0 }}>
+                <AppBar
+                    position="fixed"
+                    sx={{
+                        zIndex: 1200,
+                        backgroundColor: 'background.paper',
+                        boxShadow: 'none',
+                        left: !isMobile ? SIDEBAR_WIDTH : 0,
+                        width: !isMobile ? `calc(100% - ${SIDEBAR_WIDTH}px)` : '100%'
+                    }}
+                >
+                    <Toolbar sx={{ minHeight: isMobile ? '56px' : '64px' }}>
+                        {isMobile && (
+                            <IconButton color="inherit" edge="start" onClick={() => setDrawerOpen(true)} sx={{ mr: 2 }}>
+                                <MenuIcon />
+                            </IconButton>
+                        )}
+                        {logo}
+                        <Box sx={{
+                            ml: 2,
+                            color: 'white',
+                            fontSize: isMobile ? '1.2rem' : '1.5rem',
+                            fontWeight: 500
+                        }}>
+                            {brand}
+                        </Box>
+                    </Toolbar>
+                </AppBar>
+                {/* Контент приложения */}
+                <Box sx={{ pt: isMobile ? 7 : 8, pl: 0, pr: 0, height: '100vh', overflowY: 'auto' }}>
+                    <Routes>
+                        <Route path="/" element={<Home />} />
+                        <Route path="/routine" element={<RoutineTracker />} />
+                        <Route path="/messages" element={<Messages />} />
+                        <Route path="/drops" element={<Drops />} />
+                        <Route path="/temporary" element={<Temporary />} />
+                        <Route path="/devlog" element={<DevLog />} />
+                        <Route path="/marketing" element={<Marketing />} />
+                        <Route path="/music" element={<Music />} />
+                        <Route path="/design" element={<Design />} />
+                        <Route path="/general" element={<General />} />
+                        <Route path="/politics" element={<Politics />} />
+                        <Route path="/hrbot" element={<HRBot />} />
+                    </Routes>
+                </Box>
             </Box>
         </Box>
     );
