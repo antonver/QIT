@@ -47,8 +47,8 @@ const NAVIGATION = [
     },
 ];
 
-const SIDEBAR_WIDTH = 88;
-const SIDEBAR_WIDTH_MOBILE = 60; // Уменьшенная ширина для мобильной версии
+const SIDEBAR_WIDTH = 70; // Еще больше уменьшенная ширина для десктопа
+const SIDEBAR_WIDTH_MOBILE = 50; // Еще больше уменьшенная ширина для мобильной версии
 
 const DashboardLayoutBasic = memo(() => {
     const theme = useTheme();
@@ -145,9 +145,9 @@ const DashboardLayoutBasic = memo(() => {
                             >
                             <ListItemIcon sx={{ color: 'inherit', minWidth: 0, justifyContent: 'center', mb: 0.2 }}>
                                 <Box sx={{
-                                    fontSize: { xs: 24, sm: 28, md: 30 }, // Увеличенные иконки
-                                    width: { xs: 24, sm: 28, md: 30 },
-                                    height: { xs: 24, sm: 28, md: 30 },
+                                    fontSize: { xs: 20, sm: 24, md: 26 }, // Немного уменьшенные иконки для компактности
+                                    width: { xs: 20, sm: 24, md: 26 },
+                                    height: { xs: 20, sm: 24, md: 26 },
                                     display: 'flex', 
                                     alignItems: 'center', 
                                     justifyContent: 'center'
@@ -155,7 +155,7 @@ const DashboardLayoutBasic = memo(() => {
                             </ListItemIcon>
                             <Typography variant="caption" sx={{
                                 color: '#b0bec5',
-                                fontSize: { xs: 7, sm: 8, md: 9 }, // Немного уменьшенный текст для мобильных
+                                fontSize: { xs: 6, sm: 7, md: 8 }, // Еще меньший текст для более компактного вида
                                 mt: 0.1,
                                 textAlign: 'center',
                                 lineHeight: 1.1
@@ -210,10 +210,11 @@ const DashboardLayoutBasic = memo(() => {
                             }}
                         >
                             <Avatar sx={{ 
-                                width: 44, 
-                                height: 44, 
+                                width: { xs: 32, md: 38 }, // Уменьшенный аватар для компактности
+                                height: { xs: 32, md: 38 }, 
                                 bgcolor: deepPurple[500], 
                                 cursor: 'pointer',
+                                fontSize: { xs: '0.9rem', md: '1rem' }, // Адаптивный размер текста
                                 boxShadow: '0 4px 12px rgba(103, 58, 183, 0.3)',
                                 transition: 'all 0.3s ease',
                                 '&:hover': {
