@@ -21,7 +21,7 @@ const Home = () => {
                 alignItems: "center",
                 justifyContent: "center",
                 height: '100vh',
-                bgcolor: 'rgba(29, 39, 51, 1)', // Унифицированный цвет как у Drawer
+                bgcolor: 'rgba(35, 43, 59, 0.95)', // Унифицированный цвет как у Drawer
                 px: { xs: 2, sm: 3, md: 4 }, // Адаптивные отступы вместо Container
                 py: 4,
             }}>

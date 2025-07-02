@@ -97,7 +97,7 @@ const DashboardLayoutBasic = memo(() => {
             height: '100vh',
             minHeight: 0,
             p: 0,
-            pt: isMobile ? { xs: 7, sm: 8 } : 0, // Added top padding for mobile Drawer
+            pt: isMobile ? { xs: 7, sm: 8 } : 0, // Added top padding for mobile  
         }}>
             {/* Основное меню */}
             <List sx={{ p: 0 }}>
@@ -297,7 +297,7 @@ const DashboardLayoutBasic = memo(() => {
                     position="fixed"
                     sx={{
                         zIndex: 1200,
-                        backgroundColor: 'rgba(29, 39, 51, 1)', // Новый цвет как запросил пользователь
+                        backgroundColor: 'rgba(35, 43, 59, 0.95)', // Унифицированный цвет как у Drawer
                         backdropFilter: 'blur(20px)',
                         boxShadow: '0 2px 20px rgba(0,0,0,0.1)',
                         left: currentSidebarWidth,

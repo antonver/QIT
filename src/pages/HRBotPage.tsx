@@ -339,7 +339,7 @@ ${sessionResults.answerTimes.map((time, index) =>
   return (
     <Box sx={{ 
       minHeight: '100vh',
-      bgcolor: 'rgba(29, 39, 51, 1)', // Унифицированный цвет как у Drawer
+      bgcolor: 'rgba(35, 43, 59, 0.95)', // Унифицированный цвет как у Drawer
       py: { xs: 2, md: 4 }  // Уменьшенные отступы для мобильных
     }}>
       <Box maxWidth="md" sx={{ mx: 'auto', px: { xs: 1, sm: 2, md: 3 } }}> {/* Заменил Container на обычный Box */}

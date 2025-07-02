@@ -4,15 +4,12 @@ import {
   Typography,
   TextField,
   IconButton,
-  Avatar,
   useTheme,
   useMediaQuery,
 } from '@mui/material';
 import {
   Send as SendIcon,
-  Phone as PhoneIcon,
-  MoreVert as MoreVertIcon,
-  } from '@mui/icons-material';
+} from '@mui/icons-material';
 import backgroundImage from '../assets/background.png';
   
   interface Message {
@@ -88,64 +85,16 @@ const AeonChat: React.FC = () => {
       height: '100vh',
       display: 'flex',
       flexDirection: 'column',
-      bgcolor: 'rgba(29, 39, 51, 1)', // Унифицированный цвет как у Drawer
+      bgcolor: 'rgba(35, 43, 59, 0.95)', // Унифицированный цвет как у Drawer
       color: 'white',
       overflow: 'hidden'
     }}>
-      {/* Заголовок чата в стиле Telegram - упрощенный без "был недавно" */}
-      <Box sx={{ 
-        p: isMobile ? 1.5 : 2,
-        bgcolor: 'rgba(29, 39, 51, 1)', // Тот же цвет что и основной фон
-        color: 'white',
-        display: 'flex',
-        alignItems: 'center',
-        gap: isMobile ? 1.5 : 2,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-        minHeight: isMobile ? 60 : 'auto',
-        borderBottom: '1px solid rgba(43, 52, 65, 1)'
-      }}>
-        <Avatar sx={{ 
-          width: isMobile ? 36 : 42, 
-          height: isMobile ? 36 : 42,
-          bgcolor: '#FF6B6B',
-          fontSize: isMobile ? '1.1rem' : '1.3rem',
-          fontWeight: 'bold'
-        }}>
-          Æ
-        </Avatar>
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="h6" fontWeight="600" sx={{ fontSize: isMobile ? '1rem' : '1.1rem', color: 'white' }}>
-            ÆON
-          </Typography>
-        </Box>
-        <IconButton 
-          color="inherit" 
-          size={isMobile ? 'small' : 'medium'}
-          sx={{ 
-            '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
-            color: '#8b95a1'
-          }}
-        >
-          <PhoneIcon fontSize={isMobile ? 'small' : 'medium'} />
-        </IconButton>
-        <IconButton 
-          color="inherit" 
-          size={isMobile ? 'small' : 'medium'}
-          sx={{ 
-            '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
-            color: '#8b95a1'
-          }}
-        >
-          <MoreVertIcon fontSize={isMobile ? 'small' : 'medium'} />
-        </IconButton>
-      </Box>
-
-      {/* Область сообщений */}
+      {/* Область сообщений - теперь занимает всё пространство */}
       <Box sx={{ 
         flex: 1,
         overflow: 'auto',
         p: isMobile ? 1 : 1.5,
-        bgcolor: 'rgba(29, 39, 51, 1)', // Унифицированный цвет
+        bgcolor: 'rgba(35, 43, 59, 0.95)', // Унифицированный цвет
         // Фон из background.png
         backgroundImage: `url(${backgroundImage})`,
         backgroundSize: 'cover',
@@ -159,7 +108,7 @@ const AeonChat: React.FC = () => {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(29, 39, 51, 0.8)', // Тот же цвет с прозрачностью
+          backgroundColor: 'rgba(35, 43, 59, 0.8)', // Тот же цвет с прозрачностью
           pointerEvents: 'none',
           zIndex: 0
         },
@@ -226,7 +175,7 @@ const AeonChat: React.FC = () => {
       {/* Поле ввода в стиле Telegram */}
       <Box sx={{ 
         p: isMobile ? 1.5 : 2,
-        bgcolor: 'rgba(29, 39, 51, 1)', // Тот же цвет что и Dashboard для полного слияния
+        bgcolor: 'rgba(35, 43, 59, 0.95)', // Тот же цвет что и Drawer для полного слияния
         display: 'flex',
         gap: isMobile ? 1 : 1.5,
         alignItems: 'flex-end',
