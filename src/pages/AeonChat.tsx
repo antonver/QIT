@@ -229,7 +229,7 @@ const AeonChat: React.FC = () => {
       {/* Поле ввода в стиле Telegram */}
       <Box sx={{ 
         p: isMobile ? 1.5 : 2,
-        bgcolor: 'rgba(23, 31, 41, 1)', // Новый цвет footer
+        bgcolor: 'rgba(29, 39, 51, 1)', // Тот же цвет что и Dashboard для слияния
         display: 'flex',
         gap: isMobile ? 1 : 1.5,
         alignItems: 'flex-end',

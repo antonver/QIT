@@ -175,11 +175,12 @@ const DashboardLayoutBasic = memo(() => {
                                     left: 0,
                                     top: '50%',
                                     transform: 'translateY(-50%)',
-                                    width: '4px',
-                                    height: '32px',
+                                    width: '3px', // Тонкая синяя линия как запросил пользователь
+                                    height: '40px', // Увеличена высота под большие иконки
                                     backgroundColor: '#40c4ff',
-                                    borderRadius: '0 4px 4px 0',
-                                    transformOrigin: 'center'
+                                    borderRadius: '0 3px 3px 0',
+                                    transformOrigin: 'center',
+                                    boxShadow: '0 0 8px rgba(64, 196, 255, 0.6)' // Небольшое свечение
                                 }}
                             />
                         )}
@@ -296,7 +297,7 @@ const DashboardLayoutBasic = memo(() => {
                     position="fixed"
                     sx={{
                         zIndex: 1200,
-                        backgroundColor: 'rgba(35, 43, 59, 0.8)',
+                        backgroundColor: 'rgba(29, 39, 51, 1)', // Новый цвет как запросил пользователь
                         backdropFilter: 'blur(20px)',
                         boxShadow: '0 2px 20px rgba(0,0,0,0.1)',
                         left: currentSidebarWidth,
