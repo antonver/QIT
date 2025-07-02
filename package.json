@@ -21,7 +21,7 @@
     "@toolpad/core": "^0.16.0",
     "@types/node": "^24.0.4",
     "axios": "^1.10.0",
-    "framer-motion": "^12.19.2",
+    "framer-motion": "^12.23.0",
     "lottie-react": "^2.4.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

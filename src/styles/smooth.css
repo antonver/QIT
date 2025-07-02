@@ -1,0 +1,132 @@
+/* Глобальные стили для плавности приложения */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+/* Плавные переходы для всех интерактивных элементов */
+button, a, input, textarea, select {
+  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.0);
+}
+
+/* Улучшенный скроллбар */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(64, 196, 255, 0.6);
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(64, 196, 255, 0.8);
+}
+
+/* Анимации для фокуса */
+*:focus {
+  outline: 2px solid rgba(64, 196, 255, 0.5);
+  outline-offset: 2px;
+  transition: outline 0.2s ease;
+}
+
+/* Плавные анимации для загрузки */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Классы утилит для анимаций */
+.fade-in-up {
+  animation: fadeInUp 0.6s cubic-bezier(0.25, 0.1, 0.25, 1.0);
+}
+
+.slide-in-left {
+  animation: slideInLeft 0.4s cubic-bezier(0.25, 0.1, 0.25, 1.0);
+}
+
+.scale-in {
+  animation: scaleIn 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.0);
+}
+
+/* Улучшение производительности */
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Плавные тени */
+.smooth-shadow {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.0);
+}
+
+.smooth-shadow:hover {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* Backdrop filter support */
+.backdrop-blur {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Reduce motion для пользователей с особыми потребностями */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  html {
+    scroll-behavior: auto;
+  }
+} 

@@ -1,562 +1,280 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  Box,
-  Typography,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
-  Button,
-  CircularProgress,
-  Alert,
-  Card,
-  CardContent,
-  LinearProgress,
-  Chip,
-  useTheme,
-  useMediaQuery,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions
-} from '@mui/material';
-import { getTest, submitTestAnswer, autosaveTest, getTestResult, generateGlyph } from '../services/api';
-import type { Test, UserAnswer, SubmitAnswersResponse, GetResultResponse, GlyphData } from '../types/api';
-import GlyphCanvas from './GlyphCanvas';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Box, Typography, Container, CircularProgress, Button, Alert } from '@mui/material';
+import TestRunner from '../components/TestRunner';
+import GlyphCanvas from '../components/GlyphCanvas';
+import HRPanel from '../components/HRPanel';
+import AeonBadge from '../components/AeonBadge';
+import HRBotTest from '../components/HRBotTest';
+import AeonTest from '../components/AeonTest';
+import { useAuth } from '../hooks/useAuth';
+import { createSession } from '../services/api';
+import type { AeonSummary, GlyphData } from '../types/api';
 
-interface HRBotProps {
-  testId: number;
-  lang?: string;
-}
+// Main HRBot page component
+const HRBot: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated, user, initializing } = useAuth();
+  const [currentView, setCurrentView] = useState<'welcome' | 'test' | 'result' | 'glyph' | 'hr-panel' | 'new-test' | 'aeon-test'>('welcome');
+  const [testResult, setTestResult] = useState<any>(null);
+  const [score, setScore] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [sessionToken, setSessionToken] = useState<string>('');
 
-const HRBot: React.FC<HRBotProps> = ({ testId, lang = 'ru' }) => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const questionRef = useRef<HTMLDivElement>(null);
-  
-  // State management
-  const [test, setTest] = useState<Test | null>(null);
-  const [answers, setAnswers] = useState<{ [questionId: number]: number }>({});
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [result, setResult] = useState<GetResultResponse | null>(null);
-  const [glyphData, setGlyphData] = useState<GlyphData | null>(null);
-  const [showGlyph, setShowGlyph] = useState(false);
-  const [showRules, setShowRules] = useState(false);
-  
-  // Loading states
-  const [isLoadingTest, setIsLoadingTest] = useState(true);
-  const [isAutosaving, setIsAutosaving] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingResult, setIsLoadingResult] = useState(false);
-  const [isGeneratingGlyph, setIsGeneratingGlyph] = useState(false);
-  
-  // Error states
-  const [error, setError] = useState<string>('');
-
-  // Smooth scroll to question
-  const scrollToQuestion = useCallback(() => {
-    if (questionRef.current) {
-      questionRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start'
-      });
-    }
-  }, []);
-
-  // Fetch test details
-  const fetchTest = useCallback(async () => {
-    try {
-      setIsLoadingTest(true);
-      setError('');
-      
-      const testData = await getTest(testId, lang as 'ru' | 'en');
-      setTest(testData);
-    } catch (err) {
-      console.error('Failed to fetch test:', err);
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Failed to load test');
-      }
-    } finally {
-      setIsLoadingTest(false);
-    }
-  }, [testId, lang]);
-
-  // Autosave answers
-  const autosaveAnswers = useCallback(async () => {
-    if (!test || Object.keys(answers).length === 0) return;
-    
-    try {
-      setIsAutosaving(true);
-      
-      const answersArray: UserAnswer[] = Object.entries(answers).map(([questionId, answerId]) => ({
-        question_id: parseInt(questionId),
-        answer_id: answerId
-      }));
-      
-      await autosaveTest(testId, answersArray);
-    } catch (err) {
-      console.error('Autosave error:', err);
-    } finally {
-      setIsAutosaving(false);
-    }
-  }, [test, answers, testId]);
-
-  // Submit answers and get results
-  const submitAnswers = useCallback(async () => {
-    if (!test) return;
-    
-    try {
-      setIsSubmitting(true);
-      setError('');
-      
-      const answersArray: UserAnswer[] = Object.entries(answers).map(([questionId, answerId]) => ({
-        question_id: parseInt(questionId),
-        answer_id: answerId
-      }));
-      
-      const submitData: SubmitAnswersResponse = await submitTestAnswer(testId, answersArray);
-      
-      setIsLoadingResult(true);
-      const resultData: GetResultResponse = await getTestResult(submitData.result_id);
-      setResult(resultData);
-      
-    } catch (err) {
-      console.error('Submit error:', err);
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Failed to submit test');
-      }
-    } finally {
-      setIsSubmitting(false);
-      setIsLoadingResult(false);
-    }
-  }, [test, answers, testId]);
-
-  // Generate glyph
-  const handleGenerateGlyph = useCallback(async () => {
-    if (!result) return;
-    
-    try {
-      setIsGeneratingGlyph(true);
-      const glyph = await generateGlyph({ score: result.score });
-      setGlyphData(glyph);
-      setShowGlyph(true);
-    } catch (err) {
-      console.error('Failed to generate glyph:', err);
-      setError('Failed to generate glyph');
-    } finally {
-      setIsGeneratingGlyph(false);
-    }
-  }, [result]);
-
-  // Download glyph
-  const handleDownloadGlyph = useCallback(() => {
-    if (!glyphData) return;
-    
-    try {
-      // Create a blob from the SVG
-      const blob = new Blob([glyphData.svg], { type: 'image/svg+xml' });
-      const url = URL.createObjectURL(blob);
-      
-      // Create download link
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `aeon-glyph-${result?.score || 'result'}.svg`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('Failed to download glyph:', err);
-      setError('Failed to download glyph');
-    }
-  }, [glyphData, result]);
-
-  // Handle answer selection
-  const handleAnswerSelect = (questionId: number, answerId: number) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: answerId
-    }));
-  };
-
-  // Handle navigation with smooth scroll
-  const handleNext = () => {
-    if (test && currentQuestionIndex < test.questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
-      setTimeout(scrollToQuestion, 100);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1);
-      setTimeout(scrollToQuestion, 100);
-    }
-  };
-
-  // Load test on mount
+  // Check if user is HR and redirect accordingly
   useEffect(() => {
-    fetchTest();
-  }, [fetchTest]);
-
-  // Autosave every 30 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (Object.keys(answers).length > 0) {
-        autosaveAnswers();
+    const checkUserRole = async () => {
+      // Wait for auth to finish initializing
+      if (initializing) {
+        return;
       }
-    }, 30000);
 
-    return () => clearInterval(interval);
-  }, [autosaveAnswers]);
+      if (isAuthenticated && user) {
+        // Use user data from auth state instead of making additional API calls
+        if (user.role === 'hr' && location.pathname === '/hr/bot/panel') {
+          setCurrentView('hr-panel');
+        } else if (user.role === 'hr' && location.pathname === '/hr/bot') {
+          navigate('/hr/bot/panel');
+        }
+      }
+      setIsLoading(false);
+    };
 
-  // Calculate progress
-  const progress = test ? ((currentQuestionIndex + 1) / test.questions.length) * 100 : 0;
-  const answeredCount = Object.keys(answers).length;
+    checkUserRole();
+  }, [isAuthenticated, user, location.pathname, navigate, initializing]);
 
-  // Loading state
-  if (isLoadingTest) {
+  // Handle test completion
+  const handleTestComplete = (result: any) => {
+    setTestResult(result);
+    setScore(result.score || 0);
+    setCurrentView('result');
+  };
+
+  // Handle glyph generation
+  const handleGlyphGenerated = () => {
+    setCurrentView('glyph');
+  };
+
+  // Handle start new test
+  const handleStartNewTest = () => {
+    setCurrentView('new-test');
+  };
+
+  // Handle start ÆON test
+  const handleStartAeonTest = async () => {
+    try {
+      setError('');
+      // Create a new session for the ÆON test
+      const session = await createSession();
+      setSessionToken(session.token);
+      setCurrentView('aeon-test');
+    } catch (err) {
+      console.error('Failed to create session:', err);
+      setError('Failed to start ÆON test');
+    }
+  };
+
+  // Handle ÆON test completion
+  const handleAeonTestComplete = (summary: AeonSummary, glyph: GlyphData) => {
+    setTestResult({ summary, glyph });
+    setCurrentView('result');
+  };
+
+  // Handle back to welcome
+  const handleBackToWelcome = () => {
+    setCurrentView('welcome');
+    setTestResult(null);
+    setScore(0);
+    setSessionToken('');
+    setError('');
+  };
+
+  // Show loading state during initialization
+  if (initializing || isLoading) {
     return (
       <Box sx={{ 
         display: 'flex', 
         justifyContent: 'center', 
         alignItems: 'center', 
-        height: '50vh',
-        minHeight: isMobile ? '60vh' : '50vh'
+        height: '100vh',
+        backgroundImage: 'url(/background.png)',
+        backgroundSize: 'cover'
       }}>
-        <Box sx={{ textAlign: 'center' }}>
-          <CircularProgress sx={{ mb: 2 }} />
-          <Typography>Loading test...</Typography>
-        </Box>
+        <CircularProgress />
       </Box>
     );
   }
 
-  // Error state
-  if (error && !test) {
-    return (
-      <Box sx={{ textAlign: 'center', p: isMobile ? 2 : 3 }}>
-        <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
-        <Button variant="contained" onClick={fetchTest}>
-          Retry
-        </Button>
-      </Box>
-    );
+  // Show welcome screen if not authenticated
+  if (!isAuthenticated) {
+    return <WelcomeScreen onStart={handleStartNewTest} onStartAeon={handleStartAeonTest} error={error} />;
   }
 
-  // Results display with glyph
-  if (result) {
-    return (
-      <Box sx={{ 
-        maxWidth: 800, 
-        mx: 'auto', 
-        p: isMobile ? 2 : 3,
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center'
-      }}>
-        <Typography variant={isMobile ? "h5" : "h4"} gutterBottom align="center">
-          Test Results
-        </Typography>
-        
-        <Card sx={{ mb: 3, mx: isMobile ? 0 : 'auto' }}>
-          <CardContent sx={{ textAlign: 'center' }}>
-            <Typography variant={isMobile ? "h6" : "h5"} gutterBottom>
-              Score: {result.score}%
-            </Typography>
-            <Typography variant="body1" sx={{ mt: 2 }}>
-              {result.details}
-            </Typography>
-          </CardContent>
-        </Card>
-
-        {/* Glyph Display */}
-        {glyphData && showGlyph && (
-          <Card sx={{ mb: 3, mx: isMobile ? 0 : 'auto' }}>
-            <CardContent sx={{ textAlign: 'center' }}>
-              <Typography variant="h6" gutterBottom>
-                Your ÆON Glyph
-              </Typography>
-              <Box sx={{ mb: 2 }}>
-                <GlyphCanvas score={result.score} />
-              </Box>
-              <Button
-                variant="contained"
-                onClick={handleDownloadGlyph}
-                sx={{ mr: 2 }}
-              >
-                Download Glyph
-              </Button>
-              <Button
-                variant="outlined"
-                onClick={() => setShowGlyph(false)}
-              >
-                Hide Glyph
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Action Buttons */}
-        <Box sx={{ textAlign: 'center' }}>
-          {!glyphData && (
-            <Button 
-              variant="contained"
-              color="secondary"
-              size={isMobile ? "large" : "medium"}
-              fullWidth={isMobile}
-              onClick={handleGenerateGlyph}
-              disabled={isGeneratingGlyph}
-              sx={{ 
-                mb: 2,
-                maxWidth: isMobile ? '100%' : 300
-              }}
-            >
-              {isGeneratingGlyph ? 'Generating...' : 'Generate ÆON Glyph'}
-            </Button>
-          )}
-          
-          <Button 
-            variant="contained" 
-            color="primary"
-            size={isMobile ? "large" : "medium"}
-            fullWidth={isMobile}
-            onClick={() => {
-              setResult(null);
-              setAnswers({});
-              setCurrentQuestionIndex(0);
-              setGlyphData(null);
-              setShowGlyph(false);
-              fetchTest();
-            }}
-            sx={{ 
-              mt: 2,
-              maxWidth: isMobile ? '100%' : 300
-            }}
-          >
-            Начать тест заново
-          </Button>
-        </Box>
-      </Box>
-    );
-  }
-
-  // No test available
-  if (!test) {
-    return (
-      <Box sx={{ textAlign: 'center', p: isMobile ? 2 : 3 }}>
-        <Typography>No test available</Typography>
-      </Box>
-    );
-  }
-
-  const currentQuestion = test.questions[currentQuestionIndex];
-
+  // Render appropriate view based on current state
   return (
-    <Box sx={{ 
-      maxWidth: 800, 
-      mx: 'auto', 
-      p: isMobile ? 1 : 3,
-      minHeight: '100vh'
-    }}>
-      {/* Test Header */}
-      <Typography 
-        variant={isMobile ? "h5" : "h4"} 
-        gutterBottom 
-        align="center"
-        sx={{ mb: isMobile ? 2 : 3 }}
-      >
-        {test.title}
-      </Typography>
-
-      {/* Rules Button */}
-      <Box sx={{ textAlign: 'center', mb: 3 }}>
-        <Button
-          variant="outlined"
-          onClick={() => setShowRules(true)}
-          size="small"
-        >
-          📋 Test Rules
-        </Button>
-      </Box>
-
-      {/* Progress Bar */}
-      <Box sx={{ mb: isMobile ? 2 : 3 }}>
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          mb: 1,
-          flexDirection: isMobile ? 'column' : 'row',
-          gap: isMobile ? 1 : 0
-        }}>
-          <Typography variant="body2">
-            Question {currentQuestionIndex + 1} of {test.questions.length}
-          </Typography>
-          <Chip 
-            label={`${Math.round(progress)}%`} 
-            color="primary" 
-            size="small" 
-            sx={{ alignSelf: isMobile ? 'flex-start' : 'center' }}
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      {currentView === 'welcome' && (
+        <WelcomeScreen onStart={handleStartNewTest} onStartAeon={handleStartAeonTest} error={error} />
+      )}
+      
+      {currentView === 'test' && (
+        <TestRunner onComplete={handleTestComplete} />
+      )}
+      
+      {currentView === 'new-test' && (
+        <Box>
+          <Button 
+            variant="outlined" 
+            onClick={handleBackToWelcome}
+            sx={{ mb: 3 }}
+          >
+            ← Back to Welcome
+          </Button>
+          <HRBotTest testId={1} lang="ru" />
+        </Box>
+      )}
+      
+      {currentView === 'aeon-test' && sessionToken && (
+        <Box>
+          <Button 
+            variant="outlined" 
+            onClick={handleBackToWelcome}
+            sx={{ mb: 3 }}
+          >
+            ← Back to Welcome
+          </Button>
+          <AeonTest 
+            sessionToken={sessionToken}
+            onComplete={handleAeonTestComplete}
           />
         </Box>
-        <LinearProgress variant="determinate" value={progress} />
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          {answeredCount} of {test.questions.length} questions answered
-        </Typography>
-      </Box>
-
-      {/* Error Display */}
-      {error && (
-        <Alert severity="error" sx={{ mb: isMobile ? 2 : 3 }}>{error}</Alert>
       )}
-
-      {/* Autosave Indicator */}
-      {isAutosaving && (
-        <Alert severity="info" sx={{ mb: isMobile ? 2 : 3 }}>
-          Autosaving your progress...
-        </Alert>
-      )}
-
-      {/* Question Card */}
-      <Card 
-        ref={questionRef}
-        sx={{ 
-          mb: isMobile ? 2 : 3,
-          transition: 'all 0.3s ease-in-out'
-        }}
-      >
-        <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-          <Typography 
-            variant={isMobile ? "h6" : "h6"} 
-            gutterBottom
-            sx={{ mb: isMobile ? 2 : 3 }}
-          >
-            {currentQuestion.text}
+      
+      {currentView === 'result' && testResult && (
+        <Box>
+          <Typography variant="h4" gutterBottom>
+            Test Results
           </Typography>
-
-          <RadioGroup
-            value={answers[currentQuestion.id]?.toString() || ''}
-            onChange={(e) => handleAnswerSelect(currentQuestion.id, parseInt(e.target.value))}
-          >
-            {currentQuestion.answers.map((answer) => (
-              <FormControlLabel
-                key={answer.id}
-                value={answer.id.toString()}
-                control={<Radio />}
-                label={answer.text}
-                sx={{ 
-                  mb: isMobile ? 1.5 : 1, 
-                  p: isMobile ? 1.5 : 2, 
-                  border: '1px solid #e0e0e0', 
-                  borderRadius: 1,
-                  '&:hover': { 
-                    backgroundColor: '#f5f5f5',
-                    transform: 'translateY(-1px)',
-                    transition: 'all 0.2s ease-in-out'
-                  },
-                  '&.Mui-checked': {
-                    borderColor: theme.palette.primary.main,
-                    backgroundColor: theme.palette.primary.light + '20'
-                  }
-                }}
-              />
-            ))}
-          </RadioGroup>
-        </CardContent>
-      </Card>
-
-      {/* Navigation Buttons */}
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        mb: isMobile ? 2 : 3,
-        flexDirection: isMobile ? 'column' : 'row',
-        gap: isMobile ? 2 : 0
-      }}>
-        <Button
-          variant="outlined"
-          onClick={handlePrevious}
-          disabled={currentQuestionIndex === 0}
-          fullWidth={isMobile}
-          size={isMobile ? "large" : "medium"}
-        >
-          Previous
-        </Button>
-
-        {currentQuestionIndex === test.questions.length - 1 ? (
-          <Button
-            variant="contained"
-            onClick={submitAnswers}
-            disabled={isSubmitting || isLoadingResult || answeredCount < test.questions.length}
-            fullWidth={isMobile}
-            size={isMobile ? "large" : "medium"}
-          >
-            {isSubmitting ? 'Submitting...' : isLoadingResult ? 'Loading Results...' : 'Submit Test'}
-          </Button>
-        ) : (
-          <Button
-            variant="contained"
-            onClick={handleNext}
-            disabled={!answers[currentQuestion.id]}
-            fullWidth={isMobile}
-            size={isMobile ? "large" : "medium"}
-          >
-            Next
-          </Button>
-        )}
-      </Box>
-
-      {/* Submit Progress */}
-      {(isSubmitting || isLoadingResult) && (
-        <Box sx={{ textAlign: 'center', py: 2 }}>
-          <CircularProgress size={24} sx={{ mr: 1 }} />
-          <Typography variant="body2" color="text.secondary">
-            {isSubmitting ? 'Submitting your answers...' : 'Loading your results...'}
-          </Typography>
+          {testResult.summary ? (
+            // ÆON test results
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                Your Summary
+              </Typography>
+              <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', mb: 3 }}>
+                {testResult.summary.summary}
+              </Typography>
+              {testResult.glyph && (
+                <Box sx={{ textAlign: 'center', mb: 3 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Your ÆON Glyph
+                  </Typography>
+                  <Box sx={{ mb: 2 }}>
+                    <div dangerouslySetInnerHTML={{ __html: testResult.glyph.svg }} />
+                  </Box>
+                </Box>
+              )}
+            </Box>
+          ) : (
+            // Standard test results
+            <Box>
+              <AeonBadge score={score} />
+              <Box sx={{ mt: 2 }}>
+                <Button variant="contained" onClick={handleGlyphGenerated}>
+                  Generate Glyph
+                </Button>
+              </Box>
+            </Box>
+          )}
         </Box>
       )}
+      
+      {currentView === 'glyph' && (
+        <GlyphCanvas score={score} />
+      )}
+      
+      {currentView === 'hr-panel' && (
+        <HRPanel />
+      )}
+    </Container>
+  );
+};
 
-      {/* Rules Dialog */}
-      <Dialog 
-        open={showRules} 
-        onClose={() => setShowRules(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Test Rules</DialogTitle>
-        <DialogContent>
-          <Typography variant="body1" paragraph>
-            <strong>How to take the test:</strong>
-          </Typography>
-          <Typography variant="body2" paragraph>
-            • Read each question carefully
-          </Typography>
-          <Typography variant="body2" paragraph>
-            • Select only one answer per question
-          </Typography>
-          <Typography variant="body2" paragraph>
-            • You can navigate between questions using Previous/Next buttons
-          </Typography>
-          <Typography variant="body2" paragraph>
-            • Your progress is automatically saved every 30 seconds
-          </Typography>
-          <Typography variant="body2" paragraph>
-            • You must answer all questions before submitting
-          </Typography>
-          <Typography variant="body2" paragraph>
-            • After completion, you'll receive your score and can generate an ÆON glyph
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowRules(false)}>
-            Got it!
+// Updated WelcomeScreen component
+const WelcomeScreen: React.FC<{ 
+  onStart: () => void; 
+  onStartAeon: () => void;
+  error: string 
+}> = ({ onStart, onStartAeon, error }) => {
+  return (
+    <Box sx={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      height: '100vh',
+      backgroundImage: 'url(/background.png)',
+      backgroundSize: 'cover'
+    }}>
+      <Box sx={{ 
+        p: 4, 
+        bgcolor: 'background.paper', 
+        borderRadius: 2, 
+        boxShadow: 3,
+        minWidth: 400,
+        textAlign: 'center'
+      }}>
+        <Typography variant="h4" gutterBottom>
+          Welcome to HRBot
+        </Typography>
+        
+        <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary' }}>
+          Choose your assessment type:
+        </Typography>
+
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
+          <Button
+            variant="contained"
+            size="large"
+            onClick={onStart}
+            sx={{ minWidth: 200 }}
+          >
+            Standard Test
           </Button>
-        </DialogActions>
-      </Dialog>
+          
+          <Button
+            variant="outlined"
+            size="large"
+            onClick={onStartAeon}
+            sx={{ minWidth: 200 }}
+          >
+            ÆON AI Assessment
+          </Button>
+        </Box>
+
+        <Box sx={{ 
+          p: 2, 
+          bgcolor: 'rgba(18, 18, 18, 0.8)', 
+          borderRadius: 1,
+          border: '1px solid rgba(255, 255, 255, 0.1)'
+        }}>
+          <Typography variant="body2" color="white" sx={{ fontWeight: 600, mb: 1 }}>
+            Test Types:
+          </Typography>
+          <Typography variant="body2" color="rgba(255, 255, 255, 0.8)" sx={{ mb: 0.5 }}>
+            • Standard: Multiple choice questions
+          </Typography>
+          <Typography variant="body2" color="rgba(255, 255, 255, 0.8)" sx={{ mb: 0.5 }}>
+            • ÆON: AI-powered open questions
+          </Typography>
+          <Typography variant="body2" color="rgba(255, 255, 255, 0.8)" sx={{ mb: 0.5 }}>
+            • Both provide personalized results & ÆON badges
+          </Typography>
+        </Box>
+      </Box>
     </Box>
   );
 };

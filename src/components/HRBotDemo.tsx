@@ -1,144 +1,282 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  Typography,
-  Button,
-  Card,
-  CardContent,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  TextField
-} from '@mui/material';
-import HRBot from './HRBot';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Box, Typography, Container, CircularProgress, Button, Alert } from '@mui/material';
+import TestRunner from '../components/TestRunner';
+import GlyphCanvas from '../components/GlyphCanvas';
+import HRPanel from '../components/HRPanel';
+import AeonBadge from '../components/AeonBadge';
+import HRBotTest from '../components/HRBotTest';
+import AeonTest from '../components/AeonTest';
+import { useAuth } from '../hooks/useAuth';
+import { createSession } from '../services/api';
+import type { AeonSummary, GlyphData } from '../types/api';
 
-const HRBotDemo: React.FC = () => {
-  const [testId, setTestId] = useState<number>(1);
-  const [lang, setLang] = useState<string>('ru');
-  const [showTest, setShowTest] = useState<boolean>(false);
+// Main HRBot page component
+const HRBot: React.FC = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated, user, initializing } = useAuth();
+  const [currentView, setCurrentView] = useState<'welcome' | 'test' | 'result' | 'glyph' | 'hr-panel' | 'new-test' | 'aeon-test'>('welcome');
+  const [testResult, setTestResult] = useState<any>(null);
+  const [score, setScore] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [sessionToken, setSessionToken] = useState<string>('');
 
-  const handleStartTest = () => {
-    setShowTest(true);
+  // Check if user is HR and redirect accordingly
+  useEffect(() => {
+    const checkUserRole = async () => {
+      // Wait for auth to finish initializing
+      if (initializing) {
+        return;
+      }
+
+      if (isAuthenticated && user) {
+        // Use user data from auth state instead of making additional API calls
+        if (user.role === 'hr' && location.pathname === '/hr/bot/panel') {
+          setCurrentView('hr-panel');
+        } else if (user.role === 'hr' && location.pathname === '/hr/bot') {
+          navigate('/hr/bot/panel');
+        }
+      }
+      setIsLoading(false);
+    };
+
+    checkUserRole();
+  }, [isAuthenticated, user, location.pathname, navigate, initializing]);
+
+  // Handle test completion
+  const handleTestComplete = (result: any) => {
+    setTestResult(result);
+    setScore(result.score || 0);
+    setCurrentView('result');
   };
 
-  const handleReset = () => {
-    setShowTest(false);
+  // Handle glyph generation
+  const handleGlyphGenerated = () => {
+    setCurrentView('glyph');
   };
 
-  if (showTest) {
+  // Handle start new test
+  const handleStartNewTest = () => {
+    setCurrentView('new-test');
+  };
+
+  // Handle start ÆON test
+  const handleStartAeonTest = async () => {
+    try {
+      setError('');
+      // Create a new session for the ÆON test
+      const session = await createSession();
+      setSessionToken(session.token);
+      setCurrentView('aeon-test');
+    } catch (err) {
+      console.error('Failed to create session:', err);
+      setError('Failed to start ÆON test');
+    }
+  };
+
+  // Handle ÆON test completion
+  const handleAeonTestComplete = (summary: AeonSummary, glyph: GlyphData) => {
+    setTestResult({ summary, glyph });
+    setCurrentView('result');
+  };
+
+  // Handle back to welcome
+  const handleBackToWelcome = () => {
+    setCurrentView('welcome');
+    setTestResult(null);
+    setScore(0);
+    setSessionToken('');
+    setError('');
+  };
+
+  // Show loading state during initialization
+  if (initializing || isLoading) {
     return (
-      <Box>
-        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h4">HRBot Test Demo</Typography>
-          <Button variant="outlined" onClick={handleReset}>
-            Back to Demo
-          </Button>
-        </Box>
-        <HRBot testId={testId} lang={lang} />
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        backgroundImage: 'url(/background.png)',
+        backgroundSize: 'cover'
+      }}>
+        <CircularProgress />
       </Box>
     );
   }
 
+  // Show welcome screen if not authenticated
+  if (!isAuthenticated) {
+    return <WelcomeScreen onStart={handleStartNewTest} onStartAeon={handleStartAeonTest} error={error} />;
+  }
+
+  // Render appropriate view based on current state
   return (
-    <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
-      <Typography variant="h4" gutterBottom align="center">
-        HRBot Component Demo
-      </Typography>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      {currentView === 'welcome' && (
+        <WelcomeScreen onStart={handleStartNewTest} onStartAeon={handleStartAeonTest} error={error} />
+      )}
       
-      <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 4 }}>
-        Configure test parameters and start the assessment
-      </Typography>
-
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
-            <Box sx={{ flex: 1 }}>
-              <TextField
-                fullWidth
-                label="Test ID"
-                type="number"
-                value={testId}
-                onChange={(e) => setTestId(parseInt(e.target.value) || 1)}
-                helperText="Enter the test ID to load"
-              />
+      {currentView === 'test' && (
+        <TestRunner onComplete={handleTestComplete} />
+      )}
+      
+      {currentView === 'new-test' && (
+        <Box>
+          <Button 
+            variant="outlined" 
+            onClick={handleBackToWelcome}
+            sx={{ mb: 3 }}
+          >
+            ← Back to Welcome
+          </Button>
+          <HRBotTest testId={1} lang="ru" />
+        </Box>
+      )}
+      
+      {currentView === 'aeon-test' && sessionToken && (
+        <Box>
+          <Button 
+            variant="outlined" 
+            onClick={handleBackToWelcome}
+            sx={{ mb: 3 }}
+          >
+            ← Back to Welcome
+          </Button>
+          <AeonTest 
+            sessionToken={sessionToken}
+            onComplete={handleAeonTestComplete}
+          />
+        </Box>
+      )}
+      
+      {currentView === 'result' && testResult && (
+        <Box>
+          <Typography variant="h4" gutterBottom>
+            Test Results
+          </Typography>
+          {testResult.summary ? (
+            // ÆON test results
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                Your Summary
+              </Typography>
+              <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', mb: 3 }}>
+                {testResult.summary.summary}
+              </Typography>
+              {testResult.glyph && (
+                <Box sx={{ textAlign: 'center', mb: 3 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Your ÆON Glyph
+                  </Typography>
+                  <Box sx={{ mb: 2 }}>
+                    <div dangerouslySetInnerHTML={{ __html: testResult.glyph.svg }} />
+                  </Box>
+                </Box>
+              )}
             </Box>
-            
-            <Box sx={{ flex: 1 }}>
-              <FormControl fullWidth>
-                <InputLabel>Language</InputLabel>
-                <Select
-                  value={lang}
-                  label="Language"
-                  onChange={(e) => setLang(e.target.value)}
-                >
-                  <MenuItem value="ru">Russian (ru)</MenuItem>
-                  <MenuItem value="en">English (en)</MenuItem>
-                </Select>
-              </FormControl>
+          ) : (
+            // Standard test results
+            <Box>
+              <AeonBadge score={score} />
+              <Box sx={{ mt: 2 }}>
+                <Button variant="contained" onClick={handleGlyphGenerated}>
+                  Generate Glyph
+                </Button>
+              </Box>
             </Box>
-          </Box>
-        </CardContent>
-      </Card>
+          )}
+        </Box>
+      )}
+      
+      {currentView === 'glyph' && (
+        <GlyphCanvas score={score} />
+      )}
+      
+      {currentView === 'hr-panel' && (
+        <HRPanel />
+      )}
+    </Container>
+  );
+};
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Current Configuration
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Test ID: {testId}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Language: {lang === 'ru' ? 'Russian' : 'English'}
-          </Typography>
-        </CardContent>
-      </Card>
+// Updated WelcomeScreen component
+const WelcomeScreen: React.FC<{ 
+  onStart: () => void; 
+  onStartAeon: () => void;
+  error: string 
+}> = ({ onStart, onStartAeon, error }) => {
+  return (
+    <Box sx={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      height: '100vh',
+      backgroundImage: 'url(/background.png)',
+      backgroundSize: 'cover'
+    }}>
+      <Box sx={{ 
+        p: 4, 
+        bgcolor: 'background.paper', 
+        borderRadius: 2, 
+        boxShadow: 3,
+        minWidth: 400,
+        textAlign: 'center'
+      }}>
+        <Typography variant="h4" gutterBottom>
+          Welcome to HRBot
+        </Typography>
+        
+        <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary' }}>
+          Choose your assessment type:
+        </Typography>
 
-      <Box sx={{ textAlign: 'center' }}>
-        <Button
-          variant="contained"
-          size="large"
-          onClick={handleStartTest}
-          sx={{ minWidth: 200 }}
-        >
-          Start Test
-        </Button>
-      </Box>
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      <Card sx={{ mt: 4 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Features Demo
-          </Typography>
-          <Typography variant="body2" color="text.secondary" paragraph>
-            This demo showcases the HRBot component with the following features:
-          </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
+          <Button
+            variant="contained"
+            size="large"
+            onClick={onStart}
+            sx={{ minWidth: 200 }}
+          >
+            Standard Test
+          </Button>
           
-          <Box component="ul" sx={{ pl: 2 }}>
-            <Typography component="li" variant="body2" color="text.secondary">
-              Dynamic test loading based on ID and language
-            </Typography>
-            <Typography component="li" variant="body2" color="text.secondary">
-              Step-by-step question navigation
-            </Typography>
-            <Typography component="li" variant="body2" color="text.secondary">
-              Auto-save functionality every 30 seconds
-            </Typography>
-            <Typography component="li" variant="body2" color="text.secondary">
-              Progress tracking and visual feedback
-            </Typography>
-            <Typography component="li" variant="body2" color="text.secondary">
-              Error handling and loading states
-            </Typography>
-            <Typography component="li" variant="body2" color="text.secondary">
-              Results display with score and details
-            </Typography>
-          </Box>
-        </CardContent>
-      </Card>
+          <Button
+            variant="outlined"
+            size="large"
+            onClick={onStartAeon}
+            sx={{ minWidth: 200 }}
+          >
+            ÆON AI Assessment
+          </Button>
+        </Box>
+
+        <Box sx={{ 
+          p: 2, 
+          bgcolor: 'rgba(18, 18, 18, 0.8)', 
+          borderRadius: 1,
+          border: '1px solid rgba(255, 255, 255, 0.1)'
+        }}>
+          <Typography variant="body2" color="white" sx={{ fontWeight: 600, mb: 1 }}>
+            Test Types:
+          </Typography>
+          <Typography variant="body2" color="rgba(255, 255, 255, 0.8)" sx={{ mb: 0.5 }}>
+            • Standard: Multiple choice questions
+          </Typography>
+          <Typography variant="body2" color="rgba(255, 255, 255, 0.8)" sx={{ mb: 0.5 }}>
+            • ÆON: AI-powered open questions
+          </Typography>
+          <Typography variant="body2" color="rgba(255, 255, 255, 0.8)" sx={{ mb: 0.5 }}>
+            • Both provide personalized results & ÆON badges
+          </Typography>
+        </Box>
+      </Box>
     </Box>
   );
 };
 
-export default HRBotDemo; 
+export default HRBot; 
