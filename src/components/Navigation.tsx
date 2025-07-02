@@ -47,8 +47,8 @@ const NAVIGATION = [
     },
 ];
 
-const SIDEBAR_WIDTH = 70; // Еще больше уменьшенная ширина для десктопа
-const SIDEBAR_WIDTH_MOBILE = 50; // Еще больше уменьшенная ширина для мобильной версии
+const SIDEBAR_WIDTH = 64; // Максимально компактная ширина для десктопа
+const SIDEBAR_WIDTH_MOBILE = 44; // Максимально компактная ширина для мобильной версии
 
 const DashboardLayoutBasic = memo(() => {
     const theme = useTheme();
@@ -131,8 +131,8 @@ const DashboardLayoutBasic = memo(() => {
                                     alignItems: 'center',
                                     borderRadius: 3,
                                     bgcolor: location.pathname.replace('/', '') === item.segment ? 'rgba(64,196,255,0.12)' : 'transparent',
-                                    py: 1,
-                                    px: 0,
+                                    py: { xs: 1.5, md: 1 }, // Больше отступов для мобильных
+                                    px: { xs: 0.5, md: 0 },
                                     width: '100%',
                                     transition: 'all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.0)',
                                     '&:hover': {
@@ -143,11 +143,11 @@ const DashboardLayoutBasic = memo(() => {
                                     }
                                 }}
                             >
-                            <ListItemIcon sx={{ color: 'inherit', minWidth: 0, justifyContent: 'center', mb: 0.2 }}>
+                            <ListItemIcon sx={{ color: 'inherit', minWidth: 0, justifyContent: 'center', mb: 0.5 }}>
                                 <Box sx={{
-                                    fontSize: { xs: 20, sm: 24, md: 26 }, // Немного уменьшенные иконки для компактности
-                                    width: { xs: 20, sm: 24, md: 26 },
-                                    height: { xs: 20, sm: 24, md: 26 },
+                                    fontSize: { xs: 24, sm: 28, md: 30 }, // Увеличенные иконки для лучшей видимости
+                                    width: { xs: 24, sm: 28, md: 30 },
+                                    height: { xs: 24, sm: 28, md: 30 },
                                     display: 'flex', 
                                     alignItems: 'center', 
                                     justifyContent: 'center'
@@ -155,10 +155,11 @@ const DashboardLayoutBasic = memo(() => {
                             </ListItemIcon>
                             <Typography variant="caption" sx={{
                                 color: '#b0bec5',
-                                fontSize: { xs: 6, sm: 7, md: 8 }, // Еще меньший текст для более компактного вида
-                                mt: 0.1,
+                                fontSize: { xs: 7, sm: 8, md: 9 }, // Увеличенный текст для лучшей читаемости
+                                mt: 0.2,
                                 textAlign: 'center',
-                                lineHeight: 1.1
+                                lineHeight: 1.1,
+                                fontWeight: 500
                             }}>{item.title}</Typography>
                         </ListItemButton>
                         </motion.div>
@@ -210,11 +211,11 @@ const DashboardLayoutBasic = memo(() => {
                             }}
                         >
                             <Avatar sx={{ 
-                                width: { xs: 32, md: 38 }, // Уменьшенный аватар для компактности
-                                height: { xs: 32, md: 38 }, 
+                                width: { xs: 28, md: 32 }, // Еще более компактный аватар
+                                height: { xs: 28, md: 32 }, 
                                 bgcolor: deepPurple[500], 
                                 cursor: 'pointer',
-                                fontSize: { xs: '0.9rem', md: '1rem' }, // Адаптивный размер текста
+                                fontSize: { xs: '0.75rem', md: '0.85rem' }, // Меньший размер текста
                                 boxShadow: '0 4px 12px rgba(103, 58, 183, 0.3)',
                                 transition: 'all 0.3s ease',
                                 '&:hover': {
