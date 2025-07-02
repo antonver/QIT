@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Box,
-  Paper,
   Typography,
   TextField,
   IconButton,
