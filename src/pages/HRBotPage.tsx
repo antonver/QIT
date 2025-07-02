@@ -139,6 +139,9 @@ const HRBotPage: React.FC = () => {
       // Сохраняем ответ локально
       setAnswers(prev => [...prev, answer]);
 
+      // Очищаем предыдущие ошибки перед новой отправкой
+      setError('');
+
       // Отправляем ответ на /session/token/answer
       const answerResponse: AnswerResponse = await hrBotAPI.submitAnswer(sessionToken, answer);
       console.log('✅ Answer response:', answerResponse, 'Time spent:', timeSpent);
@@ -166,12 +169,19 @@ const HRBotPage: React.FC = () => {
         setCurrentAnswer('');
         setQuestionStartTime(Date.now());
         startTimer();
+        // При успешном получении следующего вопроса убираем сообщение об ошибке
+        setError('');
       } else {
         // Завершаем сессию
         await completeSession();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка отправки ответа');
+      // Если сервер временно отвечает 404, даём пользователю шанс повторить
+      if (err instanceof Error && err.message.includes('404')) {
+        setError('Не удалось отправить. Подождите 5 секунд и отправьте ещё раз.');
+      } else {
+        setError(err instanceof Error ? err.message : 'Ошибка отправки ответа');
+      }
     } finally {
       setLoading(false);
     }
@@ -361,11 +371,13 @@ ${sessionResults.answerTimes.map((time, index) =>
 
         {/* Ошибка */}
         {error && (
-          <Alert severity="error" sx={{ mb: { xs: 2, md: 3 } }} action={
-            <Button color="inherit" size="small" onClick={restart}>
-              Попробовать снова
-            </Button>
-          }>
+          <Alert severity="error" sx={{ mb: { xs: 2, md: 3 } }}
+            action={error.includes('Не удалось отправить') ? undefined : (
+              <Button color="inherit" size="small" onClick={restart}>
+                Попробовать снова
+              </Button>
+            )}
+          >
             {error}
           </Alert>
         )}
