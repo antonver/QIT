@@ -173,10 +173,9 @@ const DashboardLayoutBasic = memo(() => {
                                 style={{
                                     position: 'absolute',
                                     left: 0,
-                                    top: '50%',
-                                    transform: 'translateY(-50%)',
+                                    top: 6,
+                                    bottom: 6,
                                     width: '3px', // Тонкая синяя линия
-                                    height: isMobile ? '60px' : '70px', // Адаптивная высота для заполнения всего блока
                                     backgroundColor: '#40c4ff',
                                     borderRadius: '0 3px 3px 0',
                                     transformOrigin: 'center',
