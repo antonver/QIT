@@ -4,12 +4,10 @@ import { Routes, Route } from 'react-router-dom';
 import {
     AppBar,
     Toolbar,
-    Drawer,
     List,
     Box,
     Avatar,
     CssBaseline,
-    IconButton,
     Typography,
     useTheme,
     useMediaQuery,
@@ -21,7 +19,6 @@ import { deepPurple } from '@mui/material/colors';
 import { motion } from 'framer-motion';
 import LazyPageLoader from './LazyPageLoader';
 import backgroundImage from '../assets/background.png';
-import MenuIcon from '@mui/icons-material/Menu';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import useOptimizedPerformance from '../hooks/useOptimizedPerformance';
@@ -59,7 +56,6 @@ const DashboardLayoutBasic = memo(() => {
     const [logo, setLogo] = useState<React.ReactNode>('');
     const location = useLocation();
     const navigate = useNavigate();
-    const [drawerOpen, setDrawerOpen] = useState(false);
     
     // Хук для оптимизации производительности
     useOptimizedPerformance();
@@ -124,7 +120,6 @@ const DashboardLayoutBasic = memo(() => {
                                 selected={location.pathname.replace('/', '') === item.segment}
                                 onClick={() => {
                                     navigate(`/${item.segment}`);
-                                    setDrawerOpen(false);
                                 }}
                                 sx={{
                                     minWidth: 0,
@@ -197,7 +192,7 @@ const DashboardLayoutBasic = memo(() => {
                         whileTap={{ scale: 0.95 }}
                     >
                         <ListItemButton
-                            onClick={() => { navigate('/profile'); setDrawerOpen(false); }}
+                            onClick={() => { navigate('/profile'); }}
                             sx={{ 
                                 display: 'flex', 
                                 flexDirection: 'column', 
@@ -259,76 +254,37 @@ const DashboardLayoutBasic = memo(() => {
                 }
             }}>
             <CssBaseline />
-            {/* Sidebar for desktop */}
-            {!isMobile && (
-                <motion.div
-                    initial={{ x: -SIDEBAR_WIDTH }}
-                    animate={{ x: 0 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
-                    style={{
-                        width: SIDEBAR_WIDTH,
-                        position: 'fixed',
-                        left: 0,
-                        top: 0,
-                        zIndex: 1201,
-                        height: '100vh'
-                    }}
-                >
-                    <Box sx={{
-                        width: '100%',
-                        height: '100%',
-                        bgcolor: 'rgba(35, 43, 59, 0.95)',
-                        backdropFilter: 'blur(20px)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        borderRight: '1.5px solid rgba(38, 50, 74, 0.8)',
-                        boxShadow: '2px 0 20px 0 rgba(0,0,0,0.15)',
-                        py: 0,
-                    }}>
-                        {navList}
-                    </Box>
-                </motion.div>
-            )}
-            {/* Drawer for mobile */}
-            {isMobile && (
-                <Drawer
-                    anchor="left"
-                    open={drawerOpen}
-                    onClose={() => setDrawerOpen(false)}
-                    PaperProps={{
-                        sx: {
-                            width: SIDEBAR_WIDTH + 32,
-                            bgcolor: 'rgba(35, 43, 59, 0.95)',
-                            backdropFilter: 'blur(20px)',
-                            pt: 0,
-                            top: isMobile ? '56px' : 0,
-                            height: isMobile ? 'calc(100% - 56px)' : '100%',
-                            borderRight: '1.5px solid rgba(38, 50, 74, 0.8)',
-                        }
-                    }}
-                    ModalProps={{
-                        BackdropProps: {
-                            sx: {
-                                backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                                backdropFilter: 'blur(5px)',
-                            }
-                        }
-                    }}
-                    SlideProps={{
-                        timeout: { enter: 300, exit: 250 }
-                    }}
-                >
-                    <motion.div
-                        initial={{ x: -20 }}
-                        animate={{ x: 0 }}
-                        transition={{ duration: 0.3, delay: 0.1 }}
-                    >
-                        {navList}
-                    </motion.div>
-                </Drawer>
-            )}
-            <Box sx={{ flex: 1, ml: !isMobile ? `${SIDEBAR_WIDTH}px` : 0, minWidth: 0 }}>
+            {/* Sidebar - всегда открыт */}
+            <motion.div
+                initial={{ x: -SIDEBAR_WIDTH }}
+                animate={{ x: 0 }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
+                style={{
+                    width: SIDEBAR_WIDTH,
+                    position: 'fixed',
+                    left: 0,
+                    top: 0,
+                    zIndex: 1201,
+                    height: '100vh'
+                }}
+            >
+                <Box sx={{
+                    width: '100%',
+                    height: '100%',
+                    bgcolor: 'rgba(35, 43, 59, 0.95)',
+                    backdropFilter: 'blur(20px)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    borderRight: '1.5px solid rgba(38, 50, 74, 0.8)',
+                    boxShadow: '2px 0 20px 0 rgba(0,0,0,0.15)',
+                    py: 0,
+                }}>
+                    {navList}
+                </Box>
+            </motion.div>
+
+            <Box sx={{ flex: 1, ml: `${SIDEBAR_WIDTH}px`, minWidth: 0 }}>
                 <AppBar
                     position="fixed"
                     sx={{
@@ -336,34 +292,13 @@ const DashboardLayoutBasic = memo(() => {
                         backgroundColor: 'rgba(35, 43, 59, 0.8)',
                         backdropFilter: 'blur(20px)',
                         boxShadow: '0 2px 20px rgba(0,0,0,0.1)',
-                        left: !isMobile ? SIDEBAR_WIDTH : 0,
-                        width: !isMobile ? `calc(100% - ${SIDEBAR_WIDTH}px)` : '100%',
+                        left: SIDEBAR_WIDTH,
+                        width: `calc(100% - ${SIDEBAR_WIDTH}px)`,
                         borderBottom: '1px solid rgba(255,255,255,0.1)',
                         transition: 'all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.0)'
                     }}
                 >
                     <Toolbar sx={{ minHeight: isMobile ? '56px' : '64px' }}>
-                        {isMobile && (
-                            <motion.div
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                            >
-                                <IconButton 
-                                    color="inherit" 
-                                    edge="start" 
-                                    onClick={() => setDrawerOpen(true)} 
-                                    sx={{ 
-                                        mr: 2,
-                                        transition: 'transform 0.2s ease',
-                                        '&:hover': {
-                                            bgcolor: 'rgba(255,255,255,0.1)'
-                                        }
-                                    }}
-                                >
-                                    <MenuIcon />
-                                </IconButton>
-                            </motion.div>
-                        )}
                         <motion.div
                             key={location.pathname}
                             initial={{ x: -10 }}

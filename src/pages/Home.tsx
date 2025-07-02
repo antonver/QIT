@@ -1,77 +1,261 @@
 import { motion } from "framer-motion";
-import ChatBar from "../components/ChatBar.tsx";
-import { Box, Typography, Card, CardContent } from "@mui/material";
+import { Box, Typography, Card, CardContent, Button, Container } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import SmartToyIcon from '@mui/icons-material/SmartToy';
+import PsychologyIcon from '@mui/icons-material/Psychology';
 
 const Home = () => {
+    const navigate = useNavigate();
+
     return (
         <motion.div
-            initial={{ y: 50 }}
-            animate={{ y: 0 }}
-            exit={{ y: -50 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -30 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
             style={{ height: '100%' }}
         >
-            <Box sx={{
-                justifyContent: "flex-end",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                height: '92vh',
-                position: 'relative',
-            }}>
-                {/* Приветственное сообщение */}
-                <motion.div
-                    initial={{ y: -30 }}
-                    animate={{ y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
-                    style={{ 
-                        position: 'absolute', 
-                        top: '20%', 
-                        left: '50%', 
-                        transform: 'translateX(-50%)',
-                        zIndex: 1,
-                        width: '90%',
-                        maxWidth: '400px'
-                    }}
-                >
-                    <Card sx={{
-                        bgcolor: 'rgba(255, 255, 255, 0.1)',
-                        backdropFilter: 'blur(20px)',
-                        border: '1px solid rgba(255, 255, 255, 0.2)',
-                        borderRadius: 3,
-                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-                    }}>
-                        <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                            <Typography variant="h5" sx={{ 
+            <Container maxWidth="md" sx={{ height: '100%' }}>
+                <Box sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: '100%',
+                    py: 4,
+                }}>
+                    {/* Главный заголовок */}
+                    <motion.div
+                        initial={{ y: -50, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ duration: 0.8, delay: 0.2 }}
+                        style={{ textAlign: 'center', marginBottom: '3rem' }}
+                    >
+                        <Typography 
+                            variant="h2" 
+                            component="h1"
+                            sx={{ 
                                 color: 'white', 
-                                fontWeight: 600,
+                                fontWeight: 700,
+                                textShadow: '0 4px 8px rgba(0,0,0,0.3)',
+                                mb: 2,
+                                fontSize: { xs: '2.5rem', sm: '3rem', md: '3.5rem' }
+                            }}
+                        >
+                            QIP mini
+                        </Typography>
+                        <Typography 
+                            variant="h5" 
+                            sx={{ 
+                                color: 'rgba(255, 255, 255, 0.9)',
                                 textShadow: '0 2px 4px rgba(0,0,0,0.3)',
-                                mb: 1
-                            }}>
-                                Добро пожаловать!
-                            </Typography>
-                            <Typography variant="body2" sx={{ 
-                                color: 'rgba(255, 255, 255, 0.8)',
-                                textShadow: '0 1px 2px rgba(0,0,0,0.3)'
-                            }}>
-                                Начните общение с помощью чата ниже
-                            </Typography>
-                        </CardContent>
-                    </Card>
-                </motion.div>
+                                fontWeight: 400,
+                                fontSize: { xs: '1.2rem', sm: '1.5rem' }
+                            }}
+                        >
+                            Интеллектуальная платформа для интервью
+                        </Typography>
+                    </motion.div>
 
-                {/* Анимированный ChatBar */}
-                <motion.div
-                    initial={{ y: 50 }}
-                    animate={{ y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.4 }}
-                    style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
-                >
-                    <ChatBar onAttachmentClick={function(): void {
-                        throw new Error("Function not implemented.");
-                    }} />
-                </motion.div>
-            </Box>
+                    {/* Карточки сервисов */}
+                    <Box sx={{ 
+                        display: 'flex', 
+                        flexDirection: { xs: 'column', md: 'row' },
+                        gap: 4, 
+                        maxWidth: '800px', 
+                        width: '100%' 
+                    }}>
+                        {/* HR Bot карточка */}
+                        <Box sx={{ flex: 1 }}>
+                            <motion.div
+                                initial={{ x: -50, opacity: 0 }}
+                                animate={{ x: 0, opacity: 1 }}
+                                transition={{ duration: 0.8, delay: 0.4 }}
+                                whileHover={{ 
+                                    scale: 1.05,
+                                    transition: { duration: 0.2 }
+                                }}
+                                whileTap={{ scale: 0.98 }}
+                            >
+                                <Card sx={{
+                                    bgcolor: 'rgba(64, 196, 255, 0.15)',
+                                    backdropFilter: 'blur(20px)',
+                                    border: '1px solid rgba(64, 196, 255, 0.3)',
+                                    borderRadius: 4,
+                                    boxShadow: '0 12px 40px rgba(64, 196, 255, 0.2)',
+                                    height: '100%',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                        boxShadow: '0 16px 50px rgba(64, 196, 255, 0.3)',
+                                        border: '1px solid rgba(64, 196, 255, 0.5)',
+                                    }
+                                }}>
+                                    <CardContent sx={{ 
+                                        textAlign: 'center', 
+                                        p: 4,
+                                        height: '100%',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        justifyContent: 'center'
+                                    }}>
+                                        <SmartToyIcon sx={{ 
+                                            fontSize: 80, 
+                                            color: '#40C4FF', 
+                                            mb: 2,
+                                            filter: 'drop-shadow(0 4px 8px rgba(64, 196, 255, 0.3))'
+                                        }} />
+                                        <Typography variant="h4" sx={{ 
+                                            color: 'white', 
+                                            fontWeight: 600,
+                                            textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                                            mb: 2
+                                        }}>
+                                            HR Bot
+                                        </Typography>
+                                        <Typography variant="body1" sx={{ 
+                                            color: 'rgba(255, 255, 255, 0.8)',
+                                            textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                                            mb: 3,
+                                            lineHeight: 1.6
+                                        }}>
+                                            Умный HR-ассистент для проведения интервью с анализом ответов и генерацией персонального профиля
+                                        </Typography>
+                                        <Button 
+                                            variant="contained"
+                                            size="large"
+                                            onClick={() => navigate('/hrbot-test')}
+                                            sx={{
+                                                bgcolor: '#40C4FF',
+                                                color: 'white',
+                                                fontWeight: 600,
+                                                px: 4,
+                                                py: 1.5,
+                                                fontSize: '1.1rem',
+                                                boxShadow: '0 4px 16px rgba(64, 196, 255, 0.4)',
+                                                '&:hover': {
+                                                    bgcolor: '#29B6F6',
+                                                    boxShadow: '0 6px 20px rgba(64, 196, 255, 0.5)',
+                                                    transform: 'translateY(-2px)'
+                                                }
+                                            }}
+                                        >
+                                            Начать интервью
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        </Box>
+
+                        {/* ÆON карточка */}
+                        <Box sx={{ flex: 1 }}>
+                            <motion.div
+                                initial={{ x: 50, opacity: 0 }}
+                                animate={{ x: 0, opacity: 1 }}
+                                transition={{ duration: 0.8, delay: 0.6 }}
+                                whileHover={{ 
+                                    scale: 1.05,
+                                    transition: { duration: 0.2 }
+                                }}
+                                whileTap={{ scale: 0.98 }}
+                            >
+                                <Card sx={{
+                                    bgcolor: 'rgba(255, 107, 107, 0.15)',
+                                    backdropFilter: 'blur(20px)',
+                                    border: '1px solid rgba(255, 107, 107, 0.3)',
+                                    borderRadius: 4,
+                                    boxShadow: '0 12px 40px rgba(255, 107, 107, 0.2)',
+                                    height: '100%',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.3s ease',
+                                    '&:hover': {
+                                        boxShadow: '0 16px 50px rgba(255, 107, 107, 0.3)',
+                                        border: '1px solid rgba(255, 107, 107, 0.5)',
+                                    }
+                                }}>
+                                    <CardContent sx={{ 
+                                        textAlign: 'center', 
+                                        p: 4,
+                                        height: '100%',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        justifyContent: 'center'
+                                    }}>
+                                        <PsychologyIcon sx={{ 
+                                            fontSize: 80, 
+                                            color: '#FF6B6B', 
+                                            mb: 2,
+                                            filter: 'drop-shadow(0 4px 8px rgba(255, 107, 107, 0.3))'
+                                        }} />
+                                        <Typography variant="h4" sx={{ 
+                                            color: 'white', 
+                                            fontWeight: 600,
+                                            textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                                            mb: 2
+                                        }}>
+                                            ÆON
+                                        </Typography>
+                                        <Typography variant="body1" sx={{ 
+                                            color: 'rgba(255, 255, 255, 0.8)',
+                                            textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                                            mb: 3,
+                                            lineHeight: 1.6
+                                        }}>
+                                            Продвинутый ИИ-собеседник для глубокого анализа личности и профессиональных качеств
+                                        </Typography>
+                                        <Button 
+                                            variant="contained"
+                                            size="large"
+                                            onClick={() => navigate('/aeon')}
+                                            sx={{
+                                                bgcolor: '#FF6B6B',
+                                                color: 'white',
+                                                fontWeight: 600,
+                                                px: 4,
+                                                py: 1.5,
+                                                fontSize: '1.1rem',
+                                                boxShadow: '0 4px 16px rgba(255, 107, 107, 0.4)',
+                                                '&:hover': {
+                                                    bgcolor: '#FF5252',
+                                                    boxShadow: '0 6px 20px rgba(255, 107, 107, 0.5)',
+                                                    transform: 'translateY(-2px)'
+                                                }
+                                            }}
+                                        >
+                                            Открыть чат
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        </Box>
+                    </Box>
+
+                    {/* Дополнительная информация */}
+                    <motion.div
+                        initial={{ y: 50, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ duration: 0.8, delay: 0.8 }}
+                        style={{ 
+                            textAlign: 'center', 
+                            marginTop: '3rem',
+                            maxWidth: '600px'
+                        }}
+                    >
+                        <Typography 
+                            variant="body1" 
+                            sx={{ 
+                                color: 'rgba(255, 255, 255, 0.7)',
+                                textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                                lineHeight: 1.8,
+                                fontSize: '1.1rem'
+                            }}
+                        >
+                            Выберите один из сервисов для начала работы. HR Bot проведет с вами структурированное интервью, 
+                            а ÆON предложит свободное общение с глубоким анализом личности.
+                        </Typography>
+                    </motion.div>
+                </Box>
+            </Container>
         </motion.div>
     );
 };
