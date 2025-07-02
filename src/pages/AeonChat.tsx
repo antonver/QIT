@@ -57,12 +57,6 @@ const AeonChat: React.FC = () => {
 
   useEffect(scrollToBottom, [messages]);
 
-  // OpenAI клиент (ВНИМАНИЕ: API ключ будет виден в браузере!)
-  const openai = new OpenAI({
-    apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-    dangerouslyAllowBrowser: true, // Разрешаем использование в браузере
-  });
-
   const handleSendMessage = async () => {
     if (inputValue.trim() === '') return;
 
@@ -78,16 +72,24 @@ const AeonChat: React.FC = () => {
     setInputValue('');
 
     try {
-      if (!openai.apiKey) {
+      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+      
+      if (!apiKey) {
         const errorMessage: Message = {
           id: userMessage.id + 1,
-          text: '⚠️ Добавьте VITE_OPENAI_API_KEY в .env файл',
+          text: '⚠️ Добавьте VITE_OPENAI_API_KEY в .env файл для работы ÆON',
           isUser: false,
           timestamp: new Date(),
         };
         setMessages(prev => [...prev, errorMessage]);
         return;
       }
+
+      // Создаём OpenAI клиент только когда нужно
+      const openai = new OpenAI({
+        apiKey,
+        dangerouslyAllowBrowser: true, // Разрешаем использование в браузере
+      });
 
       // Формируем историю для ChatGPT
       const chatHistory = [
