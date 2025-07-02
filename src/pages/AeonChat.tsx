@@ -11,7 +11,7 @@ import {
   Send as SendIcon,
 } from '@mui/icons-material';
 import backgroundImage from '../assets/background.png';
-import axios from 'axios';
+import OpenAI from 'openai';
   
   interface Message {
   id: number;
@@ -57,6 +57,12 @@ const AeonChat: React.FC = () => {
 
   useEffect(scrollToBottom, [messages]);
 
+  // OpenAI клиент (ВНИМАНИЕ: API ключ будет виден в браузере!)
+  const openai = new OpenAI({
+    apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+    dangerouslyAllowBrowser: true, // Разрешаем использование в браузере
+  });
+
   const handleSendMessage = async () => {
     if (inputValue.trim() === '') return;
 
@@ -72,18 +78,32 @@ const AeonChat: React.FC = () => {
     setInputValue('');
 
     try {
+      if (!openai.apiKey) {
+        const errorMessage: Message = {
+          id: userMessage.id + 1,
+          text: '⚠️ Добавьте VITE_OPENAI_API_KEY в .env файл',
+          isUser: false,
+          timestamp: new Date(),
+        };
+        setMessages(prev => [...prev, errorMessage]);
+        return;
+      }
+
       // Формируем историю для ChatGPT
       const chatHistory = [
-        { role: 'system', content: SYSTEM_PROMPT },
-        ...messages.map(m => ({ role: m.isUser ? 'user' : 'assistant', content: m.text })),
-        { role: 'user', content: inputValue.trim() },
+        { role: 'system' as const, content: SYSTEM_PROMPT },
+        ...messages.map(m => ({ role: m.isUser ? 'user' as const : 'assistant' as const, content: m.text })),
+        { role: 'user' as const, content: inputValue.trim() },
       ];
 
-      const { data } = await axios.post('/api/chat', { messages: chatHistory });
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: chatHistory,
+      });
 
       const botMessage: Message = {
         id: userMessage.id + 1,
-        text: data.content,
+        text: completion.choices[0]?.message?.content || 'Нет ответа',
         isUser: false,
         timestamp: new Date(),
       };
@@ -93,7 +113,7 @@ const AeonChat: React.FC = () => {
       console.error(err);
       const errorMessage: Message = {
         id: userMessage.id + 1,
-        text: '⚠️ Ошибка ответа сервера',
+        text: '⚠️ Ошибка ответа от ÆON',
         isUser: false,
         timestamp: new Date(),
       };
