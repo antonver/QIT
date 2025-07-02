@@ -7,7 +7,6 @@ import {
     Drawer,
     List,
     Box,
-    Button,
     Avatar,
     CssBaseline,
     IconButton,
@@ -16,13 +15,11 @@ import {
     useMediaQuery,
     ListItemButton,
     ListItemIcon,
-    Tooltip,
     ListItem
 } from '@mui/material';
 import { deepPurple } from '@mui/material/colors';
 import { motion } from 'framer-motion';
 import LazyPageLoader from './LazyPageLoader';
-import ProfileCard from './ProfileCard.tsx';
 import backgroundImage from '../assets/background.png';
 import MenuIcon from '@mui/icons-material/Menu';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
@@ -54,13 +51,6 @@ const NAVIGATION = [
 ];
 
 const SIDEBAR_WIDTH = 88;
-
-const drawerFooter = {
-    position: 'relative',
-    top: 'auto',
-    bottom: 0,
-    boxSizing: 'border-box'
-};
 
 const DashboardLayoutBasic = memo(() => {
     const theme = useTheme();

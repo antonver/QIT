@@ -79,7 +79,7 @@ class HRBotMockAPI {
   }
 
   // Получить следующий вопрос
-  async getNextQuestion(token: string, data: any = {}): Promise<Question | null> {
+  async getNextQuestion(_token: string, _data: any = {}): Promise<Question | null> {
     await this.delay(600);
     
     if (this.currentQuestionIndex >= MOCK_QUESTIONS.length) {
@@ -129,7 +129,7 @@ class HRBotMockAPI {
   }
 
   // Сгенерировать глиф
-  async generateGlyph(token: string, data: any = {}): Promise<GlyphResponse> {
+  async generateGlyph(_token: string, _data: any = {}): Promise<GlyphResponse> {
     await this.delay(1500); // Более долгая генерация
     
     // Возвращаем URL случайного изображения для демонстрации
@@ -144,15 +144,24 @@ class HRBotMockAPI {
     const randomGlyph = glyphUrls[Math.floor(Math.random() * glyphUrls.length)];
     
     console.log('🎨 Mock glyph generated:', {
-      token: token.substring(0, 12) + '...',
+      token: _token.substring(0, 12) + '...',
       glyph_url: randomGlyph
     });
     
+    const glyphs = ['⚡ Потенциал', '🎯 Лидер', '🧠 Аналитик', '🚀 Инноватор', '🤝 Коммуникатор'];
+    const profiles = [
+      'Кандидат демонстрирует высокий потенциал роста и готовность к новым вызовам.',
+      'Показывает отличные лидерские качества и способность мотивировать команду.',
+      'Обладает сильными аналитическими навыками и системным мышлением.',
+      'Креативно подходит к решению задач и готов внедрять инновации.',
+      'Отлично взаимодействует с людьми и эффективно работает в команде.'
+    ];
+    
+    const randomIndex = Math.floor(Math.random() * glyphs.length);
+    
     return {
-      glyph_url: randomGlyph,
-      generated_at: new Date().toISOString(),
-      style: 'mock_style',
-      colors: ['#6366f1', '#8b5cf6', '#06b6d4']
+      glyph: glyphs[randomIndex],
+      profile: profiles[randomIndex]
     };
   }
 

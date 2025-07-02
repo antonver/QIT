@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { Box, CircularProgress, Skeleton } from '@mui/material';
+import { Box, Skeleton } from '@mui/material';
 import { motion } from 'framer-motion';
 
 interface LazyPageLoaderProps {
@@ -22,32 +22,7 @@ const PageSkeleton = () => (
   </Box>
 );
 
-const LoadingSpinner = () => (
-  <Box 
-    sx={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      height: '50vh',
-      flexDirection: 'column'
-    }}
-  >
-    <motion.div
-      initial={{ scale: 0.8, y: 20 }}
-      animate={{ scale: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <CircularProgress 
-        size={48} 
-        thickness={2}
-        sx={{ 
-          color: '#40c4ff',
-          mb: 2
-        }} 
-      />
-    </motion.div>
-  </Box>
-);
+
 
 const LazyPageLoader: React.FC<LazyPageLoaderProps> = ({ children }) => {
   return (

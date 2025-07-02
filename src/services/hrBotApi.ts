@@ -330,7 +330,7 @@ function createMockAPI() {
     },
 
     // Получить следующий вопрос
-    async getNextQuestion(token: string, data: any = {}): Promise<Question | null> {
+    async getNextQuestion(_token: string, _data: any = {}): Promise<Question | null> {
       await delay(600);
       
       if (currentQuestionIndex >= MOCK_QUESTIONS.length) {
@@ -343,7 +343,7 @@ function createMockAPI() {
     },
 
     // Отправить ответ
-    async submitAnswer(token: string, answer: Answer): Promise<AnswerResponse> {
+    async submitAnswer(_token: string, _answer: Answer): Promise<AnswerResponse> {
       await delay(500);
       
       const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
@@ -387,7 +387,7 @@ function createMockAPI() {
     },
 
     // Сгенерировать глиф
-    async generateGlyph(token: string): Promise<GlyphResponse> {
+    async generateGlyph(_token: string): Promise<GlyphResponse> {
       await delay(1500);
       
       const glyphs = ['⚡ Потенциал', '🎯 Лидер', '🧠 Аналитик', '🚀 Инноватор', '🤝 Коммуникатор'];

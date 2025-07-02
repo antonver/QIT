@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import {
   Box,
   Card,
@@ -11,7 +10,6 @@ import {
   Alert,
   CircularProgress,
   Chip,
-  Divider,
   Paper,
   Container,
 } from '@mui/material';
@@ -28,7 +26,7 @@ import {
   EmojiEvents,
 } from '@mui/icons-material';
 import { hrBotAPI } from '../services/hrBotApi';
-import type { Question, Answer, SessionResponse, GlyphResponse, AnswerResponse, ResultResponse } from '../services/hrBotApi';
+import type { Question, Answer, GlyphResponse, AnswerResponse, ResultResponse } from '../services/hrBotApi';
 
 type SessionState = 'welcome' | 'initializing' | 'in_progress' | 'completed' | 'error';
 
