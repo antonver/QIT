@@ -13,6 +13,7 @@ import {
   Phone as PhoneIcon,
   MoreVert as MoreVertIcon,
   } from '@mui/icons-material';
+import backgroundImage from '../assets/background.png';
   
   interface Message {
   id: number;
@@ -87,21 +88,21 @@ const AeonChat: React.FC = () => {
       height: '100vh',
       display: 'flex',
       flexDirection: 'column',
-      bgcolor: '#0e1621', // Темная тема как в Telegram
+      bgcolor: 'rgba(29, 39, 51, 1)', // Новый цвет как запросил пользователь
       color: 'white',
       overflow: 'hidden'
     }}>
       {/* Заголовок чата в стиле Telegram */}
       <Box sx={{ 
         p: isMobile ? 1.5 : 2,
-        bgcolor: '#17212b', // Более темный заголовок
+        bgcolor: 'rgba(23, 31, 41, 1)', // Более темный заголовок в новой палитре
         color: 'white',
         display: 'flex',
         alignItems: 'center',
         gap: isMobile ? 1.5 : 2,
         boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
         minHeight: isMobile ? 60 : 'auto',
-        borderBottom: '1px solid #2b3441'
+        borderBottom: '1px solid rgba(43, 52, 65, 1)'
       }}>
         <Avatar sx={{ 
           width: isMobile ? 36 : 42, 
@@ -147,17 +148,25 @@ const AeonChat: React.FC = () => {
         flex: 1,
         overflow: 'auto',
         p: isMobile ? 1 : 1.5,
-        bgcolor: '#0e1621',
-        // Паттерн фона как в Telegram
-        backgroundImage: `
-          repeating-linear-gradient(
-            45deg,
-            transparent,
-            transparent 35px,
-            rgba(255, 255, 255, 0.02) 35px,
-            rgba(255, 255, 255, 0.02) 70px
-          )
-        `,
+        bgcolor: 'rgba(29, 39, 51, 1)',
+        // Фон из background.png как запросил пользователь
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'local',
+        // Темный оверлей для лучшей читаемости
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(29, 39, 51, 0.8)',
+          pointerEvents: 'none',
+          zIndex: 0
+        },
+        position: 'relative',
         '&::-webkit-scrollbar': {
           width: '6px',
         },
@@ -179,6 +188,8 @@ const AeonChat: React.FC = () => {
               display: 'flex',
               justifyContent: message.isUser ? 'flex-end' : 'flex-start',
               mb: 1.5,
+              position: 'relative',
+              zIndex: 1 // Выше фонового оверлея
             }}
           >
             <Box
@@ -187,7 +198,7 @@ const AeonChat: React.FC = () => {
                 px: isMobile ? 1.5 : 2,
                 py: isMobile ? 1 : 1.2,
                 borderRadius: message.isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-                bgcolor: message.isUser ? '#4a9eff' : '#2b3441', // Синий для исходящих, темно-серый для входящих
+                bgcolor: message.isUser ? '#4a9eff' : 'rgba(43, 52, 65, 0.9)', // Синий для исходящих, темно-серый для входящих
                 color: 'white',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
                 wordBreak: 'break-word',
@@ -212,17 +223,17 @@ const AeonChat: React.FC = () => {
             </Box>
           </Box>
         ))}
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef} style={{ position: 'relative', zIndex: 1 }} />
       </Box>
 
       {/* Поле ввода в стиле Telegram */}
       <Box sx={{ 
         p: isMobile ? 1.5 : 2,
-        bgcolor: '#17212b',
+        bgcolor: 'rgba(23, 31, 41, 1)', // Новый цвет footer
         display: 'flex',
         gap: isMobile ? 1 : 1.5,
         alignItems: 'flex-end',
-        borderTop: '1px solid #2b3441',
+        borderTop: '1px solid rgba(43, 52, 65, 1)',
         pb: isMobile ? 'max(1.5rem, env(safe-area-inset-bottom))' : 2 // Безопасная зона для iPhone
       }}>
         <TextField
@@ -238,12 +249,12 @@ const AeonChat: React.FC = () => {
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: '20px',
-              bgcolor: '#232e3c',
+              bgcolor: 'rgba(35, 46, 60, 1)', // Новый цвет поля ввода
               border: 'none',
               fontSize: isMobile ? '0.9rem' : '0.95rem',
               color: 'white',
               '& fieldset': {
-                border: '1px solid #3c4854',
+                border: '1px solid rgba(60, 72, 84, 1)',
               },
               '&:hover fieldset': {
                 border: '1px solid #4a9eff',
@@ -278,7 +289,7 @@ const AeonChat: React.FC = () => {
               transform: 'scale(1.05)',
             },
             '&:disabled': {
-              bgcolor: '#3c4854',
+              bgcolor: 'rgba(60, 72, 84, 1)',
               color: '#8b95a1',
             },
             transition: 'all 0.2s ease'

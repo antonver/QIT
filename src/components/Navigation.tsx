@@ -47,8 +47,8 @@ const NAVIGATION = [
     },
 ];
 
-const SIDEBAR_WIDTH = 64; // Максимально компактная ширина для десктопа
-const SIDEBAR_WIDTH_MOBILE = 44; // Максимально компактная ширина для мобильной версии
+const SIDEBAR_WIDTH = 80; // Увеличенная ширина для больших иконок
+const SIDEBAR_WIDTH_MOBILE = 60; // Увеличенная ширина для мобильной версии
 
 const DashboardLayoutBasic = memo(() => {
     const theme = useTheme();
@@ -131,8 +131,8 @@ const DashboardLayoutBasic = memo(() => {
                                     alignItems: 'center',
                                     borderRadius: 3,
                                     bgcolor: location.pathname.replace('/', '') === item.segment ? 'rgba(64,196,255,0.12)' : 'transparent',
-                                    py: { xs: 1.5, md: 1 }, // Больше отступов для мобильных
-                                    px: { xs: 0.5, md: 0 },
+                                    py: { xs: 2, md: 1.5 }, // Больше отступов для больших иконок
+                                    px: { xs: 1, md: 0.5 },
                                     width: '100%',
                                     transition: 'all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.0)',
                                     '&:hover': {
@@ -145,9 +145,9 @@ const DashboardLayoutBasic = memo(() => {
                             >
                             <ListItemIcon sx={{ color: 'inherit', minWidth: 0, justifyContent: 'center', mb: 0.5 }}>
                                 <Box sx={{
-                                    fontSize: { xs: 24, sm: 28, md: 30 }, // Увеличенные иконки для лучшей видимости
-                                    width: { xs: 24, sm: 28, md: 30 },
-                                    height: { xs: 24, sm: 28, md: 30 },
+                                    fontSize: { xs: 32, sm: 36, md: 40 }, // БОЛЬШИЕ иконки как запросил пользователь
+                                    width: { xs: 32, sm: 36, md: 40 },
+                                    height: { xs: 32, sm: 36, md: 40 },
                                     display: 'flex', 
                                     alignItems: 'center', 
                                     justifyContent: 'center'
@@ -155,8 +155,8 @@ const DashboardLayoutBasic = memo(() => {
                             </ListItemIcon>
                             <Typography variant="caption" sx={{
                                 color: '#b0bec5',
-                                fontSize: { xs: 7, sm: 8, md: 9 }, // Увеличенный текст для лучшей читаемости
-                                mt: 0.2,
+                                fontSize: { xs: 8, sm: 9, md: 10 }, // Увеличенный текст под большими иконками
+                                mt: 0.3,
                                 textAlign: 'center',
                                 lineHeight: 1.1,
                                 fontWeight: 500
@@ -211,11 +211,11 @@ const DashboardLayoutBasic = memo(() => {
                             }}
                         >
                             <Avatar sx={{ 
-                                width: { xs: 28, md: 32 }, // Еще более компактный аватар
-                                height: { xs: 28, md: 32 }, 
+                                width: { xs: 44, md: 50 }, // БОЛЬШОЙ аватар чтобы помещался на экран
+                                height: { xs: 44, md: 50 }, 
                                 bgcolor: deepPurple[500], 
                                 cursor: 'pointer',
-                                fontSize: { xs: '0.75rem', md: '0.85rem' }, // Меньший размер текста
+                                fontSize: { xs: '1rem', md: '1.2rem' }, // Увеличенный размер текста
                                 boxShadow: '0 4px 12px rgba(103, 58, 183, 0.3)',
                                 transition: 'all 0.3s ease',
                                 '&:hover': {
@@ -271,7 +271,8 @@ const DashboardLayoutBasic = memo(() => {
                     left: 0,
                     top: 0,
                     zIndex: 1201,
-                    height: '100vh'
+                    height: '100vh',
+                    overflow: 'hidden' // Предотвращаем выход анимации за границы
                 }}
             >
                 <Box sx={{
