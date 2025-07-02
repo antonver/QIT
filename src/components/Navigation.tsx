@@ -21,7 +21,6 @@ import LazyPageLoader from './LazyPageLoader';
 import backgroundImage from '../assets/background.png';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import PsychologyIcon from '@mui/icons-material/Psychology';
-import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import useOptimizedPerformance from '../hooks/useOptimizedPerformance';
 
 // Lazy load страниц для лучшей производительности
