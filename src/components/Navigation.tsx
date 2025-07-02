@@ -175,8 +175,8 @@ const DashboardLayoutBasic = memo(() => {
                                     left: 0,
                                     top: '50%',
                                     transform: 'translateY(-50%)',
-                                    width: '3px', // Тонкая синяя линия как запросил пользователь
-                                    height: '40px', // Увеличена высота под большие иконки
+                                    width: '3px', // Тонкая синяя линия
+                                    height: isMobile ? '60px' : '70px', // Адаптивная высота для заполнения всего блока
                                     backgroundColor: '#40c4ff',
                                     borderRadius: '0 3px 3px 0',
                                     transformOrigin: 'center',
