@@ -88,14 +88,14 @@ const AeonChat: React.FC = () => {
       height: '100vh',
       display: 'flex',
       flexDirection: 'column',
-      bgcolor: 'rgba(29, 39, 51, 1)', // Новый цвет как запросил пользователь
+      bgcolor: 'rgba(29, 39, 51, 1)', // Унифицированный цвет как у Drawer
       color: 'white',
       overflow: 'hidden'
     }}>
-      {/* Заголовок чата в стиле Telegram */}
+      {/* Заголовок чата в стиле Telegram - упрощенный без "был недавно" */}
       <Box sx={{ 
         p: isMobile ? 1.5 : 2,
-        bgcolor: 'rgba(23, 31, 41, 1)', // Более темный заголовок в новой палитре
+        bgcolor: 'rgba(29, 39, 51, 1)', // Тот же цвет что и основной фон
         color: 'white',
         display: 'flex',
         alignItems: 'center',
@@ -116,9 +116,6 @@ const AeonChat: React.FC = () => {
         <Box sx={{ flex: 1 }}>
           <Typography variant="h6" fontWeight="600" sx={{ fontSize: isMobile ? '1rem' : '1.1rem', color: 'white' }}>
             ÆON
-          </Typography>
-          <Typography variant="body2" sx={{ opacity: 0.7, fontSize: isMobile ? '0.8rem' : '0.85rem', color: '#8b95a1' }}>
-            последний раз был недавно
           </Typography>
         </Box>
         <IconButton 
@@ -148,8 +145,8 @@ const AeonChat: React.FC = () => {
         flex: 1,
         overflow: 'auto',
         p: isMobile ? 1 : 1.5,
-        bgcolor: 'rgba(29, 39, 51, 1)',
-        // Фон из background.png как запросил пользователь
+        bgcolor: 'rgba(29, 39, 51, 1)', // Унифицированный цвет
+        // Фон из background.png
         backgroundImage: `url(${backgroundImage})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
@@ -162,7 +159,7 @@ const AeonChat: React.FC = () => {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(29, 39, 51, 0.8)',
+          backgroundColor: 'rgba(29, 39, 51, 0.8)', // Тот же цвет с прозрачностью
           pointerEvents: 'none',
           zIndex: 0
         },
@@ -229,7 +226,7 @@ const AeonChat: React.FC = () => {
       {/* Поле ввода в стиле Telegram */}
       <Box sx={{ 
         p: isMobile ? 1.5 : 2,
-        bgcolor: 'rgba(29, 39, 51, 1)', // Тот же цвет что и Dashboard для слияния
+        bgcolor: 'rgba(29, 39, 51, 1)', // Тот же цвет что и Dashboard для полного слияния
         display: 'flex',
         gap: isMobile ? 1 : 1.5,
         alignItems: 'flex-end',
@@ -249,7 +246,7 @@ const AeonChat: React.FC = () => {
           sx={{
             '& .MuiOutlinedInput-root': {
               borderRadius: '20px',
-              bgcolor: 'rgba(35, 46, 60, 1)', // Новый цвет поля ввода
+              bgcolor: 'rgba(35, 46, 60, 1)', // Цвет поля ввода
               border: 'none',
               fontSize: isMobile ? '0.9rem' : '0.95rem',
               color: 'white',

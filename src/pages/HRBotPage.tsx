@@ -11,7 +11,6 @@ import {
   CircularProgress,
   Chip,
   Paper,
-  Container,
   useTheme,
   useMediaQuery,
 } from '@mui/material';
@@ -340,10 +339,10 @@ ${sessionResults.answerTimes.map((time, index) =>
   return (
     <Box sx={{ 
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      bgcolor: 'rgba(29, 39, 51, 1)', // Унифицированный цвет как у Drawer
       py: { xs: 2, md: 4 }  // Уменьшенные отступы для мобильных
     }}>
-      <Container maxWidth="md" sx={{ px: { xs: 1, sm: 2, md: 3 } }}> {/* Уменьшенные горизонтальные отступы */}
+      <Box maxWidth="md" sx={{ mx: 'auto', px: { xs: 1, sm: 2, md: 3 } }}> {/* Заменил Container на обычный Box */}
         {/* Заголовок */}
         <Typography 
           variant="h3" 
@@ -771,7 +770,7 @@ ${sessionResults.answerTimes.map((time, index) =>
             </CardContent>
           </Card>
         )}
-      </Container>
+      </Box>
     </Box>
   );
 };
