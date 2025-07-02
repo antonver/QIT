@@ -12,6 +12,8 @@ import {
   Chip,
   Paper,
   Container,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import {
   Download,
@@ -43,6 +45,9 @@ interface SessionResults {
 }
 
 const HRBotPage: React.FC = () => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
   // Основные состояния
   const [sessionState, setSessionState] = useState<SessionState>('welcome');
   const [sessionToken, setSessionToken] = useState<string>('');
@@ -336,19 +341,20 @@ ${sessionResults.answerTimes.map((time, index) =>
     <Box sx={{ 
       minHeight: '100vh',
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      py: 4
+      py: { xs: 2, md: 4 }  // Уменьшенные отступы для мобильных
     }}>
-      <Container maxWidth="md">
+      <Container maxWidth="md" sx={{ px: { xs: 1, sm: 2, md: 3 } }}> {/* Уменьшенные горизонтальные отступы */}
         {/* Заголовок */}
         <Typography 
           variant="h3" 
           component="h1" 
           align="center" 
           sx={{ 
-            mb: 6, 
+            mb: { xs: 3, md: 6 }, // Адаптивные отступы
             color: 'white',
             fontWeight: 'bold',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+            textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+            fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' } // Адаптивный размер шрифта
           }}
         >
           🤖 HR Bot
@@ -356,7 +362,7 @@ ${sessionResults.answerTimes.map((time, index) =>
 
         {/* Ошибка */}
         {error && (
-          <Alert severity="error" sx={{ mb: 3 }} action={
+          <Alert severity="error" sx={{ mb: { xs: 2, md: 3 } }} action={
             <Button color="inherit" size="small" onClick={restart}>
               Попробовать снова
             </Button>
@@ -367,65 +373,65 @@ ${sessionResults.answerTimes.map((time, index) =>
 
         {/* Стартовая страница */}
         {sessionState === 'welcome' && (
-          <Card elevation={8} sx={{ borderRadius: 4, overflow: 'hidden' }}>
+          <Card elevation={8} sx={{ borderRadius: { xs: 2, md: 4 }, overflow: 'hidden' }}>
             <Box sx={{ 
               background: 'linear-gradient(45deg, #FF6B6B 30%, #4ECDC4 90%)',
-              p: 4,
+              p: { xs: 2, sm: 3, md: 4 }, // Адаптивные отступы
               color: 'white',
               textAlign: 'center'
             }}>
-              <Psychology sx={{ fontSize: 80, mb: 2 }} />
-              <Typography variant="h4" gutterBottom fontWeight="bold">
+              <Psychology sx={{ fontSize: { xs: 60, md: 80 }, mb: { xs: 1, md: 2 } }} />
+              <Typography variant="h4" gutterBottom fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' } }}>
                 Добро пожаловать в HR интервью!
               </Typography>
-              <Typography variant="h6" sx={{ opacity: 0.9 }}>
+              <Typography variant="h6" sx={{ opacity: 0.9, fontSize: { xs: '1rem', md: '1.25rem' } }}>
                 Искусственный интеллект проведет с вами персональное интервью
               </Typography>
             </Box>
             
-            <CardContent sx={{ p: 4 }}>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 4 }}>
-                <Box sx={{ flex: '1 1 300px', textAlign: 'center', p: 2 }}>
-                  <QuestionAnswer sx={{ fontSize: 48, color: 'primary.main', mb: 1 }} />
-                  <Typography variant="h6" gutterBottom>
+            <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: { xs: 2, md: 3 }, mb: { xs: 3, md: 4 } }}>
+                <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 300px' }, textAlign: 'center', p: { xs: 1, md: 2 } }}>
+                  <QuestionAnswer sx={{ fontSize: { xs: 36, md: 48 }, color: 'primary.main', mb: 1 }} />
+                  <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1rem', md: '1.25rem' } }}>
                     10 Вопросов
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' } }}>
                     Открытые вопросы для полного анализа
                   </Typography>
                 </Box>
-                <Box sx={{ flex: '1 1 300px', textAlign: 'center', p: 2 }}>
-                  <TimerOutlined sx={{ fontSize: 48, color: 'warning.main', mb: 1 }} />
-                  <Typography variant="h6" gutterBottom>
+                <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 300px' }, textAlign: 'center', p: { xs: 1, md: 2 } }}>
+                  <TimerOutlined sx={{ fontSize: { xs: 36, md: 48 }, color: 'warning.main', mb: 1 }} />
+                  <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1rem', md: '1.25rem' } }}>
                     90 секунд
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' } }}>
                     На каждый вопрос или ответить раньше
                   </Typography>
                 </Box>
-                <Box sx={{ flex: '1 1 300px', textAlign: 'center', p: 2 }}>
-                  <Assessment sx={{ fontSize: 48, color: 'success.main', mb: 1 }} />
-                  <Typography variant="h6" gutterBottom>
+                <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 300px' }, textAlign: 'center', p: { xs: 1, md: 2 } }}>
+                  <Assessment sx={{ fontSize: { xs: 36, md: 48 }, color: 'success.main', mb: 1 }} />
+                  <Typography variant="h6" gutterBottom sx={{ fontSize: { xs: '1rem', md: '1.25rem' } }}>
                     Персональный отчет
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' } }}>
                     Уникальный глиф и профиль кандидата
                   </Typography>
                 </Box>
               </Box>
 
-              <Paper sx={{ p: 3, mb: 4, backgroundColor: 'rgba(0,0,0,0.02)' }}>
-                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+              <Paper sx={{ p: { xs: 2, md: 3 }, mb: { xs: 3, md: 4 }, backgroundColor: 'rgba(0,0,0,0.02)' }}>
+                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', fontSize: { xs: '1.1rem', md: '1.25rem' } }}>
                   <Psychology sx={{ mr: 1, color: 'primary.main' }} />
                   Как это работает:
                 </Typography>
-                <Typography variant="body1" paragraph>
+                <Typography variant="body1" paragraph sx={{ fontSize: { xs: '0.9rem', md: '1rem' } }}>
                   • ИИ задаст вам 10 открытых вопросов о вашем опыте и навыках
                 </Typography>
-                <Typography variant="body1" paragraph>
+                <Typography variant="body1" paragraph sx={{ fontSize: { xs: '0.9rem', md: '1rem' } }}>
                   • Каждый ответ анализируется в реальном времени
                 </Typography>
-                <Typography variant="body1">
+                <Typography variant="body1" sx={{ fontSize: { xs: '0.9rem', md: '1rem' } }}>
                   • В конце вы получите персональный глиф и профиль кандидата
                 </Typography>
               </Paper>
@@ -437,9 +443,9 @@ ${sessionResults.answerTimes.map((time, index) =>
                   startIcon={<PlayArrow />}
                   onClick={startInterview}
                   sx={{ 
-                    px: 6, 
-                    py: 2,
-                    fontSize: '1.2rem',
+                    px: { xs: 4, md: 6 }, 
+                    py: { xs: 1.5, md: 2 },
+                    fontSize: { xs: '1rem', md: '1.2rem' },
                     background: 'linear-gradient(45deg, #FF6B6B 30%, #4ECDC4 90%)',
                     '&:hover': {
                       background: 'linear-gradient(45deg, #FF5252 30%, #26A69A 90%)',
@@ -458,13 +464,13 @@ ${sessionResults.answerTimes.map((time, index) =>
 
         {/* Инициализация */}
         {sessionState === 'initializing' && (
-          <Card elevation={8} sx={{ borderRadius: 4 }}>
-            <CardContent sx={{ textAlign: 'center', py: 8 }}>
-              <CircularProgress size={80} sx={{ mb: 4, color: 'primary.main' }} />
-              <Typography variant="h5" gutterBottom>
+          <Card elevation={8} sx={{ borderRadius: { xs: 2, md: 4 } }}>
+            <CardContent sx={{ textAlign: 'center', py: { xs: 6, md: 8 } }}>
+              <CircularProgress size={isMobile ? 60 : 80} sx={{ mb: { xs: 3, md: 4 }, color: 'primary.main' }} />
+              <Typography variant="h5" gutterBottom sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }}>
                 Подготовка интервью...
               </Typography>
-              <Typography variant="body1" color="text.secondary">
+              <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: '0.9rem', md: '1rem' } }}>
                 ИИ создает персональную сессию и загружает вопросы
               </Typography>
             </CardContent>
@@ -473,14 +479,14 @@ ${sessionResults.answerTimes.map((time, index) =>
 
         {/* В процессе интервью */}
         {sessionState === 'in_progress' && currentQuestion && (
-          <Card elevation={8} sx={{ borderRadius: 4 }}>
+          <Card elevation={8} sx={{ borderRadius: { xs: 2, md: 4 } }}>
             <Box sx={{ 
               background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
-              p: 3,
+              p: { xs: 2, md: 3 },
               color: 'white'
             }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h5" fontWeight="bold">
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: { xs: 'wrap', sm: 'nowrap' }, gap: { xs: 1, sm: 0 } }}>
+                <Typography variant="h5" fontWeight="bold" sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }}>
                   Вопрос {questionIndex} из {totalQuestions}
                 </Typography>
                 <Chip
@@ -490,7 +496,8 @@ ${sessionResults.answerTimes.map((time, index) =>
                   sx={{ 
                     backgroundColor: 'rgba(255,255,255,0.2)',
                     color: 'white',
-                    fontWeight: 'bold'
+                    fontWeight: 'bold',
+                    fontSize: { xs: '0.75rem', md: '0.875rem' }
                   }}
                 />
               </Box>
@@ -498,7 +505,7 @@ ${sessionResults.answerTimes.map((time, index) =>
                 variant="determinate"
                 value={(questionIndex / totalQuestions) * 100}
                 sx={{ 
-                  height: 8, 
+                  height: { xs: 6, md: 8 }, 
                   borderRadius: 4,
                   backgroundColor: 'rgba(255,255,255,0.3)',
                   '& .MuiLinearProgress-bar': {
@@ -508,23 +515,23 @@ ${sessionResults.answerTimes.map((time, index) =>
               />
             </Box>
 
-            <CardContent sx={{ p: 4 }}>
-              <Typography variant="h5" gutterBottom sx={{ mb: 4, lineHeight: 1.4, fontWeight: 500 }}>
+            <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
+              <Typography variant="h5" gutterBottom sx={{ mb: { xs: 3, md: 4 }, lineHeight: 1.4, fontWeight: 500, fontSize: { xs: '1.25rem', md: '1.5rem' } }}>
                 {currentQuestion.text}
               </Typography>
 
               <TextField
                 fullWidth
                 multiline
-                rows={8}
+                                  rows={isMobile ? 6 : 8} // Меньше строк на мобильных
                 value={currentAnswer}
                 onChange={(e) => setCurrentAnswer(e.target.value)}
                 placeholder="Поделитесь своими мыслями и опытом..."
                 variant="outlined"
                 sx={{ 
-                  mb: 4,
+                  mb: { xs: 3, md: 4 },
                   '& .MuiOutlinedInput-root': {
-                    fontSize: '1.1rem',
+                    fontSize: { xs: '1rem', md: '1.1rem' },
                     borderRadius: 2,
                     '&:hover fieldset': {
                       borderColor: 'primary.main',
@@ -544,8 +551,9 @@ ${sessionResults.answerTimes.map((time, index) =>
                   disabled={loading || !currentAnswer.trim()}
                   startIcon={loading ? <CircularProgress size={20} /> : null}
                   sx={{ 
-                    minWidth: 180,
-                    py: 1.5,
+                    minWidth: { xs: 120, md: 180 },
+                    py: { xs: 1.2, md: 1.5 },
+                    fontSize: { xs: '0.9rem', md: '1rem' },
                     background: 'linear-gradient(45deg, #667eea 30%, #764ba2 90%)',
                     '&:hover': {
                       background: 'linear-gradient(45deg, #5a67d8 30%, #6b46c1 90%)',
@@ -567,42 +575,42 @@ ${sessionResults.answerTimes.map((time, index) =>
 
         {/* Завершено */}
         {sessionState === 'completed' && sessionResults.glyph && sessionResults.result && (
-          <Card elevation={12} sx={{ borderRadius: 4, overflow: 'hidden' }}>
+          <Card elevation={12} sx={{ borderRadius: { xs: 2, md: 4 }, overflow: 'hidden' }}>
             <Box sx={{ 
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              p: 4,
+              p: { xs: 3, md: 4 },
               color: 'white',
               textAlign: 'center'
             }}>
-              <CheckCircle sx={{ fontSize: 100, mb: 2 }} />
-              <Typography variant="h3" gutterBottom fontWeight="bold">
+              <CheckCircle sx={{ fontSize: { xs: 80, md: 100 }, mb: { xs: 1, md: 2 } }} />
+              <Typography variant="h3" gutterBottom fontWeight="bold" sx={{ fontSize: { xs: '2rem', md: '3rem' } }}>
                 Интервью завершено!
               </Typography>
-              <Typography variant="h6" sx={{ opacity: 0.9 }}>
+              <Typography variant="h6" sx={{ opacity: 0.9, fontSize: { xs: '1.1rem', md: '1.25rem' } }}>
                 Ваш персональный профиль готов
               </Typography>
             </Box>
 
-            <CardContent sx={{ p: 6 }}>
+            <CardContent sx={{ p: { xs: 3, sm: 4, md: 6 } }}>
               {/* Глиф */}
               <Paper 
                 elevation={6} 
                 sx={{ 
-                  p: 6, 
-                  mb: 4, 
+                  p: { xs: 4, md: 6 }, 
+                  mb: { xs: 3, md: 4 }, 
                   textAlign: 'center',
                   background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
                   color: 'white',
-                  borderRadius: 4
+                  borderRadius: { xs: 3, md: 4 }
                 }}
               >
-                <Typography variant="h6" gutterBottom sx={{ opacity: 0.9 }}>
+                <Typography variant="h6" gutterBottom sx={{ opacity: 0.9, fontSize: { xs: '1.1rem', md: '1.25rem' } }}>
                   Ваш персональный глиф
                 </Typography>
                 <Typography 
                   variant="h2" 
                   sx={{ 
-                    fontSize: '4rem',
+                    fontSize: { xs: '3rem', md: '4rem' },
                     fontWeight: 'bold',
                     mb: 2,
                     textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
@@ -616,20 +624,20 @@ ${sessionResults.answerTimes.map((time, index) =>
               <Paper 
                 elevation={3} 
                 sx={{ 
-                  p: 4, 
-                  mb: 4,
+                  p: { xs: 3, md: 4 }, 
+                  mb: { xs: 3, md: 4 },
                   borderRadius: 3,
                   backgroundColor: 'rgba(102, 126, 234, 0.05)',
                   borderLeft: '6px solid #667eea'
                 }}
               >
-                <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                <Typography variant="h6" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold', fontSize: { xs: '1.1rem', md: '1.25rem' } }}>
                   📊 Анализ профиля кандидата
                 </Typography>
                 <Typography 
                   variant="body1" 
                   sx={{ 
-                    fontSize: '1.1rem',
+                    fontSize: { xs: '1rem', md: '1.1rem' },
                     lineHeight: 1.7,
                     color: 'text.primary'
                   }}
@@ -642,55 +650,55 @@ ${sessionResults.answerTimes.map((time, index) =>
               <Paper 
                 elevation={2} 
                 sx={{ 
-                  p: 4, 
-                  mb: 4,
+                  p: { xs: 3, md: 4 }, 
+                  mb: { xs: 3, md: 4 },
                   borderRadius: 3,
                   backgroundColor: 'rgba(0,0,0,0.02)'
                 }}
               >
-                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', mb: 3, fontSize: { xs: '1.1rem', md: '1.25rem' } }}>
                   <TrendingUp sx={{ mr: 1, color: 'success.main' }} />
                   📈 Подробная статистика интервью
                 </Typography>
                 
                 {/* Основные метрики */}
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 4 }}>
-                  <Box sx={{ textAlign: 'center', minWidth: 140 }}>
-                    <Speed sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
-                    <Typography variant="h4" color="primary.main" fontWeight="bold">
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: { xs: 2, md: 3 }, mb: { xs: 3, md: 4 } }}>
+                  <Box sx={{ textAlign: 'center', minWidth: { xs: 120, md: 140 }, flex: { xs: '1 1 calc(50% - 8px)', sm: '0 0 auto' } }}>
+                    <Speed sx={{ fontSize: { xs: 32, md: 40 }, color: 'primary.main', mb: 1 }} />
+                    <Typography variant="h4" color="primary.main" fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', md: '2.125rem' } }}>
                       {formatDuration(getSafeNumber(sessionResults.result?.total_time))}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }}>
                       Общее время
                     </Typography>
                   </Box>
-                  <Box sx={{ textAlign: 'center', minWidth: 140 }}>
-                    <EmojiEvents sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
-                    <Typography variant="h4" color="success.main" fontWeight="bold">
+                  <Box sx={{ textAlign: 'center', minWidth: { xs: 120, md: 140 }, flex: { xs: '1 1 calc(50% - 8px)', sm: '0 0 auto' } }}>
+                    <EmojiEvents sx={{ fontSize: { xs: 32, md: 40 }, color: 'success.main', mb: 1 }} />
+                    <Typography variant="h4" color="success.main" fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', md: '2.125rem' } }}>
                       {Math.round(getSafePercentage(sessionResults.result?.completion_rate || (answers.length / totalQuestions) * 100))}%
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }}>
                       Завершено
                     </Typography>
                   </Box>
-                  <Box sx={{ textAlign: 'center', minWidth: 140 }}>
-                    <TimerOutlined sx={{ fontSize: 40, color: 'warning.main', mb: 1 }} />
-                    <Typography variant="h4" color="warning.main" fontWeight="bold">
+                  <Box sx={{ textAlign: 'center', minWidth: { xs: 120, md: 140 }, flex: { xs: '1 1 calc(50% - 8px)', sm: '0 0 auto' } }}>
+                    <TimerOutlined sx={{ fontSize: { xs: 32, md: 40 }, color: 'warning.main', mb: 1 }} />
+                    <Typography variant="h4" color="warning.main" fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', md: '2.125rem' } }}>
                       {formatDuration(getSafeNumber(sessionResults.result?.average_time_per_question) || 
                         (sessionResults.answerTimes.length > 0 ? 
                           sessionResults.answerTimes.reduce((sum, time) => sum + time, 0) / sessionResults.answerTimes.length : 
                           0))}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }}>
                       Среднее время
                     </Typography>
                   </Box>
-                  <Box sx={{ textAlign: 'center', minWidth: 140 }}>
-                    <QuestionAnswer sx={{ fontSize: 40, color: 'info.main', mb: 1 }} />
-                    <Typography variant="h4" color="info.main" fontWeight="bold">
+                  <Box sx={{ textAlign: 'center', minWidth: { xs: 120, md: 140 }, flex: { xs: '1 1 calc(50% - 8px)', sm: '0 0 auto' } }}>
+                    <QuestionAnswer sx={{ fontSize: { xs: 32, md: 40 }, color: 'info.main', mb: 1 }} />
+                    <Typography variant="h4" color="info.main" fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', md: '2.125rem' } }}>
                       {getSafeNumber(sessionResults.result?.questions_answered) || answers.length}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', md: '0.875rem' } }}>
                       Ответов дано
                     </Typography>
                   </Box>
@@ -699,7 +707,7 @@ ${sessionResults.answerTimes.map((time, index) =>
                 {/* График времени по вопросам */}
                 {sessionResults.answerTimes.length > 0 && (
                   <Box>
-                    <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+                    <Typography variant="h6" gutterBottom sx={{ mb: 2, fontSize: { xs: '1rem', md: '1.25rem' } }}>
                       ⏱️ Время ответа по вопросам
                     </Typography>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
@@ -710,6 +718,7 @@ ${sessionResults.answerTimes.map((time, index) =>
                           variant="outlined"
                           size="small"
                           color={time > 60 ? 'error' : time > 30 ? 'warning' : 'success'}
+                          sx={{ fontSize: { xs: '0.7rem', md: '0.75rem' } }}
                         />
                       ))}
                     </Box>
@@ -718,15 +727,16 @@ ${sessionResults.answerTimes.map((time, index) =>
               </Paper>
 
               {/* Кнопки действий */}
-              <Box sx={{ display: 'flex', gap: 3, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Box sx={{ display: 'flex', gap: { xs: 2, md: 3 }, justifyContent: 'center', flexWrap: 'wrap' }}>
                 <Button
                   variant="contained"
                   size="large"
                   startIcon={<Download />}
                   onClick={downloadReport}
                   sx={{ 
-                    px: 4,
-                    py: 1.5,
+                    px: { xs: 3, md: 4 },
+                    py: { xs: 1.2, md: 1.5 },
+                    fontSize: { xs: '0.9rem', md: '1rem' },
                     background: 'linear-gradient(45deg, #667eea 30%, #764ba2 90%)',
                     '&:hover': {
                       background: 'linear-gradient(45deg, #5a67d8 30%, #6b46c1 90%)',
@@ -743,8 +753,9 @@ ${sessionResults.answerTimes.map((time, index) =>
                   size="large"
                   onClick={restart}
                   sx={{ 
-                    px: 4,
-                    py: 1.5,
+                    px: { xs: 3, md: 4 },
+                    py: { xs: 1.2, md: 1.5 },
+                    fontSize: { xs: '0.9rem', md: '1rem' },
                     borderWidth: 2,
                     '&:hover': {
                       borderWidth: 2,

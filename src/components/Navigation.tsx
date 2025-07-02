@@ -48,6 +48,7 @@ const NAVIGATION = [
 ];
 
 const SIDEBAR_WIDTH = 88;
+const SIDEBAR_WIDTH_MOBILE = 60; // Уменьшенная ширина для мобильной версии
 
 const DashboardLayoutBasic = memo(() => {
     const theme = useTheme();
@@ -59,6 +60,9 @@ const DashboardLayoutBasic = memo(() => {
     
     // Хук для оптимизации производительности
     useOptimizedPerformance();
+
+    // Динамическая ширина sidebar в зависимости от устройства
+    const currentSidebarWidth = isMobile ? SIDEBAR_WIDTH_MOBILE : SIDEBAR_WIDTH;
 
     useEffect(() => {
         const pathname = location.pathname.replace('/', '');
@@ -141,9 +145,9 @@ const DashboardLayoutBasic = memo(() => {
                             >
                             <ListItemIcon sx={{ color: 'inherit', minWidth: 0, justifyContent: 'center', mb: 0.2 }}>
                                 <Box sx={{
-                                    fontSize: { xs: 18, sm: 22, md: 26 },
-                                    width: { xs: 22, sm: 26, md: 32 },
-                                    height: { xs: 22, sm: 26, md: 32 },
+                                    fontSize: { xs: 24, sm: 28, md: 30 }, // Увеличенные иконки
+                                    width: { xs: 24, sm: 28, md: 30 },
+                                    height: { xs: 24, sm: 28, md: 30 },
                                     display: 'flex', 
                                     alignItems: 'center', 
                                     justifyContent: 'center'
@@ -151,7 +155,7 @@ const DashboardLayoutBasic = memo(() => {
                             </ListItemIcon>
                             <Typography variant="caption" sx={{
                                 color: '#b0bec5',
-                                fontSize: { xs: 8, sm: 9, md: 10 },
+                                fontSize: { xs: 7, sm: 8, md: 9 }, // Немного уменьшенный текст для мобильных
                                 mt: 0.1,
                                 textAlign: 'center',
                                 lineHeight: 1.1
@@ -256,11 +260,11 @@ const DashboardLayoutBasic = memo(() => {
             <CssBaseline />
             {/* Sidebar - всегда открыт */}
             <motion.div
-                initial={{ x: -SIDEBAR_WIDTH }}
+                initial={{ x: -currentSidebarWidth }}
                 animate={{ x: 0 }}
                 transition={{ duration: 0.4, ease: "easeOut" }}
                 style={{
-                    width: SIDEBAR_WIDTH,
+                    width: currentSidebarWidth,
                     position: 'fixed',
                     left: 0,
                     top: 0,
@@ -284,7 +288,7 @@ const DashboardLayoutBasic = memo(() => {
                 </Box>
             </motion.div>
 
-            <Box sx={{ flex: 1, ml: `${SIDEBAR_WIDTH}px`, minWidth: 0 }}>
+            <Box sx={{ flex: 1, ml: `${currentSidebarWidth}px`, minWidth: 0 }}>
                 <AppBar
                     position="fixed"
                     sx={{
@@ -292,8 +296,8 @@ const DashboardLayoutBasic = memo(() => {
                         backgroundColor: 'rgba(35, 43, 59, 0.8)',
                         backdropFilter: 'blur(20px)',
                         boxShadow: '0 2px 20px rgba(0,0,0,0.1)',
-                        left: SIDEBAR_WIDTH,
-                        width: `calc(100% - ${SIDEBAR_WIDTH}px)`,
+                        left: currentSidebarWidth,
+                        width: `calc(100% - ${currentSidebarWidth}px)`,
                         borderBottom: '1px solid rgba(255,255,255,0.1)',
                         transition: 'all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.0)'
                     }}
