@@ -11,6 +11,7 @@ import {
   Send as SendIcon,
 } from '@mui/icons-material';
 import backgroundImage from '../assets/background.png';
+import axios from 'axios';
   
   interface Message {
   id: number;
@@ -18,6 +19,8 @@ import backgroundImage from '../assets/background.png';
   isUser: boolean;
   timestamp: Date;
 }
+
+const SYSTEM_PROMPT = 'Ты — дружелюбный ассистент ÆON. Отвечай кратко и по-русски.';
 
 const AeonChat: React.FC = () => {
   const theme = useTheme();
@@ -40,10 +43,9 @@ const AeonChat: React.FC = () => {
 
   useEffect(scrollToBottom, [messages]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (inputValue.trim() === '') return;
 
-    // Добавляем сообщение пользователя
     const userMessage: Message = {
       id: messages.length + 1,
       text: inputValue,
@@ -51,19 +53,38 @@ const AeonChat: React.FC = () => {
       timestamp: new Date(),
     };
 
+    // Отображаем сразу сообщение пользователя
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
 
-    // Имитируем печатание и отвечаем через 1 секунду
-    setTimeout(() => {
+    try {
+      // Формируем историю для ChatGPT
+      const chatHistory = [
+        { role: 'system', content: SYSTEM_PROMPT },
+        ...messages.map(m => ({ role: m.isUser ? 'user' : 'assistant', content: m.text })),
+        { role: 'user', content: inputValue.trim() },
+      ];
+
+      const { data } = await axios.post('/api/chat', { messages: chatHistory });
+
       const botMessage: Message = {
-        id: messages.length + 2,
-        text: 'ÆON пока не подключен 🤖',
+        id: userMessage.id + 1,
+        text: data.content,
         isUser: false,
         timestamp: new Date(),
       };
+
       setMessages(prev => [...prev, botMessage]);
-    }, 1000);
+    } catch (err) {
+      console.error(err);
+      const errorMessage: Message = {
+        id: userMessage.id + 1,
+        text: '⚠️ Ошибка ответа сервера',
+        isUser: false,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, errorMessage]);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

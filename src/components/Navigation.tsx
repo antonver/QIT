@@ -30,7 +30,6 @@ const HRBot = lazy(() => import('../pages/HRBot'));
 const HRBotPage = lazy(() => import('../pages/HRBotPage'));
 const TestPage = lazy(() => import('../pages/TestPage'));
 const AeonChat = lazy(() => import('../pages/AeonChat'));
-const ChatGPT = lazy(() => import('../pages/ChatGPT'));
 
 const NAVIGATION = [
     {
@@ -46,11 +45,6 @@ const NAVIGATION = [
         segment: 'aeon',
         title: 'ÆON',
         icon: <PsychologyIcon sx={{ color: '#FF6B6B' }} />,
-    },
-    {
-        segment: 'chatgpt',
-        title: 'GPT Chat',
-        icon: <ChatBubbleOutlineIcon sx={{ color: '#00E676' }} />,
     },
 ];
 
@@ -349,7 +343,6 @@ const DashboardLayoutBasic = memo(() => {
                             <Route path="/hrbot" element={<HRBot />} />
                             <Route path="/aeon" element={<AeonChat />} />
                             <Route path="/test" element={<TestPage />} />
-                            <Route path="/chatgpt" element={<ChatGPT />} />
                         </Routes>
                     </LazyPageLoader>
                 </Box>
