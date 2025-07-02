@@ -11,7 +11,7 @@ import {
   Send as SendIcon,
 } from '@mui/icons-material';
 import backgroundImage from '../assets/background.png';
-import OpenAI from 'openai';
+import axios from 'axios';
   
   interface Message {
   id: number;
@@ -72,25 +72,6 @@ const AeonChat: React.FC = () => {
     setInputValue('');
 
     try {
-      const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
-      
-      if (!apiKey) {
-        const errorMessage: Message = {
-          id: userMessage.id + 1,
-          text: '⚠️ Добавьте VITE_OPENAI_API_KEY в .env файл для работы ÆON',
-          isUser: false,
-          timestamp: new Date(),
-        };
-        setMessages(prev => [...prev, errorMessage]);
-        return;
-      }
-
-      // Создаём OpenAI клиент только когда нужно
-      const openai = new OpenAI({
-        apiKey,
-        dangerouslyAllowBrowser: true, // Разрешаем использование в браузере
-      });
-
       // Формируем историю для ChatGPT
       const chatHistory = [
         { role: 'system' as const, content: SYSTEM_PROMPT },
@@ -98,14 +79,15 @@ const AeonChat: React.FC = () => {
         { role: 'user' as const, content: inputValue.trim() },
       ];
 
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
+      // Отправляем через безопасный прокси-сервер
+      const { data } = await axios.post('/api/chat', {
         messages: chatHistory,
+        model: 'gpt-3.5-turbo',
       });
 
       const botMessage: Message = {
         id: userMessage.id + 1,
-        text: completion.choices[0]?.message?.content || 'Нет ответа',
+        text: data.content || 'Нет ответа',
         isUser: false,
         timestamp: new Date(),
       };
