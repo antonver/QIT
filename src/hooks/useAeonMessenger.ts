@@ -7,6 +7,7 @@ import {
   getCurrentUser,
   markAllMessagesAsRead,
 } from '../services/aeonMessengerApi';
+import { initTelegramWebApp, isTelegramWebApp, getTelegramUser } from '../utils/telegram';
 import type {
   AeonChatList,
   AeonMessage,
@@ -27,11 +28,7 @@ export const useAeonMessenger = () => {
 
   // Проверяем доступность Telegram WebApp
   const checkTelegramWebApp = useCallback(() => {
-    if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
-      window.Telegram.WebApp.ready();
-      return true;
-    }
-    return false;
+    return initTelegramWebApp();
   }, []);
 
   // Загружаем информацию о пользователе
@@ -52,15 +49,27 @@ export const useAeonMessenger = () => {
       }
       
       // Используем мок данные для разработки
-      if (!checkTelegramWebApp()) {
-        setCurrentUser({
-          id: 123456789,
-          telegram_id: 123456789,
-          username: 'testuser',
-          first_name: 'Test',
-          last_name: 'User',
-          profile_photo_url: undefined,
-        });
+      if (!isTelegramWebApp()) {
+        const telegramUser = getTelegramUser();
+        if (telegramUser) {
+          setCurrentUser({
+            id: telegramUser.id,
+            telegram_id: telegramUser.id,
+            username: telegramUser.username,
+            first_name: telegramUser.first_name,
+            last_name: telegramUser.last_name,
+            profile_photo_url: telegramUser.photo_url,
+          });
+        } else {
+          setCurrentUser({
+            id: 123456789,
+            telegram_id: 123456789,
+            username: 'testuser',
+            first_name: 'Test',
+            last_name: 'User',
+            profile_photo_url: undefined,
+          });
+        }
         setIsAuthError(false);
       }
     }
@@ -85,7 +94,7 @@ export const useAeonMessenger = () => {
       }
       
       // Используем мок данные для разработки
-      if (!checkTelegramWebApp()) {
+      if (!isTelegramWebApp()) {
         setChats([
           {
             id: 1,
@@ -123,7 +132,7 @@ export const useAeonMessenger = () => {
       }
       
       // Используем мок данные для разработки
-      if (!checkTelegramWebApp()) {
+      if (!isTelegramWebApp()) {
         setMessages([
           {
             id: 1,

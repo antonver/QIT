@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getTelegramInitData } from '../utils/telegram';
 import type {
   AeonChat,
   AeonChatList,
@@ -20,30 +21,15 @@ const aeonApi = axios.create({
   },
 });
 
-
-
-// Get Telegram init data from WebApp or use mock
-const getTelegramInitData = () => {
-  // Проверяем, есть ли реальный Telegram WebApp
-  if (typeof window !== 'undefined' && window.Telegram?.WebApp?.initData) {
-    return window.Telegram.WebApp.initData;
-  }
-  
-  // Проверяем, есть ли тестовые данные в localStorage (для разработки)
-  if (typeof window !== 'undefined' && localStorage.getItem('telegram_init_data')) {
-    return localStorage.getItem('telegram_init_data');
-  }
-  
-  // Возвращаем пустую строку, чтобы API мог обработать отсутствие данных
-  return '';
-};
-
 // Request interceptor to add Telegram init data
 aeonApi.interceptors.request.use(
   (config) => {
     const initData = getTelegramInitData();
     if (initData) {
       config.headers['x-telegram-init-data'] = initData;
+      console.debug('Aeon API Request:', config.url, 'auth header attached');
+    } else {
+      console.warn('Aeon API Request without auth data:', config.url);
     }
     return config;
   },
