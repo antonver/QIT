@@ -15,10 +15,20 @@ if (typeof window !== 'undefined') {
   });
 
   // Инициализируем Telegram WebApp если доступен
-  if (window.Telegram?.WebApp) {
-    window.Telegram.WebApp.ready();
-    window.Telegram.WebApp.expand();
-  }
+  // Ждем небольшой timeout, чтобы убедиться что скрипт загрузился
+  setTimeout(() => {
+    if (window.Telegram?.WebApp) {
+      console.log('Инициализация Telegram WebApp...');
+      window.Telegram.WebApp.ready();
+      window.Telegram.WebApp.expand();
+      window.Telegram.WebApp.setHeaderColor('#232b3b');
+      window.Telegram.WebApp.setBackgroundColor('#232b3b');
+      window.Telegram.WebApp.enableClosingConfirmation();
+      console.log('Telegram WebApp инициализирован');
+    } else {
+      console.log('Telegram WebApp не найден');
+    }
+  }, 100);
 }
 
 // Добавляем условное подключение Eruda для отладки в Telegram Mini App

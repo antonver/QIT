@@ -159,26 +159,56 @@ const AeonMessenger: React.FC = () => {
             Ошибка авторизации
           </Typography>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            Не удалось авторизоваться в системе. Это может произойти, если:
+            Не удалось авторизоваться в системе. Возможные причины:
           </Typography>
-          <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
+          <Typography variant="body2" component="ul" sx={{ pl: 2, mb: 2 }}>
             <li>Приложение запущено не из Telegram</li>
             <li>Истек срок действия сессии</li>
             <li>Проблемы с сетевым подключением</li>
+            <li>Сервер временно недоступен</li>
+          </Typography>
+          <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+            Решение:
+          </Typography>
+          <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
+            <li>Убедитесь, что приложение открыто в Telegram</li>
+            <li>Проверьте интернет-соединение</li>
+            <li>Перезапустите приложение через меню Telegram</li>
+            <li>Если проблема повторяется, обратитесь в поддержку</li>
           </Typography>
         </Alert>
-        <Button
-          variant="contained"
-          onClick={() => window.location.reload()}
-          sx={{
-            bgcolor: '#4a9eff',
-            '&:hover': {
-              bgcolor: '#3d8bdb',
-            },
-          }}
-        >
-          Перезагрузить приложение
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <Button
+            variant="contained"
+            onClick={() => window.location.reload()}
+            sx={{
+              bgcolor: '#4a9eff',
+              '&:hover': {
+                bgcolor: '#3d8bdb',
+              },
+            }}
+          >
+            Перезагрузить приложение
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              if (window.Telegram?.WebApp) {
+                window.Telegram.WebApp.close();
+              }
+            }}
+            sx={{
+              borderColor: '#4a9eff',
+              color: '#4a9eff',
+              '&:hover': {
+                borderColor: '#3d8bdb',
+                color: '#3d8bdb',
+              },
+            }}
+          >
+            Закрыть приложение
+          </Button>
+        </Box>
       </Box>
     );
   }
