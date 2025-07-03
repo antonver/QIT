@@ -12,6 +12,18 @@ import type {
   AeonCurrentUser,
 } from '../types/api';
 
+// Debug function to log API configuration
+const logApiConfig = () => {
+  console.log('=== Aeon Messenger API Configuration ===');
+  console.log('VITE_CHAT_URL:', import.meta.env.VITE_CHAT_URL);
+  console.log('Base URL:', import.meta.env.VITE_CHAT_URL || 'https://aeon-messenger-app-09faae856b73.herokuapp.com');
+  console.log('Environment:', import.meta.env.MODE);
+  console.log('=========================================');
+};
+
+// Log configuration on module load
+logApiConfig();
+
 // Create axios instance for Aeon Messenger API
 const aeonApi = axios.create({
   baseURL: import.meta.env.VITE_CHAT_URL || 'https://aeon-messenger-app-09faae856b73.herokuapp.com',
@@ -25,25 +37,72 @@ const aeonApi = axios.create({
 aeonApi.interceptors.request.use(
   (config) => {
     const initData = getTelegramInitData();
+    console.log('=== Aeon API Request Debug ===');
+    console.log('URL:', config.url);
+    console.log('Method:', config.method);
+    console.log('Base URL:', config.baseURL);
+    console.log('Init Data Length:', initData ? initData.length : 0);
+    console.log('Init Data Preview:', initData ? initData.substring(0, 100) + '...' : 'No data');
+    
     if (initData) {
       config.headers['x-telegram-init-data'] = initData;
-      console.debug('Aeon API Request:', config.url, 'auth header attached');
+      console.log('✅ Auth header attached');
     } else {
-      console.warn('Aeon API Request without auth data:', config.url);
+      console.warn('❌ No auth data available - running in development mode');
+      console.warn('❌ This request will likely fail with 401 error');
+      // Не добавляем заголовок авторизации если данных нет
     }
+    console.log('===============================');
     return config;
   },
   (error) => {
+    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
 
 // Response interceptor to handle errors
 aeonApi.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('✅ API Response:', response.config.url, response.status);
+    return response;
+  },
   (error) => {
-    console.error('Aeon Messenger API Error:', error.response?.data || error.message);
-    return Promise.reject(error);
+    console.error('=== Aeon API Error ===');
+    console.error('URL:', error.config?.url);
+    console.error('Status:', error.response?.status);
+    console.error('Status Text:', error.response?.statusText);
+    console.error('Response Data:', error.response?.data);
+    console.error('Request Headers:', error.config?.headers);
+    console.error('======================');
+    
+    // Enhanced error messages
+    if (error.response?.status === 401) {
+      console.error('❌ Authorization failed');
+      console.error('❌ Possible reasons:');
+      console.error('   1. App is not running inside Telegram WebApp');
+      console.error('   2. Invalid or expired Telegram init data');
+      console.error('   3. Server-side authorization issue');
+      console.error('❌ Solution: Open this app from Telegram bot/mini app');
+      
+      // Создаем более информативную ошибку
+      const enhancedError = {
+        ...error,
+        message: 'Authorization failed - app must be opened from Telegram',
+        isAuthError: true,
+        response: {
+          ...error.response,
+          data: {
+            ...error.response?.data,
+            error: 'Приложение должно быть открыто из Telegram'
+          }
+        }
+      };
+      
+      throw enhancedError;
+    }
+    
+    throw error;
   }
 );
 
