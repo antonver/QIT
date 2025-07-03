@@ -93,4 +93,112 @@ export interface AeonSummary {
 
 export interface AeonTask {
   task: string;
+}
+
+// Aeon Messenger types (new version)
+export interface AeonMessage {
+  id: number;
+  text?: string;
+  message_type: string;
+  reply_to_message_id?: number;
+  chat_id: number;
+  sender_id: number;
+  sender: MessageSender;
+  media_url?: string;
+  media_type?: string;
+  media_size?: number;
+  media_duration?: number;
+  forward_from_user_id?: number;
+  forward_from_chat_id?: number;
+  is_edited: boolean;
+  is_deleted: boolean;
+  read_by: number[];
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface MessageSender {
+  id: number;
+  telegram_id: number;
+  username?: string;
+  first_name: string;
+  last_name?: string;
+  profile_photo_url?: string;
+}
+
+export interface AeonChat {
+  id: number;
+  title?: string;
+  chat_type: string;
+  description?: string;
+  photo_url?: string;
+  created_by: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at?: string;
+  members: UserInChat[];
+}
+
+export interface UserInChat {
+  id: number;
+  telegram_id: number;
+  username?: string;
+  first_name: string;
+  last_name?: string;
+  profile_photo_url?: string;
+  is_admin: boolean;
+  joined_at: string;
+}
+
+export interface AeonChatList {
+  id: number;
+  title?: string;
+  chat_type: string;
+  photo_url?: string;
+  last_message?: string;
+  last_message_time?: string;
+  unread_count: number;
+}
+
+export interface AeonMessageList {
+  messages: AeonMessage[];
+  total: number;
+  page: number;
+  per_page: number;
+  has_next: boolean;
+  has_prev: boolean;
+}
+
+export interface AeonChatCreate {
+  title?: string;
+  chat_type: string;
+  description?: string;
+  photo_url?: string;
+  member_ids: number[];
+}
+
+export interface AeonChatUpdate {
+  title?: string;
+  description?: string;
+  photo_url?: string;
+}
+
+export interface AeonMessageCreate {
+  text?: string;
+  message_type: string;
+  reply_to_message_id?: number;
+  chat_id: number;
+}
+
+export interface AeonMessageUpdate {
+  text?: string;
+}
+
+export interface AeonCurrentUser {
+  id: number;
+  telegram_id: number;
+  username?: string;
+  first_name: string;
+  last_name?: string;
+  profile_photo_url?: string;
 } 
