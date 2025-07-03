@@ -20,18 +20,22 @@ const aeonApi = axios.create({
   },
 });
 
-// Mock Telegram init data for development
-const getMockTelegramInitData = () => {
-  return 'user=%7B%22id%22%3A123456789%2C%22first_name%22%3A%22Test%22%2C%22username%22%3A%22testuser%22%7D&chat_instance=123456789&chat_type=private&auth_date=1234567890&hash=test_hash';
-};
+
 
 // Get Telegram init data from WebApp or use mock
 const getTelegramInitData = () => {
-  // В реальном Telegram Mini App это будет:
-  // return window.Telegram?.WebApp?.initData || '';
+  // Проверяем, есть ли реальный Telegram WebApp
+  if (typeof window !== 'undefined' && window.Telegram?.WebApp?.initData) {
+    return window.Telegram.WebApp.initData;
+  }
   
-  // Для разработки используем мок данные
-  return getMockTelegramInitData();
+  // Проверяем, есть ли тестовые данные в localStorage (для разработки)
+  if (typeof window !== 'undefined' && localStorage.getItem('telegram_init_data')) {
+    return localStorage.getItem('telegram_init_data');
+  }
+  
+  // Возвращаем пустую строку, чтобы API мог обработать отсутствие данных
+  return '';
 };
 
 // Request interceptor to add Telegram init data
