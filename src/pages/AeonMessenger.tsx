@@ -50,6 +50,7 @@ const AeonMessenger: React.FC = () => {
     loading,
     messagesLoading,
     error,
+    isAuthError,
     sendNewMessage,
     createNewChat,
     selectChat,
@@ -137,6 +138,47 @@ const AeonMessenger: React.FC = () => {
         bgcolor: 'rgba(35, 43, 59, 0.95)',
       }}>
         <CircularProgress sx={{ color: '#4a9eff' }} />
+      </Box>
+    );
+  }
+
+  // Показываем ошибку авторизации
+  if (isAuthError) {
+    return (
+      <Box sx={{
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        bgcolor: 'rgba(35, 43, 59, 0.95)',
+        p: 3,
+      }}>
+        <Alert severity="error" sx={{ mb: 3, maxWidth: '500px' }}>
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            Ошибка авторизации
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Не удалось авторизоваться в системе. Это может произойти, если:
+          </Typography>
+          <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
+            <li>Приложение запущено не из Telegram</li>
+            <li>Истек срок действия сессии</li>
+            <li>Проблемы с сетевым подключением</li>
+          </Typography>
+        </Alert>
+        <Button
+          variant="contained"
+          onClick={() => window.location.reload()}
+          sx={{
+            bgcolor: '#4a9eff',
+            '&:hover': {
+              bgcolor: '#3d8bdb',
+            },
+          }}
+        >
+          Перезагрузить приложение
+        </Button>
       </Box>
     );
   }

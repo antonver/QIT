@@ -23,25 +23,48 @@ export const useAeonMessenger = () => {
   const [loading, setLoading] = useState(true);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthError, setIsAuthError] = useState(false);
+
+  // Проверяем доступность Telegram WebApp
+  const checkTelegramWebApp = useCallback(() => {
+    if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+      window.Telegram.WebApp.ready();
+      return true;
+    }
+    return false;
+  }, []);
 
   // Загружаем информацию о пользователе
   const loadCurrentUser = useCallback(async () => {
     try {
       const user = await getCurrentUser();
       setCurrentUser(user);
-    } catch (err) {
+      setIsAuthError(false);
+    } catch (err: any) {
       console.error('Error loading current user:', err);
+      
+      // Проверяем, является ли это ошибкой авторизации
+      if (err.response?.status === 401) {
+        setIsAuthError(true);
+        setError('Ошибка авторизации. Пожалуйста, перезапустите приложение из Telegram.');
+      } else {
+        setError('Ошибка загрузки данных пользователя');
+      }
+      
       // Используем мок данные для разработки
-      setCurrentUser({
-        id: 123456789,
-        telegram_id: 123456789,
-        username: 'testuser',
-        first_name: 'Test',
-        last_name: 'User',
-        profile_photo_url: undefined,
-      });
+      if (!checkTelegramWebApp()) {
+        setCurrentUser({
+          id: 123456789,
+          telegram_id: 123456789,
+          username: 'testuser',
+          first_name: 'Test',
+          last_name: 'User',
+          profile_photo_url: undefined,
+        });
+        setIsAuthError(false);
+      }
     }
-  }, []);
+  }, [checkTelegramWebApp]);
 
   // Загружаем список чатов
   const loadChats = useCallback(async () => {
@@ -50,25 +73,36 @@ export const useAeonMessenger = () => {
       const chatsData = await getChats();
       setChats(chatsData);
       setError(null);
-    } catch (err) {
+      setIsAuthError(false);
+    } catch (err: any) {
       console.error('Error loading chats:', err);
-      setError('Ошибка загрузки чатов');
+      
+      if (err.response?.status === 401) {
+        setIsAuthError(true);
+        setError('Ошибка авторизации. Пожалуйста, перезапустите приложение из Telegram.');
+      } else {
+        setError('Ошибка загрузки чатов');
+      }
+      
       // Используем мок данные для разработки
-      setChats([
-        {
-          id: 1,
-          title: 'ÆON Assistant',
-          chat_type: 'private',
-          photo_url: undefined,
-          last_message: 'Добро пожаловать в ÆON Messenger!',
-          last_message_time: new Date().toISOString(),
-          unread_count: 0,
-        },
-      ]);
+      if (!checkTelegramWebApp()) {
+        setChats([
+          {
+            id: 1,
+            title: 'ÆON Assistant',
+            chat_type: 'private',
+            photo_url: undefined,
+            last_message: 'Добро пожаловать в ÆON Messenger!',
+            last_message_time: new Date().toISOString(),
+            unread_count: 0,
+          },
+        ]);
+        setIsAuthError(false);
+      }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [checkTelegramWebApp]);
 
   // Загружаем сообщения чата
   const loadMessages = useCallback(async (chatId: number) => {
@@ -77,36 +111,47 @@ export const useAeonMessenger = () => {
       const messagesData = await getChatMessages(chatId);
       setMessages(messagesData.messages);
       setError(null);
-    } catch (err) {
+      setIsAuthError(false);
+    } catch (err: any) {
       console.error('Error loading messages:', err);
-      setError('Ошибка загрузки сообщений');
+      
+      if (err.response?.status === 401) {
+        setIsAuthError(true);
+        setError('Ошибка авторизации. Пожалуйста, перезапустите приложение из Telegram.');
+      } else {
+        setError('Ошибка загрузки сообщений');
+      }
+      
       // Используем мок данные для разработки
-      setMessages([
-        {
-          id: 1,
-          text: 'Добро пожаловать в ÆON Messenger! Это новая версия чата с полной функциональностью.',
-          message_type: 'text',
-          chat_id: chatId,
-          sender_id: 1,
-          sender: {
+      if (!checkTelegramWebApp()) {
+        setMessages([
+          {
             id: 1,
-            telegram_id: 1,
-            username: 'aeon_bot',
-            first_name: 'ÆON',
-            last_name: 'Assistant',
-            profile_photo_url: undefined,
+            text: 'Добро пожаловать в ÆON Messenger! Это новая версия чата с полной функциональностью.',
+            message_type: 'text',
+            chat_id: chatId,
+            sender_id: 1,
+            sender: {
+              id: 1,
+              telegram_id: 1,
+              username: 'aeon_bot',
+              first_name: 'ÆON',
+              last_name: 'Assistant',
+              profile_photo_url: undefined,
+            },
+            is_edited: false,
+            is_deleted: false,
+            read_by: [],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
           },
-          is_edited: false,
-          is_deleted: false,
-          read_by: [],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-      ]);
+        ]);
+        setIsAuthError(false);
+      }
     } finally {
       setMessagesLoading(false);
     }
-  }, []);
+  }, [checkTelegramWebApp]);
 
   // Отправляем сообщение
   const sendNewMessage = useCallback(async (chatId: number, text: string) => {
@@ -210,9 +255,10 @@ export const useAeonMessenger = () => {
 
   // Инициализация
   useEffect(() => {
+    checkTelegramWebApp();
     loadCurrentUser();
     loadChats();
-  }, [loadCurrentUser, loadChats]);
+  }, [checkTelegramWebApp, loadCurrentUser, loadChats]);
 
   return {
     chats,
@@ -222,6 +268,7 @@ export const useAeonMessenger = () => {
     loading,
     messagesLoading,
     error,
+    isAuthError,
     sendNewMessage,
     createNewChat,
     selectChat,
