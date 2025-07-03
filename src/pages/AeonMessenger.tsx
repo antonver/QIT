@@ -154,27 +154,32 @@ const AeonMessenger: React.FC = () => {
         bgcolor: 'rgba(35, 43, 59, 0.95)',
         p: 3,
       }}>
-        <Alert severity="error" sx={{ mb: 3, maxWidth: '500px' }}>
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            Ошибка авторизации
+        <Alert severity="error" sx={{ mb: 3, maxWidth: '600px' }}>
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            🚫 Ошибка авторизации
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 2, fontWeight: 'bold' }}>
+            Приложение должно быть открыто из Telegram
           </Typography>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            Не удалось авторизоваться в системе. Возможные причины:
+            AeonMessenger - это Telegram Mini App, который работает только внутри Telegram.
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            <strong>Как правильно запустить приложение:</strong>
           </Typography>
           <Typography variant="body2" component="ul" sx={{ pl: 2, mb: 2 }}>
-            <li>Приложение запущено не из Telegram</li>
-            <li>Истек срок действия сессии</li>
-            <li>Проблемы с сетевым подключением</li>
-            <li>Сервер временно недоступен</li>
+            <li>Откройте Telegram (мобильное приложение или веб-версию)</li>
+            <li>Найдите бота или мини-приложение AeonMessenger</li>
+            <li>Нажмите на кнопку "Запустить" или "Open App"</li>
+            <li>Приложение откроется с правильной авторизацией</li>
           </Typography>
-          <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-            Решение:
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            <strong>Если вы разработчик:</strong>
           </Typography>
-          <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
-            <li>Убедитесь, что приложение открыто в Telegram</li>
-            <li>Проверьте интернет-соединение</li>
-            <li>Перезапустите приложение через меню Telegram</li>
-            <li>Если проблема повторяется, обратитесь в поддержку</li>
+          <Typography variant="body2" component="ul" sx={{ pl: 2, mb: 2 }}>
+            <li>Убедитесь, что приложение настроено как Telegram Mini App</li>
+            <li>Проверьте конфигурацию Telegram Bot</li>
+            <li>Используйте Telegram Developer Tools для тестирования</li>
           </Typography>
         </Alert>
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -188,13 +193,15 @@ const AeonMessenger: React.FC = () => {
               },
             }}
           >
-            Перезагрузить приложение
+            🔄 Перезагрузить приложение
           </Button>
           <Button
             variant="outlined"
             onClick={() => {
               if (window.Telegram?.WebApp) {
                 window.Telegram.WebApp.close();
+              } else {
+                window.history.back();
               }
             }}
             sx={{
@@ -206,7 +213,7 @@ const AeonMessenger: React.FC = () => {
               },
             }}
           >
-            Закрыть приложение
+            ⬅️ Назад
           </Button>
         </Box>
       </Box>

@@ -41,9 +41,9 @@ export const useAeonMessenger = () => {
       console.error('Error loading current user:', err);
       
       // Проверяем, является ли это ошибкой авторизации
-      if (err.response?.status === 401) {
+      if (err.response?.status === 401 || err.isAuthError) {
         setIsAuthError(true);
-        setError('Ошибка авторизации. Пожалуйста, перезапустите приложение из Telegram.');
+        setError('Приложение должно быть открыто из Telegram для корректной работы');
       } else {
         setError('Ошибка загрузки данных пользователя');
       }
@@ -86,27 +86,11 @@ export const useAeonMessenger = () => {
     } catch (err: any) {
       console.error('Error loading chats:', err);
       
-      if (err.response?.status === 401) {
+      if (err.response?.status === 401 || err.isAuthError) {
         setIsAuthError(true);
-        setError('Ошибка авторизации. Пожалуйста, перезапустите приложение из Telegram.');
+        setError('Приложение должно быть открыто из Telegram для корректной работы');
       } else {
         setError('Ошибка загрузки чатов');
-      }
-      
-      // Используем мок данные для разработки
-      if (!isTelegramWebApp()) {
-        setChats([
-          {
-            id: 1,
-            title: 'ÆON Assistant',
-            chat_type: 'private',
-            photo_url: undefined,
-            last_message: 'Добро пожаловать в ÆON Messenger!',
-            last_message_time: new Date().toISOString(),
-            unread_count: 0,
-          },
-        ]);
-        setIsAuthError(false);
       }
     } finally {
       setLoading(false);
@@ -124,38 +108,11 @@ export const useAeonMessenger = () => {
     } catch (err: any) {
       console.error('Error loading messages:', err);
       
-      if (err.response?.status === 401) {
+      if (err.response?.status === 401 || err.isAuthError) {
         setIsAuthError(true);
-        setError('Ошибка авторизации. Пожалуйста, перезапустите приложение из Telegram.');
+        setError('Приложение должно быть открыто из Telegram для корректной работы');
       } else {
         setError('Ошибка загрузки сообщений');
-      }
-      
-      // Используем мок данные для разработки
-      if (!isTelegramWebApp()) {
-        setMessages([
-          {
-            id: 1,
-            text: 'Добро пожаловать в ÆON Messenger! Это новая версия чата с полной функциональностью.',
-            message_type: 'text',
-            chat_id: chatId,
-            sender_id: 1,
-            sender: {
-              id: 1,
-              telegram_id: 1,
-              username: 'aeon_bot',
-              first_name: 'ÆON',
-              last_name: 'Assistant',
-              profile_photo_url: undefined,
-            },
-            is_edited: false,
-            is_deleted: false,
-            read_by: [],
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-        ]);
-        setIsAuthError(false);
       }
     } finally {
       setMessagesLoading(false);
