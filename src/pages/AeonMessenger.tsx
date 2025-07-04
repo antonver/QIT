@@ -29,7 +29,6 @@ import {
   Chat as ChatIcon,
   Person as PersonIcon,
   Info as InfoIcon,
-  Group as GroupIcon,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import backgroundImage from '../assets/background.png';
@@ -45,7 +44,6 @@ const AeonMessenger: React.FC = () => {
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   const [newChatTitle, setNewChatTitle] = useState('');
   const [newChatMembers, setNewChatMembers] = useState('');
-  const [newChatType, setNewChatType] = useState<'private' | 'group'>('group');
   const [showDiagnosticModal, setShowDiagnosticModal] = useState(false);
   const [showChatInfoDialog, setShowChatInfoDialog] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -109,7 +107,6 @@ const AeonMessenger: React.FC = () => {
       await createNewChat(newChatTitle.trim(), memberIds);
       setNewChatTitle('');
       setNewChatMembers('');
-      setNewChatType('group');
       setShowNewChatDialog(false);
     } catch (err) {
       console.error('Error creating chat:', err);
