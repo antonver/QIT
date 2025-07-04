@@ -28,11 +28,40 @@ logApiConfig();
 // Create axios instance for Aeon Messenger API
 const aeonApi = axios.create({
   baseURL: 'https://aeon-backend-2892-d50dfbe26b14.herokuapp.com',
-  timeout: 10000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+// Функция для retry запросов
+const retryRequest = async <T>(
+  request: () => Promise<T>,
+  maxRetries: number = 3,
+  delay: number = 1000
+): Promise<T> => {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await request();
+    } catch (error: any) {
+      console.log(`Attempt ${i + 1} failed:`, error.message);
+      
+      // Не повторяем для ошибок авторизации
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        throw error;
+      }
+      
+      // Последняя попытка - выбрасываем ошибку
+      if (i === maxRetries - 1) {
+        throw error;
+      }
+      
+      // Ждем перед следующей попыткой
+      await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+    }
+  }
+  throw new Error('Max retries reached');
+};
 
 // Request interceptor to add Telegram init data
 aeonApi.interceptors.request.use(
@@ -103,18 +132,54 @@ aeonApi.interceptors.response.use(
       throw enhancedError;
     }
     
+    // Обработка timeout ошибок
+    if (error.code === 'ECONNABORTED' && error.message.includes('timeout')) {
+      console.error('❌ Request timeout');
+      console.error('❌ Possible reasons:');
+      console.error('   1. Server is starting up (cold start)');
+      console.error('   2. Server is overloaded');
+      console.error('   3. Network connectivity issues');
+      console.error('❌ Solution: Try again in a moment');
+      
+      const enhancedError = {
+        ...error,
+        message: 'Server is starting up, please try again in a moment',
+        isTimeoutError: true,
+      };
+      
+      throw enhancedError;
+    }
+    
+    // Обработка 503 ошибок
+    if (error.response?.status === 503) {
+      console.error('❌ Service Unavailable');
+      console.error('❌ Server is temporarily unavailable');
+      
+      const enhancedError = {
+        ...error,
+        message: 'Server is temporarily unavailable, please try again',
+        isServiceError: true,
+      };
+      
+      throw enhancedError;
+    }
+    
     throw error;
   }
 );
 
 // Chat API methods
 export const getChats = async (): Promise<AeonChatList[]> => {
-  const response = await aeonApi.get<AeonChatList[]>('/api/v1/chats/');
+  const response = await retryRequest(() => aeonApi.get<AeonChatList[]>('/api/v1/chats/'));
   return response.data;
 };
 
 export const createChat = async (chatData: AeonChatCreate): Promise<AeonChat> => {
-  const response = await aeonApi.post<AeonChat>('/api/v1/chats/', chatData);
+  const response = await retryRequest(() => 
+    aeonApi.post<AeonChat>('/api/v1/chats/', chatData, {
+      timeout: 60000, // 60 секунд для создания чата
+    })
+  );
   return response.data;
 };
 

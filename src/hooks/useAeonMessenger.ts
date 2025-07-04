@@ -100,6 +100,10 @@ export const useAeonMessenger = () => {
       if (err.response?.status === 401 || err.isAuthError) {
         setIsAuthError(true);
         setError('Приложение должно быть открыто из Telegram для корректной работы');
+      } else if (err.isTimeoutError || err.code === 'ECONNABORTED') {
+        setError('⏱️ Сервер запускается, попробуйте обновить страницу через минуту');
+      } else if (err.isServiceError || err.response?.status === 503) {
+        setError('🔧 Сервер временно недоступен, попробуйте через несколько минут');
       } else {
         setError('Ошибка загрузки чатов');
       }
@@ -122,6 +126,10 @@ export const useAeonMessenger = () => {
       if (err.response?.status === 401 || err.isAuthError) {
         setIsAuthError(true);
         setError('Приложение должно быть открыто из Telegram для корректной работы');
+      } else if (err.isTimeoutError || err.code === 'ECONNABORTED') {
+        setError('⏱️ Сервер запускается, сообщения загрузятся автоматически');
+      } else if (err.isServiceError || err.response?.status === 503) {
+        setError('🔧 Сервер временно недоступен, попробуйте обновить чат');
       } else {
         setError('Ошибка загрузки сообщений');
       }
