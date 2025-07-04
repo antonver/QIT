@@ -25,7 +25,6 @@ import {
   selectMessagesLoading,
   selectMessagesError,
   selectLastMessageId,
-  selectSessionInfo,
   selectMessagesCount,
 } from '../store/messagesSlice';
 import type {
@@ -63,7 +62,6 @@ export const useAeonMessengerWithRedux = () => {
   const lastMessageId = useAppSelector(state => 
     currentChat ? selectLastMessageId(state, currentChat.id) : 0
   );
-  const sessionInfo = useAppSelector(selectSessionInfo);
   const totalMessagesCount = useAppSelector(selectMessagesCount);
 
   // Проверяем доступность Telegram WebApp
