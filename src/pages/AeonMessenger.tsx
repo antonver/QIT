@@ -537,18 +537,9 @@ const AeonMessenger: React.FC = () => {
             backgroundImage: `url(${backgroundImage})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: 'rgba(35, 43, 59, 0.8)',
-              pointerEvents: 'none',
-            },
+            backgroundBlendMode: 'overlay',
           }}>
-            <Box sx={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
+            <Box sx={{ textAlign: 'center' }}>
               <ChatIcon sx={{ fontSize: 80, color: '#4a9eff', mb: 2 }} />
               <Typography variant="h5" sx={{ mb: 1, color: 'white' }}>
                 Выберите чат
@@ -688,17 +679,6 @@ const AeonMessenger: React.FC = () => {
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundAttachment: 'local',
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: 'rgba(35, 43, 59, 0.8)',
-                pointerEvents: 'none',
-                zIndex: 0,
-              },
               position: 'relative',
               '&::-webkit-scrollbar': {
                 width: isMobile ? '3px' : '6px',
@@ -715,13 +695,13 @@ const AeonMessenger: React.FC = () => {
               },
             }}>
               {error && (
-                <Alert severity="error" sx={{ mb: isMobile ? 1 : 2, zIndex: 1, position: 'relative' }}>
+                <Alert severity="error" sx={{ mb: isMobile ? 1 : 2 }}>
                   {error}
                 </Alert>
               )}
 
               {messagesLoading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: isMobile ? 2 : 4, zIndex: 1, position: 'relative' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: isMobile ? 2 : 4 }}>
                   <CircularProgress sx={{ color: '#4a9eff' }} />
                 </Box>
               ) : (
@@ -737,8 +717,6 @@ const AeonMessenger: React.FC = () => {
                         display: 'flex',
                         justifyContent: isMyMessage(message) ? 'flex-end' : 'flex-start',
                         marginBottom: isMobile ? '8px' : '12px',
-                        position: 'relative',
-                        zIndex: 1,
                       }}
                     >
                       <Box
@@ -795,7 +773,7 @@ const AeonMessenger: React.FC = () => {
                   ))}
                 </AnimatePresence>
               )}
-              <div ref={messagesEndRef} style={{ position: 'relative', zIndex: 1 }} />
+              <div ref={messagesEndRef} />
             </Box>
 
             {/* Поле ввода */}

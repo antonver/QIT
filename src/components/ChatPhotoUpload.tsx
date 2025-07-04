@@ -65,6 +65,7 @@ export const ChatPhotoUpload: React.FC<ChatPhotoUploadProps> = ({
       setUploading(true);
       setError(null);
 
+      console.log('Загружаем файл:', file.name, file.size, file.type);
       const response = await uploadMedia(file);
       
       // Обновляем URL фото
@@ -74,7 +75,28 @@ export const ChatPhotoUpload: React.FC<ChatPhotoUploadProps> = ({
       console.log('Фото успешно загружено:', response.media_url);
     } catch (err: any) {
       console.error('Error uploading photo:', err);
-      setError('Ошибка загрузки фото');
+      
+      let errorMessage = 'Ошибка загрузки фото';
+      
+      // Более детальная обработка ошибок
+      if (err.response?.status === 405) {
+        errorMessage = 'Загрузка фото временно недоступна';
+        console.warn('405 Error: uploadMedia endpoint may not be available');
+      } else if (err.response?.status === 413) {
+        errorMessage = 'Файл слишком большой';
+      } else if (err.response?.status === 422) {
+        errorMessage = 'Неподдерживаемый формат файла';
+      } else if (err.response?.status === 401) {
+        errorMessage = 'Ошибка авторизации';
+      } else if (err.isAuthError) {
+        errorMessage = 'Требуется авторизация в Telegram';
+      } else if (err.code === 'ECONNABORTED') {
+        errorMessage = 'Превышено время ожидания';
+      } else if (err.response?.status >= 500) {
+        errorMessage = 'Ошибка сервера, попробуйте позже';
+      }
+      
+      setError(errorMessage);
       
       // Возвращаем предыдущий URL
       setPreviewUrl(currentPhotoUrl || null);
@@ -210,14 +232,19 @@ export const ChatPhotoUpload: React.FC<ChatPhotoUploadProps> = ({
         Нажмите на аватар или кнопку для выбора фото
         <br />
         Максимальный размер: 5MB
+        {error && (
+          <>
+            <br />
+            <span style={{ color: '#f44336' }}>
+              {error}
+            </span>
+            <br />
+            <span style={{ color: '#8b95a1' }}>
+              Чат можно создать и без фото
+            </span>
+          </>
+        )}
       </Typography>
-
-      {/* Ошибка */}
-      {error && (
-        <Typography variant="caption" sx={{ color: '#f44336', textAlign: 'center' }}>
-          {error}
-        </Typography>
-      )}
 
       {/* Скрытый input для выбора файла */}
       <input

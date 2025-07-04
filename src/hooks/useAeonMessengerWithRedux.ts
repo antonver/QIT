@@ -333,7 +333,8 @@ export const useAeonMessengerWithRedux = () => {
         title,
         chat_type: (memberIds.length + memberUsernames.length) > 0 ? 'group' : 'private',
         member_ids: memberIds,
-        photo_url: photoUrl,
+        // Добавляем photo_url только если он действительно есть
+        ...(photoUrl && { photo_url: photoUrl }),
       };
 
       const newChat = await createChat(chatData);

@@ -240,15 +240,33 @@ export const markAllMessagesAsRead = async (chatId: number): Promise<void> => {
 };
 
 export const uploadMedia = async (file: File): Promise<{ media_url: string }> => {
+  console.log('uploadMedia: Starting upload for file:', file.name, file.size, file.type);
+  
   const formData = new FormData();
   formData.append('file', file);
   
-  const response = await aeonApi.post<{ media_url: string }>('/api/v1/messages/upload-media', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-  return response.data;
+  try {
+    const response = await aeonApi.post<{ media_url: string }>('/api/v1/messages/upload-media', formData, {
+      headers: {
+        // Не устанавливаем Content-Type - пусть браузер сам установит с boundary
+      },
+      timeout: 60000, // 60 секунд для загрузки файлов
+    });
+    
+    console.log('uploadMedia: Upload successful:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('uploadMedia: Upload failed:', error);
+    
+    // Более детальная информация об ошибке
+    if (error.response) {
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', error.response.data);
+      console.error('Response headers:', error.response.headers);
+    }
+    
+    throw error;
+  }
 };
 
 export const forwardMessage = async (messageId: number, chatId: number): Promise<void> => {
