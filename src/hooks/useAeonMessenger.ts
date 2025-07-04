@@ -96,7 +96,17 @@ export const useAeonMessenger = () => {
     try {
       setLoading(true);
       const chatsData = await getChats();
-      setChats(chatsData);
+      // Сортируем чаты по времени последнего сообщения (самые новые сверху)
+      const sortedChats = chatsData.sort((a, b) => {
+        // Если у чата нет последнего сообщения, ставим его в конец
+        if (!a.last_message_time && !b.last_message_time) return 0;
+        if (!a.last_message_time) return 1;
+        if (!b.last_message_time) return -1;
+        
+        // Сравниваем времена (более новые сверху)
+        return new Date(b.last_message_time).getTime() - new Date(a.last_message_time).getTime();
+      });
+      setChats(sortedChats);
       setError(null);
       setIsAuthError(false);
     } catch (err: any) {
@@ -121,7 +131,17 @@ export const useAeonMessenger = () => {
   const refreshChats = useCallback(async () => {
     try {
       const chatsData = await getChats();
-      setChats(chatsData);
+      // Сортируем чаты по времени последнего сообщения (самые новые сверху)
+      const sortedChats = chatsData.sort((a, b) => {
+        // Если у чата нет последнего сообщения, ставим его в конец
+        if (!a.last_message_time && !b.last_message_time) return 0;
+        if (!a.last_message_time) return 1;
+        if (!b.last_message_time) return -1;
+        
+        // Сравниваем времена (более новые сверху)
+        return new Date(b.last_message_time).getTime() - new Date(a.last_message_time).getTime();
+      });
+      setChats(sortedChats);
       setError(null);
       setIsAuthError(false);
     } catch (err: any) {
@@ -217,12 +237,23 @@ export const useAeonMessenger = () => {
       setMessages(prev => [...prev, newMessage]);
       setLastMessageId(newMessage.id);
       
-      // Обновляем список чатов
-      setChats(prev => prev.map(chat => 
-        chat.id === chatId 
-          ? { ...chat, last_message: text.trim(), last_message_time: new Date().toISOString() }
-          : chat
-      ));
+      // Обновляем список чатов и пересортируем
+      setChats(prev => {
+        const updatedChats = prev.map(chat => 
+          chat.id === chatId 
+            ? { ...chat, last_message: text.trim(), last_message_time: new Date().toISOString() }
+            : chat
+        );
+        
+        // Сортируем чаты по времени последнего сообщения (самые новые сверху)
+        return updatedChats.sort((a, b) => {
+          if (!a.last_message_time && !b.last_message_time) return 0;
+          if (!a.last_message_time) return 1;
+          if (!b.last_message_time) return -1;
+          
+          return new Date(b.last_message_time).getTime() - new Date(a.last_message_time).getTime();
+        });
+      });
     } catch (err) {
       console.error('Error sending message:', err);
       setError('Ошибка отправки сообщения');
@@ -251,6 +282,23 @@ export const useAeonMessenger = () => {
         };
         setMessages(prev => [...prev, mockMessage]);
         setLastMessageId(mockMessage.id);
+        
+        // Обновляем и пересортируем чаты даже для мок сообщений
+        setChats(prev => {
+          const updatedChats = prev.map(chat => 
+            chat.id === chatId 
+              ? { ...chat, last_message: text.trim(), last_message_time: new Date().toISOString() }
+              : chat
+          );
+          
+          return updatedChats.sort((a, b) => {
+            if (!a.last_message_time && !b.last_message_time) return 0;
+            if (!a.last_message_time) return 1;
+            if (!b.last_message_time) return -1;
+            
+            return new Date(b.last_message_time).getTime() - new Date(a.last_message_time).getTime();
+          });
+        });
       }
     }
   }, [currentUser]);
