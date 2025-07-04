@@ -26,7 +26,6 @@ import {
   Send as SendIcon,
   Add as AddIcon,
   Chat as ChatIcon,
-  Person as PersonIcon,
   Info as InfoIcon,
   ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
@@ -807,8 +806,6 @@ const AeonMessenger: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
-
 
       {/* Модальное окно диагностики */}
       <DiagnosticModal 

@@ -317,7 +317,7 @@ const ChatInfoDialog: React.FC<ChatInfoDialogProps> = ({
                         '&:hover fieldset': { borderColor: '#4a9eff' },
                         '&.Mui-focused fieldset': { borderColor: '#4a9eff' },
                       },
-                    },
+                    }}
                   />
                   <Button
                     variant="contained"
@@ -348,7 +348,7 @@ const ChatInfoDialog: React.FC<ChatInfoDialogProps> = ({
                         '&:hover fieldset': { borderColor: '#4a9eff' },
                         '&.Mui-focused fieldset': { borderColor: '#4a9eff' },
                       },
-                    },
+                    }}
                   />
                   <Button
                     variant="contained"
