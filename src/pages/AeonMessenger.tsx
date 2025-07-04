@@ -32,6 +32,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import backgroundImage from '../assets/background.png';
 import { useAeonMessenger } from '../hooks/useAeonMessenger';
+import DiagnosticModal from '../components/DiagnosticModal';
 import type { AeonMessage } from '../types/api';
 
 const AeonMessenger: React.FC = () => {
@@ -40,6 +41,7 @@ const AeonMessenger: React.FC = () => {
   const [inputValue, setInputValue] = useState('');
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   const [newChatTitle, setNewChatTitle] = useState('');
+  const [showDiagnosticModal, setShowDiagnosticModal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -159,30 +161,40 @@ const AeonMessenger: React.FC = () => {
             🚫 Ошибка авторизации
           </Typography>
           <Typography variant="body1" sx={{ mb: 2, fontWeight: 'bold' }}>
-            Приложение должно быть открыто из Telegram
+            Проблема с авторизацией на сервере
           </Typography>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            AeonMessenger - это Telegram Mini App, который работает только внутри Telegram.
-          </Typography>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            <strong>Как правильно запустить приложение:</strong>
+            Сервер отклоняет авторизацию. Возможные причины:
           </Typography>
           <Typography variant="body2" component="ul" sx={{ pl: 2, mb: 2 }}>
-            <li>Откройте Telegram (мобильное приложение или веб-версию)</li>
-            <li>Найдите бота или мини-приложение AeonMessenger</li>
-            <li>Нажмите на кнопку "Запустить" или "Open App"</li>
-            <li>Приложение откроется с правильной авторизацией</li>
+            <li>На сервере не настроен токен Telegram бота</li>
+            <li>Неправильный или истёкший токен бота</li>
+            <li>Проблема с подписью данных авторизации</li>
+            <li>Приложение запущено не из Telegram</li>
           </Typography>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            <strong>Если вы разработчик:</strong>
+            <strong>Что делать:</strong>
           </Typography>
           <Typography variant="body2" component="ul" sx={{ pl: 2, mb: 2 }}>
-            <li>Убедитесь, что приложение настроено как Telegram Mini App</li>
-            <li>Проверьте конфигурацию Telegram Bot</li>
-            <li>Используйте Telegram Developer Tools для тестирования</li>
+            <li>Нажмите "Диагностика" для подробной проверки</li>
+            <li>Убедитесь, что приложение открыто из Telegram</li>
+            <li>Если вы администратор - проверьте настройки сервера</li>
+            <li>Если проблема повторяется - обратитесь в поддержку</li>
           </Typography>
         </Alert>
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <Button
+            variant="contained"
+            onClick={() => setShowDiagnosticModal(true)}
+            sx={{
+              bgcolor: '#f44336',
+              '&:hover': {
+                bgcolor: '#d32f2f',
+              },
+            }}
+          >
+            🔬 Диагностика проблемы
+          </Button>
           <Button
             variant="contained"
             onClick={() => window.location.reload()}
@@ -709,6 +721,12 @@ const AeonMessenger: React.FC = () => {
           <PersonIcon />
         </Fab>
       )}
+
+      {/* Модальное окно диагностики */}
+      <DiagnosticModal 
+        open={showDiagnosticModal} 
+        onClose={() => setShowDiagnosticModal(false)} 
+      />
     </Box>
   );
 };
