@@ -298,49 +298,58 @@ const DashboardLayoutBasic = memo(() => {
             </motion.div>
 
             <Box sx={{ flex: 1, ml: `${currentSidebarWidth}px`, minWidth: 0 }}>
-                <AppBar
-                    position="fixed"
-                    sx={{
-                        zIndex: 1200,
-                        backgroundColor: 'rgba(35, 43, 59, 0.95)', // Унифицированный цвет как у Drawer
-                        backdropFilter: 'blur(20px)',
-                        boxShadow: '0 2px 20px rgba(0,0,0,0.1)',
-                        left: currentSidebarWidth,
-                        width: `calc(100% - ${currentSidebarWidth}px)`,
-                        borderBottom: '1px solid rgba(255,255,255,0.1)',
-                        transition: 'all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.0)'
-                    }}
-                >
-                    <Toolbar sx={{ minHeight: isMobile ? '56px' : '64px' }}>
-                        <motion.div
-                            key={location.pathname}
-                            initial={{ x: -10 }}
-                            animate={{ x: 0 }}
-                            transition={{ duration: 0.3 }}
-                            style={{ display: 'flex', alignItems: 'center' }}
-                        >
-                            {logo}
-                        </motion.div>
-                        <motion.div
-                            key={brand}
-                            initial={{ x: 10 }}
-                            animate={{ x: 0 }}
-                            transition={{ duration: 0.3, delay: 0.1 }}
-                        >
-                            <Box sx={{
-                                ml: 2,
-                                color: 'white',
-                                fontSize: isMobile ? '1.2rem' : '1.5rem',
-                                fontWeight: 500,
-                                textShadow: '0 2px 4px rgba(0,0,0,0.3)'
-                            }}>
-                                {brand}
-                            </Box>
-                        </motion.div>
-                    </Toolbar>
-                </AppBar>
+                {/* Скрываем AppBar для AeonMessenger */}
+                {location.pathname !== '/aeon-messenger' && (
+                    <AppBar
+                        position="fixed"
+                        sx={{
+                            zIndex: 1200,
+                            backgroundColor: 'rgba(35, 43, 59, 0.95)', // Унифицированный цвет как у Drawer
+                            backdropFilter: 'blur(20px)',
+                            boxShadow: '0 2px 20px rgba(0,0,0,0.1)',
+                            left: currentSidebarWidth,
+                            width: `calc(100% - ${currentSidebarWidth}px)`,
+                            borderBottom: '1px solid rgba(255,255,255,0.1)',
+                            transition: 'all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1.0)'
+                        }}
+                    >
+                        <Toolbar sx={{ minHeight: isMobile ? '56px' : '64px' }}>
+                            <motion.div
+                                key={location.pathname}
+                                initial={{ x: -10 }}
+                                animate={{ x: 0 }}
+                                transition={{ duration: 0.3 }}
+                                style={{ display: 'flex', alignItems: 'center' }}
+                            >
+                                {logo}
+                            </motion.div>
+                            <motion.div
+                                key={brand}
+                                initial={{ x: 10 }}
+                                animate={{ x: 0 }}
+                                transition={{ duration: 0.3, delay: 0.1 }}
+                            >
+                                <Box sx={{
+                                    ml: 2,
+                                    color: 'white',
+                                    fontSize: isMobile ? '1.2rem' : '1.5rem',
+                                    fontWeight: 500,
+                                    textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                                }}>
+                                    {brand}
+                                </Box>
+                            </motion.div>
+                        </Toolbar>
+                    </AppBar>
+                )}
                 {/* Контент приложения */}
-                <Box sx={{ pt: isMobile ? 7 : 8, pl: 0, pr: 0, height: '100vh', overflowY: 'auto' }}>
+                <Box sx={{ 
+                    pt: location.pathname === '/aeon-messenger' ? 0 : (isMobile ? 7 : 8), 
+                    pl: 0, 
+                    pr: 0, 
+                    height: '100vh', 
+                    overflowY: 'auto' 
+                }}>
                     <LazyPageLoader>
                         <Routes>
                             <Route path="/" element={<Home />} />

@@ -13,15 +13,20 @@ import {
 import { initTelegramWebApp, isTelegramWebApp, getTelegramUser } from '../utils/telegram';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import {
+  initSession,
+  endSession,
   loadMessages as loadMessagesAction,
   addMessage,
   addMessages,
   setLoading as setMessagesLoading,
   setError as setMessagesError,
+  optimizeStorage,
   selectMessagesByChat,
   selectMessagesLoading,
   selectMessagesError,
   selectLastMessageId,
+  selectSessionInfo,
+  selectMessagesCount,
 } from '../store/messagesSlice';
 import type {
   AeonChatList,
@@ -43,7 +48,6 @@ export const useAeonMessengerWithRedux = () => {
   const [isAuthError, setIsAuthError] = useState(false);
 
   // Автоматическое обновление
-  const [autoRefresh, setAutoRefresh] = useState(true);
   const [hasNewMessages, setHasNewMessages] = useState(false);
 
   // Получаем сообщения из Redux для текущего чата
@@ -59,11 +63,54 @@ export const useAeonMessengerWithRedux = () => {
   const lastMessageId = useAppSelector(state => 
     currentChat ? selectLastMessageId(state, currentChat.id) : 0
   );
+  const sessionInfo = useAppSelector(selectSessionInfo);
+  const totalMessagesCount = useAppSelector(selectMessagesCount);
 
   // Проверяем доступность Telegram WebApp
   const checkTelegramWebApp = useCallback(() => {
     return initTelegramWebApp();
   }, []);
+
+  // Инициализируем сессию при запуске
+  useEffect(() => {
+    dispatch(initSession());
+    console.log('📱 Сессия инициализирована');
+  }, [dispatch]);
+
+  // Периодическая оптимизация хранилища
+  useEffect(() => {
+    const optimizeInterval = setInterval(() => {
+      if (totalMessagesCount > 5000) { // Если сообщений больше 5000
+        dispatch(optimizeStorage({ maxMessagesPerChat: 500, maxChatAge: 6 * 60 * 60 * 1000 })); // 6 часов
+        console.log('🧹 Хранилище оптимизировано, сообщений было:', totalMessagesCount);
+      }
+    }, 10 * 60 * 1000); // Каждые 10 минут
+
+    return () => clearInterval(optimizeInterval);
+  }, [dispatch, totalMessagesCount]);
+
+  // Завершаем сессию при закрытии приложения
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      dispatch(endSession());
+      console.log('📱 Сессия завершена');
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Страница скрыта - можем оптимизировать
+        dispatch(optimizeStorage({ maxMessagesPerChat: 1000 }));
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [dispatch]);
 
   // Загружаем информацию о пользователе
   const loadCurrentUser = useCallback(async () => {
@@ -76,8 +123,13 @@ export const useAeonMessengerWithRedux = () => {
       // Проверяем и активируем приглашения при входе
       try {
         await checkAndAcceptInvitations();
-      } catch (err) {
-        console.log('No pending invitations or error checking invitations:', err);
+      } catch (err: any) {
+        // 404 ошибка означает что endpoint не существует - это нормально
+        if (err.response?.status === 404) {
+          console.log('Check invitations endpoint not available (404) - skipping');
+        } else {
+          console.log('No pending invitations or error checking invitations:', err);
+        }
       }
     } catch (err: any) {
       console.error('Error loading current user:', err);
@@ -455,41 +507,46 @@ export const useAeonMessengerWithRedux = () => {
 
   // Автоматическое обновление списка чатов каждые 30 секунд
   useEffect(() => {
-    if (!autoRefresh || isAuthError) return;
+    if (isAuthError) return;
     
     const chatsInterval = setInterval(() => {
       refreshChats();
     }, 30000);
     
     return () => clearInterval(chatsInterval);
-  }, [autoRefresh, isAuthError, refreshChats]);
+  }, [isAuthError, refreshChats]);
 
   // Автоматическое обновление сообщений в текущем чате каждые 5 секунд
   useEffect(() => {
-    if (!autoRefresh || !currentChat || isAuthError) return;
+    if (!currentChat || isAuthError) return;
     
     const messagesInterval = setInterval(() => {
       checkNewMessages(currentChat.id);
     }, 5000);
     
     return () => clearInterval(messagesInterval);
-  }, [autoRefresh, currentChat, isAuthError, checkNewMessages]);
+  }, [currentChat, isAuthError, checkNewMessages]);
 
   // Проверка приглашений каждые 2 минуты
   useEffect(() => {
-    if (!autoRefresh || isAuthError) return;
+    if (isAuthError) return;
     
     const invitationsInterval = setInterval(async () => {
       try {
         await checkAndAcceptInvitations();
         refreshChats();
-      } catch (err) {
-        console.log('No new invitations or error:', err);
+      } catch (err: any) {
+        // 404 ошибка означает что endpoint не существует - это нормально
+        if (err.response?.status === 404) {
+          console.log('Check invitations endpoint not available (404) - skipping');
+        } else {
+          console.log('No new invitations or error:', err);
+        }
       }
     }, 120000);
     
     return () => clearInterval(invitationsInterval);
-  }, [autoRefresh, isAuthError, refreshChats]);
+  }, [isAuthError, refreshChats]);
 
   return {
     chats,
@@ -500,8 +557,7 @@ export const useAeonMessengerWithRedux = () => {
     messagesLoading,
     error: error || messagesError,
     isAuthError,
-    autoRefresh,
-    setAutoRefresh,
+
     hasNewMessages,
     markMessagesAsViewed,
     sendNewMessage,

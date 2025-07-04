@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -7,11 +7,23 @@ import {
   Button,
   Typography,
   Box,
-  CircularProgress,
   Alert,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
   Chip,
+  Divider,
+  CircularProgress,
 } from '@mui/material';
-import { diagnoseServerAuth } from '../utils/telegram';
+import {
+  ExpandMore as ExpandMoreIcon,
+  Warning as WarningIcon,
+  CheckCircle as CheckCircleIcon,
+  Error as ErrorIcon,
+  Info as InfoIcon,
+} from '@mui/icons-material';
+import { healthCheck, debugAuthConfig, debugValidateTelegramData } from '../services/aeonMessengerApi';
+import { getTelegramInitData, isTelegramWebApp } from '../utils/telegram';
 
 interface DiagnosticModalProps {
   open: boolean;
@@ -19,206 +31,320 @@ interface DiagnosticModalProps {
 }
 
 interface DiagnosticResult {
-  status: string;
-  serverConfig?: any;
-  validationResult?: any;
-  recommendations: string[];
+  name: string;
+  status: 'success' | 'error' | 'warning' | 'info' | 'loading';
+  message: string;
+  details?: string;
+  suggestions?: string[];
 }
 
 const DiagnosticModal: React.FC<DiagnosticModalProps> = ({ open, onClose }) => {
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<DiagnosticResult | null>(null);
+  const [results, setResults] = useState<DiagnosticResult[]>([]);
+  const [isRunning, setIsRunning] = useState(false);
 
-  const runDiagnostic = async () => {
-    setLoading(true);
-    setResult(null);
+  const runDiagnostics = async () => {
+    setIsRunning(true);
+    const diagnosticResults: DiagnosticResult[] = [];
 
+    // 1. Проверка Telegram WebApp
     try {
-      const status = await diagnoseServerAuth();
-      
-      // Get additional info from console logs
-      const { debugAuthConfig, debugValidateTelegramData } = await import('../services/aeonMessengerApi');
-      const { getTelegramInitData } = await import('../utils/telegram');
-      
-      let serverConfig;
-      let validationResult;
-      let recommendations: string[] = [];
-
-      try {
-        serverConfig = await debugAuthConfig();
-      } catch (e) {
-        serverConfig = { error: 'Не удалось получить конфигурацию сервера' };
-      }
-
-      const initData = getTelegramInitData();
-      if (initData) {
-        try {
-          validationResult = await debugValidateTelegramData(initData);
-        } catch (e) {
-          validationResult = { error: 'Не удалось протестировать валидацию' };
-        }
-      }
-
-      // Generate recommendations based on status
-      switch (status) {
-        case 'server_no_token':
-          recommendations = [
-            'Администратор должен установить переменную TELEGRAM_BOT_TOKEN на сервере',
-            'Получите токен в @BotFather и добавьте его в настройки Heroku',
-            'Перезапустите приложение после установки токена'
-          ];
-          break;
-        case 'validation_failed':
-          recommendations = [
-            'Проверьте правильность токена бота в @BotFather',
-            'Убедитесь, что приложение открыто из Telegram',
-            'Токен должен соответствовать боту, через который открыто приложение'
-          ];
-          break;
-        case 'validation_success':
-          recommendations = [
-            'Валидация прошла успешно, проблема может быть временной',
-            'Попробуйте перезагрузить приложение',
-            'Проверьте интернет-соединение'
-          ];
-          break;
-        default:
-          recommendations = [
-            'Убедитесь, что приложение открыто из Telegram',
-            'Проверьте интернет-соединение',
-            'Обратитесь к администратору с результатами диагностики'
-          ];
-      }
-
-      setResult({
-        status,
-        serverConfig,
-        validationResult,
-        recommendations
+      const isTelegram = isTelegramWebApp();
+      diagnosticResults.push({
+        name: 'Telegram WebApp',
+        status: isTelegram ? 'success' : 'warning',
+        message: isTelegram 
+          ? 'Приложение запущено в Telegram WebApp' 
+          : 'Приложение запущено вне Telegram (режим разработки)',
+        details: isTelegram 
+          ? 'Все функции Telegram WebApp доступны'
+          : 'Некоторые функции могут работать с ограничениями',
+        suggestions: !isTelegram ? [
+          'Откройте приложение через Telegram бота',
+          'Проверьте настройки WebApp в боте'
+        ] : undefined
       });
     } catch (error) {
-      setResult({
+      diagnosticResults.push({
+        name: 'Telegram WebApp',
         status: 'error',
-        recommendations: ['Произошла ошибка при диагностике', 'Проверьте консоль браузера для подробностей']
+        message: 'Ошибка при проверке Telegram WebApp',
+        details: error instanceof Error ? error.message : 'Неизвестная ошибка'
       });
-    } finally {
-      setLoading(false);
+    }
+
+    // 2. Проверка инициализационных данных
+    try {
+      const initData = getTelegramInitData();
+      diagnosticResults.push({
+        name: 'Telegram Init Data',
+        status: initData ? 'success' : 'error',
+        message: initData 
+          ? `Данные авторизации найдены (${initData.length} символов)`
+          : 'Данные авторизации отсутствуют',
+        details: initData 
+          ? `Подпись: ${initData.substring(0, 50)}...`
+          : 'Невозможно получить данные для авторизации на сервере',
+        suggestions: !initData ? [
+          'Перезапустите приложение из Telegram',
+          'Проверьте настройки бота',
+          'Убедитесь что WebApp правильно настроен'
+        ] : undefined
+      });
+    } catch (error) {
+      diagnosticResults.push({
+        name: 'Telegram Init Data',
+        status: 'error',
+        message: 'Ошибка при получении данных авторизации',
+        details: error instanceof Error ? error.message : 'Неизвестная ошибка'
+      });
+    }
+
+    // 3. Проверка подключения к серверу
+    try {
+      await healthCheck();
+      diagnosticResults.push({
+        name: 'Подключение к серверу',
+        status: 'success',
+        message: 'Сервер отвечает на запросы',
+        details: 'Health check прошел успешно'
+      });
+    } catch (error: any) {
+      const isMethodError = error.isMethodError || error.response?.status === 405;
+      diagnosticResults.push({
+        name: 'Подключение к серверу',
+        status: isMethodError ? 'warning' : 'error',
+        message: isMethodError 
+          ? 'Сервер доступен, но некоторые endpoints могут не работать (ошибка 405)'
+          : 'Сервер недоступен или не отвечает',
+        details: error.message || 'Неизвестная ошибка сервера',
+        suggestions: isMethodError ? [
+          'Проверьте настройки API на сервере',
+          'Убедитесь что все endpoints правильно настроены',
+          'Свяжитесь с администратором сервера'
+        ] : [
+          'Проверьте подключение к интернету',
+          'Сервер может быть временно недоступен',
+          'Попробуйте позже'
+        ]
+      });
+    }
+
+    // 4. Проверка конфигурации авторизации
+    try {
+      await debugAuthConfig();
+      diagnosticResults.push({
+        name: 'Конфигурация авторизации',
+        status: 'success',
+        message: 'Настройки авторизации на сервере корректны',
+        details: 'Сервер готов к обработке Telegram авторизации'
+      });
+    } catch (error: any) {
+      const isMethodError = error.isMethodError || error.response?.status === 405;
+      diagnosticResults.push({
+        name: 'Конфигурация авторизации',
+        status: isMethodError ? 'warning' : 'error',
+        message: isMethodError 
+          ? 'Endpoint диагностики недоступен (405), но это не критично'
+          : 'Проблема с настройками авторизации на сервере',
+        details: error.message || 'Ошибка при проверке конфигурации',
+        suggestions: isMethodError ? [
+          'Функция диагностики может быть отключена на сервере',
+          'Это не влияет на основную работу приложения'
+        ] : [
+          'Проверьте настройки Telegram бота на сервере',
+          'Убедитесь что TELEGRAM_BOT_TOKEN настроен правильно'
+        ]
+      });
+    }
+
+    // 5. Проверка валидации данных Telegram (если есть initData)
+    const initData = getTelegramInitData();
+    if (initData) {
+      try {
+        await debugValidateTelegramData(initData);
+        diagnosticResults.push({
+          name: 'Валидация Telegram данных',
+          status: 'success',
+          message: 'Данные Telegram проходят валидацию на сервере',
+          details: 'Подпись данных корректна'
+        });
+      } catch (error: any) {
+        const isMethodError = error.isMethodError || error.response?.status === 405;
+        diagnosticResults.push({
+          name: 'Валидация Telegram данных',
+          status: isMethodError ? 'warning' : 'error',
+          message: isMethodError 
+            ? 'Endpoint валидации недоступен (405)'
+            : 'Данные Telegram не проходят валидацию',
+          details: error.message || 'Ошибка валидации данных',
+          suggestions: isMethodError ? [
+            'Endpoint валидации может быть отключен',
+            'Попробуйте основные функции приложения'
+          ] : [
+            'Данные авторизации могли быть повреждены',
+            'Перезапустите приложение из Telegram',
+            'Проверьте настройки бота'
+          ]
+        });
+      }
+    }
+
+    setResults(diagnosticResults);
+    setIsRunning(false);
+  };
+
+  useEffect(() => {
+    if (open) {
+      runDiagnostics();
+    }
+  }, [open]);
+
+  const getStatusIcon = (status: DiagnosticResult['status']) => {
+    switch (status) {
+      case 'success': return <CheckCircleIcon sx={{ color: '#4CAF50' }} />;
+      case 'error': return <ErrorIcon sx={{ color: '#f44336' }} />;
+      case 'warning': return <WarningIcon sx={{ color: '#ff9800' }} />;
+      case 'loading': return <CircularProgress size={24} />;
+      default: return <InfoIcon sx={{ color: '#2196f3' }} />;
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: DiagnosticResult['status']) => {
     switch (status) {
-      case 'validation_success': return 'success';
-      case 'server_no_token':
-      case 'validation_failed': return 'error';
-      default: return 'warning';
+      case 'success': return '#4CAF50';
+      case 'error': return '#f44336';
+      case 'warning': return '#ff9800';
+      default: return '#2196f3';
     }
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'server_no_token': return 'Токен бота не установлен';
-      case 'validation_failed': return 'Валидация не прошла';
-      case 'validation_success': return 'Валидация успешна';
-      case 'server_config_error': return 'Ошибка конфигурации сервера';
-      case 'validation_error': return 'Ошибка валидации';
-      case 'no_data': return 'Нет данных авторизации';
-      case 'general_error': return 'Общая ошибка';
-      default: return 'Неизвестный статус';
-    }
-  };
+  const errorCount = results.filter(r => r.status === 'error').length;
+  const warningCount = results.filter(r => r.status === 'warning').length;
+  const successCount = results.filter(r => r.status === 'success').length;
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>🔬 Диагностика проблемы авторизации</DialogTitle>
-      <DialogContent>
-        {!loading && !result && (
-          <Box sx={{ textAlign: 'center', py: 3 }}>
-            <Typography variant="body1" sx={{ mb: 2 }}>
-              Нажмите "Запустить диагностику" для проверки проблемы авторизации
-            </Typography>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          bgcolor: 'rgba(35, 43, 59, 0.95)',
+          color: 'white',
+          maxHeight: '90vh'
+        },
+      }}
+    >
+      <DialogTitle>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography variant="h6">Диагностика системы</Typography>
+          {isRunning && <CircularProgress size={24} />}
+        </Box>
+        {!isRunning && results.length > 0 && (
+          <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+            <Chip label={`${successCount} успешно`} color="success" size="small" />
+            {warningCount > 0 && <Chip label={`${warningCount} предупр.`} sx={{ bgcolor: '#ff9800', color: 'white' }} size="small" />}
+            {errorCount > 0 && <Chip label={`${errorCount} ошибок`} color="error" size="small" />}
           </Box>
         )}
-
-        {loading && (
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', py: 4 }}>
-            <CircularProgress sx={{ mr: 2 }} />
+      </DialogTitle>
+      
+      <DialogContent sx={{ pb: 1 }}>
+        {isRunning ? (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 4 }}>
+            <CircularProgress />
             <Typography>Выполняется диагностика...</Typography>
           </Box>
-        )}
+        ) : (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {results.map((result, index) => (
+              <Accordion 
+                key={index}
+                sx={{
+                  bgcolor: 'rgba(255, 255, 255, 0.05)',
+                  '&:before': { display: 'none' },
+                  '&.Mui-expanded': {
+                    margin: '8px 0',
+                  }
+                }}
+              >
+                <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: 'white' }} />}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+                    {getStatusIcon(result.status)}
+                    <Typography sx={{ fontWeight: 500, flex: 1 }}>{result.name}</Typography>
+                    <Chip 
+                      label={result.status === 'success' ? 'OK' : result.status === 'error' ? 'Ошибка' : 'Внимание'}
+                      size="small"
+                      sx={{ 
+                        bgcolor: getStatusColor(result.status),
+                        color: 'white',
+                        minWidth: 80
+                      }}
+                    />
+                  </Box>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    {result.message}
+                  </Typography>
+                  {result.details && (
+                    <>
+                      <Divider sx={{ my: 1, bgcolor: 'rgba(255,255,255,0.1)' }} />
+                      <Typography variant="caption" sx={{ color: '#8b95a1' }}>
+                        Детали: {result.details}
+                      </Typography>
+                    </>
+                  )}
+                  {result.suggestions && result.suggestions.length > 0 && (
+                    <>
+                      <Divider sx={{ my: 1, bgcolor: 'rgba(255,255,255,0.1)' }} />
+                      <Typography variant="caption" sx={{ color: '#8b95a1', display: 'block', mb: 0.5 }}>
+                        Рекомендации:
+                      </Typography>
+                      {result.suggestions.map((suggestion, idx) => (
+                        <Typography key={idx} variant="caption" sx={{ color: '#8b95a1', display: 'block', ml: 2 }}>
+                          • {suggestion}
+                        </Typography>
+                      ))}
+                    </>
+                  )}
+                </AccordionDetails>
+              </Accordion>
+            ))}
 
-        {result && (
-          <Box sx={{ py: 2 }}>
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="h6" sx={{ mb: 1 }}>
-                Результат диагностики:
-              </Typography>
-              <Chip 
-                label={getStatusText(result.status)}
-                color={getStatusColor(result.status)}
-                sx={{ mb: 2 }}
-              />
-            </Box>
-
-            {result.serverConfig && (
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" sx={{ mb: 1 }}>
-                  Конфигурация сервера:
+            {errorCount > 0 && (
+              <Alert severity="error" sx={{ mt: 2, bgcolor: 'rgba(244, 67, 54, 0.1)' }}>
+                <Typography variant="body2">
+                  Обнаружены критические ошибки. Рекомендуется перезапустить приложение из Telegram.
                 </Typography>
-                <Alert severity={result.serverConfig.telegram_bot_token_set ? 'success' : 'error'}>
-                  <Typography variant="body2">
-                    Токен бота: {result.serverConfig.telegram_bot_token_set ? '✅ Установлен' : '❌ Не установлен'}
-                  </Typography>
-                  <Typography variant="body2">
-                    Режим отладки: {result.serverConfig.debug_mode ? 'Включен' : 'Выключен'}
-                  </Typography>
-                </Alert>
-              </Box>
+              </Alert>
             )}
 
-            {result.validationResult && (
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="h6" sx={{ mb: 1 }}>
-                  Результат валидации:
+            {errorCount === 0 && warningCount > 0 && (
+              <Alert severity="warning" sx={{ mt: 2, bgcolor: 'rgba(255, 152, 0, 0.1)' }}>
+                <Typography variant="body2">
+                  Есть некритичные проблемы. Основные функции должны работать.
                 </Typography>
-                <Alert severity={result.validationResult.success ? 'success' : 'error'}>
-                  <Typography variant="body2">
-                    Валидация: {result.validationResult.success ? '✅ Успешна' : '❌ Не прошла'}
-                  </Typography>
-                </Alert>
-              </Box>
+              </Alert>
             )}
 
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="h6" sx={{ mb: 1 }}>
-                Рекомендации:
-              </Typography>
-              {result.recommendations.map((rec, index) => (
-                <Typography key={index} variant="body2" sx={{ mb: 1, pl: 2 }}>
-                  • {rec}
+            {errorCount === 0 && warningCount === 0 && results.length > 0 && (
+              <Alert severity="success" sx={{ mt: 2, bgcolor: 'rgba(76, 175, 80, 0.1)' }}>
+                <Typography variant="body2">
+                  Все проверки прошли успешно! Система работает корректно.
                 </Typography>
-              ))}
-            </Box>
+              </Alert>
+            )}
           </Box>
         )}
       </DialogContent>
+      
       <DialogActions>
-        {!result && (
-          <Button 
-            onClick={runDiagnostic} 
-            disabled={loading}
-            variant="contained"
-            color="primary"
-          >
-            Запустить диагностику
-          </Button>
-        )}
-        {result && (
-          <Button onClick={runDiagnostic} variant="outlined">
-            Повторить диагностику
-          </Button>
-        )}
-        <Button onClick={onClose}>
+        <Button onClick={() => runDiagnostics()} disabled={isRunning}>
+          Повторить диагностику
+        </Button>
+        <Button onClick={onClose} variant="contained">
           Закрыть
         </Button>
       </DialogActions>

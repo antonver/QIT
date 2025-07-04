@@ -24,10 +24,9 @@ import {
 } from '@mui/material';
 import {
   Send as SendIcon,
-  Add as AddIcon,
   Chat as ChatIcon,
-  Info as InfoIcon,
   ArrowBack as ArrowBackIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import backgroundImage from '../assets/background.png';
@@ -347,7 +346,27 @@ const AeonMessenger: React.FC = () => {
           justifyContent: 'space-between',
           minHeight: isMobile ? '52px' : 'auto',
         }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box 
+            sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 1,
+              cursor: 'pointer',
+              p: 1,
+              borderRadius: 2,
+              '&:hover': {
+                bgcolor: 'rgba(74, 158, 255, 0.1)',
+              },
+              '&:active': {
+                bgcolor: 'rgba(74, 158, 255, 0.2)',
+              },
+            }}
+            onClick={() => setShowNewChatDialog(true)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setShowNewChatDialog(true);
+            }}
+          >
             <Typography 
               variant={isMobile ? "body1" : "h6"} 
               sx={{ 
@@ -357,24 +376,16 @@ const AeonMessenger: React.FC = () => {
             >
               Чаты
             </Typography>
-          </Box>
-          
-          <Box sx={{ display: 'flex', gap: isMobile ? 0.5 : 1 }}>
-            <Tooltip title="Создать новый чат">
-              <IconButton
-                onClick={() => setShowNewChatDialog(true)}
-                sx={{
-                  bgcolor: '#4a9eff',
-                  color: 'white',
-                  p: isMobile ? 0.75 : 1,
-                  '&:hover': {
-                    bgcolor: '#3d8bdb',
-                  },
-                }}
-              >
-                <AddIcon fontSize={isMobile ? "small" : "medium"} />
-              </IconButton>
-            </Tooltip>
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                color: '#8b95a1',
+                fontSize: isMobile ? '0.6rem' : '0.7rem',
+                ml: 0.5,
+              }}
+            >
+              (нажмите для создания)
+            </Typography>
           </Box>
         </Box>
 
@@ -508,17 +519,21 @@ const AeonMessenger: React.FC = () => {
           <>
             {/* Заголовок чата */}
             <Box sx={{
-              position: 'sticky',
+              position: 'fixed',
               top: 0,
-              zIndex: 10,
+              left: isMobile ? 0 : '350px',
+              right: 0,
+              zIndex: 1300, // Выше всех других элементов
               p: isMobile ? 0.75 : 2,
               borderBottom: '1px solid rgba(43, 52, 65, 1)',
-              bgcolor: 'rgba(35, 43, 59, 0.95)',
-              backdropFilter: 'blur(10px)',
+              bgcolor: 'rgba(35, 43, 59, 0.98)', // Более непрозрачный фон
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)', // Для Safari
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              minHeight: isMobile ? '56px' : 'auto',
+              minHeight: isMobile ? '56px' : '64px',
+              boxShadow: '0 2px 20px rgba(0,0,0,0.15)', // Тень для выделения
             }}>
               <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
                 {/* Кнопка назад на мобильных */}
@@ -618,6 +633,7 @@ const AeonMessenger: React.FC = () => {
               flex: 1,
               overflow: 'auto',
               p: isMobile ? 0.5 : 1.5,
+              pt: isMobile ? 7 : 9, // Отступ сверху для фиксированного заголовка
               bgcolor: 'rgba(35, 43, 59, 0.95)',
               backgroundImage: `url(${backgroundImage})`,
               backgroundSize: 'cover',
