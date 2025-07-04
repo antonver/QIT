@@ -6,6 +6,8 @@ import {
   createChat,
   getCurrentUser,
   markAllMessagesAsRead,
+  addMemberToChat as apiAddMemberToChat,
+  removeMemberFromChat as apiRemoveMemberFromChat,
 } from '../services/aeonMessengerApi';
 import { initTelegramWebApp, isTelegramWebApp, getTelegramUser } from '../utils/telegram';
 import type {
@@ -175,7 +177,7 @@ export const useAeonMessenger = () => {
     try {
       const chatData: AeonChatCreate = {
         title,
-        chat_type: 'private',
+        chat_type: memberIds.length > 0 ? 'group' : 'private',
         member_ids: memberIds,
       };
 
@@ -219,6 +221,43 @@ export const useAeonMessenger = () => {
     }
   }, [loadMessages]);
 
+  // Загружаем подробную информацию о чате
+  const loadChatInfo = useCallback(async (chatId: number) => {
+    try {
+      const { getChat } = await import('../services/aeonMessengerApi');
+      const chatInfo = await getChat(chatId);
+      return chatInfo;
+    } catch (err) {
+      console.error('Error loading chat info:', err);
+      setError('Ошибка загрузки информации о чате');
+      throw err;
+    }
+  }, []);
+
+  // Добавляем участника в чат
+  const addMemberToChat = useCallback(async (chatId: number, userId: number) => {
+    try {
+      await apiAddMemberToChat(chatId, userId);
+      setError(null);
+    } catch (err) {
+      console.error('Error adding member to chat:', err);
+      setError('Ошибка добавления участника');
+      throw err;
+    }
+  }, []);
+
+  // Удаляем участника из чата
+  const removeMemberFromChat = useCallback(async (chatId: number, userId: number) => {
+    try {
+      await apiRemoveMemberFromChat(chatId, userId);
+      setError(null);
+    } catch (err) {
+      console.error('Error removing member from chat:', err);
+      setError('Ошибка удаления участника');
+      throw err;
+    }
+  }, []);
+
   // Инициализация
   useEffect(() => {
     checkTelegramWebApp();
@@ -240,5 +279,8 @@ export const useAeonMessenger = () => {
     selectChat,
     refreshChats: loadChats,
     refreshMessages: () => currentChat && loadMessages(currentChat.id),
+    loadChatInfo,
+    addMemberToChat,
+    removeMemberFromChat,
   };
 }; 
