@@ -77,24 +77,42 @@ const ChatInfoDialog: React.FC<ChatInfoDialogProps> = ({
     }
   };
 
+  // --- Универсальная логика добавления участника ---
+  const tryAddMemberById = async (memberId: number) => {
+    if (!currentChat) return;
+    await addMemberToChat(currentChat.id, memberId);
+  };
+
+  const tryAddMemberByUsername = async (username: string) => {
+    if (!currentChat) return;
+    await inviteMemberByUsername(currentChat.id, username);
+  };
+
+  // Добавление участника в режиме "ID". Если введён не-числовой текст – пробуем как username.
   const handleAddMember = async () => {
-    if (!newMemberId.trim() || !currentChat) return;
-    
-    const memberId = parseInt(newMemberId.trim());
-    if (isNaN(memberId)) {
-      setError('Введите корректный ID пользователя');
-      return;
-    }
+    if (!newMemberId.trim()) return;
+
+    const input = newMemberId.trim();
+    const parsed = parseInt(input);
 
     try {
       setAddingMember(true);
       setError(null);
-      await addMemberToChat(currentChat.id, memberId);
+
+      if (!isNaN(parsed)) {
+        // Число – добавляем по ID
+        await tryAddMemberById(parsed);
+      } else {
+        // Не число – считаем, что это username
+        await tryAddMemberByUsername(input.replace(/^@/, ''));
+      }
+
+      // Очистка поля и перезагрузка данных
       setNewMemberId('');
-      await loadChatDetails(); // Перезагружаем информацию о чате
+      await loadChatDetails();
     } catch (err) {
+      console.error('Error adding member (ID path):', err);
       setError('Не удалось добавить участника');
-      console.error('Error adding member:', err);
     } finally {
       setAddingMember(false);
     }
