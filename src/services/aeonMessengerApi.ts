@@ -16,7 +16,7 @@ import type {
 const logApiConfig = () => {
   console.log('=== Aeon Messenger API Configuration ===');
   console.log('VITE_CHAT_URL:', import.meta.env.VITE_CHAT_URL);
-  console.log('Base URL:', import.meta.env.VITE_CHAT_URL || 'https://aeon-messenger-app-09faae856b73.herokuapp.com');
+  console.log('Base URL:', import.meta.env.VITE_CHAT_URL || 'https://aeon-backend-2892-d50dfbe26b14.herokuapp.com');
   console.log('Environment:', import.meta.env.MODE);
   console.log('=========================================');
 };
@@ -26,7 +26,7 @@ logApiConfig();
 
 // Create axios instance for Aeon Messenger API
 const aeonApi = axios.create({
-  baseURL: import.meta.env.VITE_CHAT_URL || 'https://aeon-messenger-app-09faae856b73.herokuapp.com',
+  baseURL: import.meta.env.VITE_CHAT_URL || 'https://aeon-backend-2892-d50dfbe26b14.herokuapp.com',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
