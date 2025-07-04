@@ -217,4 +217,16 @@ export const debugValidateTelegramData = async (initData: string): Promise<any> 
   return response.data;
 };
 
+export const inviteMemberByUsername = async (chatId: number, username: string): Promise<{message: string, status: string}> => {
+  const response = await aeonApi.post(`/api/v1/chats/${chatId}/invite-by-username`, {
+    username: username
+  });
+  return response.data;
+};
+
+// Функция для проверки и активации приглашений при входе
+export const checkAndAcceptInvitations = async (): Promise<void> => {
+  await aeonApi.post('/api/v1/users/check-invitations');
+};
+
 export default aeonApi; 

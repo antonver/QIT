@@ -26,6 +26,7 @@ import {
   Person as PersonIcon,
 } from '@mui/icons-material';
 import type { AeonChat, AeonChatList } from '../types/api';
+import { inviteMemberByUsername } from '../services/aeonMessengerApi';
 
 interface ChatInfoDialogProps {
   open: boolean;
@@ -50,6 +51,8 @@ const ChatInfoDialog: React.FC<ChatInfoDialogProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [newMemberId, setNewMemberId] = useState('');
+  const [newMemberUsername, setNewMemberUsername] = useState('');
+  const [addMode, setAddMode] = useState<'id' | 'username'>('username');
   const [addingMember, setAddingMember] = useState(false);
 
   useEffect(() => {
@@ -92,6 +95,33 @@ const ChatInfoDialog: React.FC<ChatInfoDialogProps> = ({
     } catch (err) {
       setError('Не удалось добавить участника');
       console.error('Error adding member:', err);
+    } finally {
+      setAddingMember(false);
+    }
+  };
+
+  const handleAddMemberByUsername = async () => {
+    if (!newMemberUsername.trim() || !currentChat) return;
+    
+    try {
+      setAddingMember(true);
+      setError(null);
+      
+      const result = await inviteMemberByUsername(currentChat.id, newMemberUsername.trim());
+      
+      // Показываем результат пользователю
+      if (result.status === 'added') {
+        setNewMemberUsername('');
+        await loadChatDetails(); // Перезагружаем информацию о чате
+      } else if (result.status === 'invited') {
+        setNewMemberUsername('');
+        // Показываем уведомление об отправке приглашения
+      }
+      
+      console.log(result.message);
+    } catch (err) {
+      setError('Не удалось добавить участника');
+      console.error('Error adding member by username:', err);
     } finally {
       setAddingMember(false);
     }
@@ -252,43 +282,88 @@ const ChatInfoDialog: React.FC<ChatInfoDialogProps> = ({
               <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
                 Добавить участника
               </Typography>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <TextField
-                  size="small"
-                  placeholder="Telegram ID пользователя"
-                  value={newMemberId}
-                  onChange={(e) => setNewMemberId(e.target.value)}
-                  sx={{
-                    flex: 1,
-                    '& .MuiOutlinedInput-root': {
-                      color: 'white',
-                      '& fieldset': {
-                        borderColor: 'rgba(255, 255, 255, 0.3)',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: '#4a9eff',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#4a9eff',
-                      },
-                    },
-                  }}
-                />
+              
+              {/* Переключатель режима */}
+              <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                 <Button
-                  variant="contained"
-                  onClick={handleAddMember}
-                  disabled={!newMemberId.trim() || addingMember}
-                  startIcon={addingMember ? <CircularProgress size={16} /> : <PersonAddIcon />}
-                  sx={{
-                    bgcolor: '#4a9eff',
-                    '&:hover': {
-                      bgcolor: '#3d8bdb',
-                    },
-                  }}
+                  variant={addMode === 'username' ? 'contained' : 'outlined'}
+                  onClick={() => setAddMode('username')}
+                  size="small"
                 >
-                  Добавить
+                  По @username
+                </Button>
+                <Button
+                  variant={addMode === 'id' ? 'contained' : 'outlined'}
+                  onClick={() => setAddMode('id')}
+                  size="small"
+                >
+                  По ID
                 </Button>
               </Box>
+              
+              {addMode === 'username' ? (
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <TextField
+                    size="small"
+                    placeholder="@username пользователя"
+                    value={newMemberUsername}
+                    onChange={(e) => setNewMemberUsername(e.target.value)}
+                    helperText="Введите @username или просто username"
+                    sx={{
+                      flex: 1,
+                      '& .MuiOutlinedInput-root': {
+                        color: 'white',
+                        '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.3)' },
+                        '&:hover fieldset': { borderColor: '#4a9eff' },
+                        '&.Mui-focused fieldset': { borderColor: '#4a9eff' },
+                      },
+                    },
+                  />
+                  <Button
+                    variant="contained"
+                    onClick={handleAddMemberByUsername}
+                    disabled={!newMemberUsername.trim() || addingMember}
+                    startIcon={addingMember ? <CircularProgress size={16} /> : <PersonAddIcon />}
+                    sx={{
+                      bgcolor: '#4a9eff',
+                      '&:hover': { bgcolor: '#3d8bdb' },
+                    }}
+                  >
+                    Добавить
+                  </Button>
+                </Box>
+              ) : (
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <TextField
+                    size="small"
+                    placeholder="Telegram ID пользователя"
+                    value={newMemberId}
+                    onChange={(e) => setNewMemberId(e.target.value)}
+                    helperText="Чтобы узнать ID, используйте @userinfobot"
+                    sx={{
+                      flex: 1,
+                      '& .MuiOutlinedInput-root': {
+                        color: 'white',
+                        '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.3)' },
+                        '&:hover fieldset': { borderColor: '#4a9eff' },
+                        '&.Mui-focused fieldset': { borderColor: '#4a9eff' },
+                      },
+                    },
+                  />
+                  <Button
+                    variant="contained"
+                    onClick={handleAddMember}
+                    disabled={!newMemberId.trim() || addingMember}
+                    startIcon={addingMember ? <CircularProgress size={16} /> : <PersonAddIcon />}
+                    sx={{
+                      bgcolor: '#4a9eff',
+                      '&:hover': { bgcolor: '#3d8bdb' },
+                    }}
+                  >
+                    Добавить
+                  </Button>
+                </Box>
+              )}
             </Box>
           </>
         ) : (
