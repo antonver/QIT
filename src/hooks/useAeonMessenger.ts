@@ -29,6 +29,11 @@ export const useAeonMessenger = () => {
   const [error, setError] = useState<string | null>(null);
   const [isAuthError, setIsAuthError] = useState(false);
 
+  // Автоматическое обновление
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [lastMessageId, setLastMessageId] = useState<number | null>(null);
+  const [hasNewMessages, setHasNewMessages] = useState(false);
+
   // Проверяем доступность Telegram WebApp
   const checkTelegramWebApp = useCallback(() => {
     return initTelegramWebApp();
@@ -112,12 +117,35 @@ export const useAeonMessenger = () => {
     }
   }, [checkTelegramWebApp]);
 
+  // Автоматическое обновление списка чатов (без лоадера)
+  const refreshChats = useCallback(async () => {
+    try {
+      const chatsData = await getChats();
+      setChats(chatsData);
+      setError(null);
+      setIsAuthError(false);
+    } catch (err: any) {
+      console.error('Error refreshing chats:', err);
+      // В автообновлении не показываем ошибки так агрессивно
+      if (err.response?.status === 401 || err.isAuthError) {
+        setIsAuthError(true);
+      }
+    }
+  }, []);
+
   // Загружаем сообщения чата
   const loadMessages = useCallback(async (chatId: number) => {
     try {
       setMessagesLoading(true);
       const messagesData = await getChatMessages(chatId);
       setMessages(messagesData.messages);
+      
+      // Устанавливаем ID последнего сообщения для отслеживания новых
+      if (messagesData.messages.length > 0) {
+        const lastMsg = messagesData.messages[messagesData.messages.length - 1];
+        setLastMessageId(lastMsg.id);
+      }
+      
       setError(null);
       setIsAuthError(false);
     } catch (err: any) {
@@ -138,6 +166,42 @@ export const useAeonMessenger = () => {
     }
   }, [checkTelegramWebApp]);
 
+  // Проверка новых сообщений в текущем чате
+  const checkNewMessages = useCallback(async (chatId: number) => {
+    try {
+      const messagesData = await getChatMessages(chatId);
+      const newMessages = messagesData.messages;
+      
+      if (newMessages.length > 0) {
+        const latestMessageId = newMessages[newMessages.length - 1].id;
+        
+        // Если есть новые сообщения
+        if (lastMessageId && latestMessageId > lastMessageId) {
+          setMessages(newMessages);
+          setLastMessageId(latestMessageId);
+          setHasNewMessages(true);
+          
+          // Обновляем список чатов для показа нового последнего сообщения
+          refreshChats();
+          
+          // Звуковое уведомление (если доступно в Telegram WebApp)
+          try {
+            if (window.Telegram?.WebApp?.HapticFeedback) {
+              window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+            }
+          } catch (err) {
+            console.log('Haptic feedback not available');
+          }
+          
+          console.log('🔄 Получены новые сообщения');
+        }
+      }
+    } catch (err: any) {
+      console.error('Error checking new messages:', err);
+      // Не показываем ошибки для фоновых проверок
+    }
+  }, [lastMessageId, refreshChats]);
+
   // Отправляем сообщение
   const sendNewMessage = useCallback(async (chatId: number, text: string) => {
     if (!text.trim()) return;
@@ -151,6 +215,7 @@ export const useAeonMessenger = () => {
 
       const newMessage = await sendMessage(messageData);
       setMessages(prev => [...prev, newMessage]);
+      setLastMessageId(newMessage.id);
       
       // Обновляем список чатов
       setChats(prev => prev.map(chat => 
@@ -185,6 +250,7 @@ export const useAeonMessenger = () => {
           updated_at: new Date().toISOString(),
         };
         setMessages(prev => [...prev, mockMessage]);
+        setLastMessageId(mockMessage.id);
       }
     }
   }, [currentUser]);
@@ -240,6 +306,8 @@ export const useAeonMessenger = () => {
   // Выбираем чат
   const selectChat = useCallback((chat: AeonChatList) => {
     setCurrentChat(chat);
+    setLastMessageId(null);
+    setHasNewMessages(false);
     loadMessages(chat.id);
     
     // Отмечаем все сообщения как прочитанные
@@ -254,6 +322,13 @@ export const useAeonMessenger = () => {
   const clearCurrentChat = useCallback(() => {
     setCurrentChat(null);
     setMessages([]);
+    setLastMessageId(null);
+    setHasNewMessages(false);
+  }, []);
+
+  // Сброс флага новых сообщений
+  const markMessagesAsViewed = useCallback(() => {
+    setHasNewMessages(false);
   }, []);
 
   // Загружаем подробную информацию о чате
@@ -274,24 +349,34 @@ export const useAeonMessenger = () => {
     try {
       await apiAddMemberToChat(chatId, userId);
       setError(null);
+      
+      // Обновляем информацию о чате после добавления участника
+      if (currentChat && currentChat.id === chatId) {
+        setTimeout(() => refreshChats(), 1000);
+      }
     } catch (err) {
       console.error('Error adding member to chat:', err);
       setError('Ошибка добавления участника');
       throw err;
     }
-  }, []);
+  }, [currentChat, refreshChats]);
 
   // Удаляем участника из чата
   const removeMemberFromChat = useCallback(async (chatId: number, userId: number) => {
     try {
       await apiRemoveMemberFromChat(chatId, userId);
       setError(null);
+      
+      // Обновляем информацию о чате после удаления участника
+      if (currentChat && currentChat.id === chatId) {
+        setTimeout(() => refreshChats(), 1000);
+      }
     } catch (err) {
       console.error('Error removing member from chat:', err);
       setError('Ошибка удаления участника');
       throw err;
     }
-  }, []);
+  }, [currentChat, refreshChats]);
 
   // Инициализация
   useEffect(() => {
@@ -299,6 +384,45 @@ export const useAeonMessenger = () => {
     loadCurrentUser();
     loadChats();
   }, [checkTelegramWebApp, loadCurrentUser, loadChats]);
+
+  // Автоматическое обновление списка чатов каждые 30 секунд
+  useEffect(() => {
+    if (!autoRefresh || isAuthError) return;
+    
+    const chatsInterval = setInterval(() => {
+      refreshChats();
+    }, 30000); // 30 секунд
+    
+    return () => clearInterval(chatsInterval);
+  }, [autoRefresh, isAuthError, refreshChats]);
+
+  // Автоматическое обновление сообщений в текущем чате каждые 5 секунд
+  useEffect(() => {
+    if (!autoRefresh || !currentChat || isAuthError) return;
+    
+    const messagesInterval = setInterval(() => {
+      checkNewMessages(currentChat.id);
+    }, 5000); // 5 секунд
+    
+    return () => clearInterval(messagesInterval);
+  }, [autoRefresh, currentChat, isAuthError, checkNewMessages]);
+
+  // Проверка приглашений каждые 2 минуты
+  useEffect(() => {
+    if (!autoRefresh || isAuthError) return;
+    
+    const invitationsInterval = setInterval(async () => {
+      try {
+        await checkAndAcceptInvitations();
+        // Если были приняты приглашения, обновляем список чатов
+        refreshChats();
+      } catch (err) {
+        console.log('No new invitations or error:', err);
+      }
+    }, 120000); // 2 минуты
+    
+    return () => clearInterval(invitationsInterval);
+  }, [autoRefresh, isAuthError, refreshChats]);
 
   return {
     chats,
@@ -309,14 +433,19 @@ export const useAeonMessenger = () => {
     messagesLoading,
     error,
     isAuthError,
+    autoRefresh,
+    setAutoRefresh,
+    hasNewMessages,
+    markMessagesAsViewed,
     sendNewMessage,
     createNewChat,
     selectChat,
-    refreshChats: loadChats,
+    refreshChats,
     refreshMessages: () => currentChat && loadMessages(currentChat.id),
     loadChatInfo,
     addMemberToChat,
     removeMemberFromChat,
     clearCurrentChat,
+    checkNewMessages: () => currentChat && checkNewMessages(currentChat.id),
   };
 }; 
