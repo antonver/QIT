@@ -43,6 +43,8 @@ const AeonMessenger: React.FC = () => {
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   const [newChatTitle, setNewChatTitle] = useState('');
   const [newChatMembers, setNewChatMembers] = useState('');
+  const [createChatResult, setCreateChatResult] = useState<{type: 'success' | 'info' | 'warning', message: string} | null>(null);
+  const [creatingChat, setCreatingChat] = useState(false);
   const [showDiagnosticModal, setShowDiagnosticModal] = useState(false);
   const [showChatInfoDialog, setShowChatInfoDialog] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -91,25 +93,63 @@ const AeonMessenger: React.FC = () => {
   };
 
   const handleCreateNewChat = async () => {
-    if (newChatTitle.trim() === '') return;
-
     try {
-      // Парсим список ID участников
+      setCreatingChat(true);
+      setCreateChatResult(null);
       const memberIds: number[] = [];
+      const memberUsernames: string[] = [];
+      
+      // Парсим участников (ID или username)
       if (newChatMembers.trim()) {
-        const parsedIds = newChatMembers
+        const members = newChatMembers
           .split(',')
-          .map(id => parseInt(id.trim()))
-          .filter(id => !isNaN(id) && id > 0);
-        memberIds.push(...parsedIds);
+          .map(member => member.trim())
+          .filter(member => member.length > 0);
+        
+        members.forEach(member => {
+          const parsed = parseInt(member);
+          if (!isNaN(parsed) && parsed > 0) {
+            // Это числовой ID
+            memberIds.push(parsed);
+          } else {
+            // Это username
+            memberUsernames.push(member.replace(/^@/, ''));
+          }
+        });
       }
 
-      await createNewChat(newChatTitle.trim(), memberIds);
+      await createNewChat(newChatTitle.trim(), memberIds, memberUsernames);
+      
+      // Показываем результат создания
+      let message = `✅ Чат "${newChatTitle.trim()}" создан успешно!`;
+      if (memberIds.length > 0) {
+        message += ` Добавлено ${memberIds.length} участников.`;
+      }
+      if (memberUsernames.length > 0) {
+        message += ` Отправлено ${memberUsernames.length} приглашений по username.`;
+      }
+      
+      setCreateChatResult({
+        type: 'success',
+        message
+      });
+      
+      // Очищаем результат и закрываем диалог через 2 секунды
+      setTimeout(() => {
+        setCreateChatResult(null);
+        setShowNewChatDialog(false);
+      }, 2000);
+      
       setNewChatTitle('');
       setNewChatMembers('');
-      setShowNewChatDialog(false);
     } catch (err) {
       console.error('Error creating chat:', err);
+      setCreateChatResult({
+        type: 'warning',
+        message: 'Не удалось создать чат. Попробуйте еще раз.'
+      });
+    } finally {
+      setCreatingChat(false);
     }
   };
 
@@ -704,7 +744,10 @@ const AeonMessenger: React.FC = () => {
       {/* Диалог создания нового чата */}
       <Dialog
         open={showNewChatDialog}
-        onClose={() => setShowNewChatDialog(false)}
+        onClose={() => {
+          setShowNewChatDialog(false);
+          setCreateChatResult(null);
+        }}
         maxWidth="sm"
         fullWidth
         PaperProps={{
@@ -716,6 +759,23 @@ const AeonMessenger: React.FC = () => {
       >
         <DialogTitle>Создать новый чат</DialogTitle>
         <DialogContent>
+          {/* Результат создания чата */}
+          {createChatResult && (
+            <Alert 
+              severity={createChatResult.type === 'success' ? 'success' : 'warning'} 
+              sx={{ 
+                mb: 2,
+                '& .MuiAlert-message': {
+                  color: 'white',
+                },
+                bgcolor: createChatResult.type === 'success' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 152, 0, 0.2)',
+                border: `1px solid ${createChatResult.type === 'success' ? '#4CAF50' : '#FF9800'}`,
+              }}
+            >
+              {createChatResult.message}
+            </Alert>
+          )}
+          
           <TextField
             autoFocus
             margin="dense"
@@ -749,13 +809,13 @@ const AeonMessenger: React.FC = () => {
           
           <TextField
             margin="dense"
-            label="ID участников (через запятую)"
+            label="Участники (ID или @username, через запятую)"
             fullWidth
             variant="outlined"
-            placeholder="Например: 123456789, 987654321"
+            placeholder="Например: 123456789, @username, 987654321, @user2"
             value={newChatMembers}
             onChange={(e) => setNewChatMembers(e.target.value)}
-            helperText="Введите Telegram ID пользователей через запятую. Чтобы узнать свой ID, используйте @userinfobot в Telegram"
+            helperText="💡 Поддерживаются как Telegram ID (числа), так и @username. Если пользователь не найден по username - получит приглашение."
             sx={{
               mb: 1,
               '& .MuiOutlinedInput-root': {
@@ -784,12 +844,16 @@ const AeonMessenger: React.FC = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowNewChatDialog(false)} sx={{ color: '#8b95a1' }}>
+          <Button onClick={() => {
+            setShowNewChatDialog(false);
+            setCreateChatResult(null);
+          }} sx={{ color: '#8b95a1' }}>
             Отмена
           </Button>
           <Button
             onClick={handleCreateNewChat}
-            disabled={!newChatTitle.trim()}
+            disabled={!newChatTitle.trim() || creatingChat}
+            startIcon={creatingChat ? <CircularProgress size={16} /> : undefined}
             sx={{
               bgcolor: '#4a9eff',
               color: 'white',
@@ -802,7 +866,7 @@ const AeonMessenger: React.FC = () => {
               },
             }}
           >
-            Создать
+            {creatingChat ? 'Создаём...' : 'Создать'}
           </Button>
         </DialogActions>
       </Dialog>

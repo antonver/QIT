@@ -182,15 +182,27 @@ export const useAeonMessenger = () => {
   }, [currentUser]);
 
   // Создаем новый чат
-  const createNewChat = useCallback(async (title: string, memberIds: number[] = []) => {
+  const createNewChat = useCallback(async (title: string, memberIds: number[] = [], memberUsernames: string[] = []) => {
     try {
       const chatData: AeonChatCreate = {
         title,
-        chat_type: memberIds.length > 0 ? 'group' : 'private',
+        chat_type: (memberIds.length + memberUsernames.length) > 0 ? 'group' : 'private',
         member_ids: memberIds,
       };
 
       const newChat = await createChat(chatData);
+      
+      // Отправляем приглашения по username, если есть
+      if (memberUsernames.length > 0) {
+        const { inviteMemberByUsername } = await import('../services/aeonMessengerApi');
+        for (const username of memberUsernames) {
+          try {
+            await inviteMemberByUsername(newChat.id, username);
+          } catch (err) {
+            console.error(`Error inviting ${username}:`, err);
+          }
+        }
+      }
       
       // Обновляем список чатов
       await loadChats();
