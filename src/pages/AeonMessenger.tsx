@@ -28,7 +28,6 @@ import {
   Chat as ChatIcon,
   Info as InfoIcon,
   ArrowBack as ArrowBackIcon,
-  Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import backgroundImage from '../assets/background.png';
@@ -61,8 +60,7 @@ const AeonMessenger: React.FC = () => {
     messagesLoading,
     error,
     isAuthError,
-    autoRefresh,
-    setAutoRefresh,
+
     hasNewMessages,
     markMessagesAsViewed,
     sendNewMessage,
@@ -72,7 +70,6 @@ const AeonMessenger: React.FC = () => {
     addMemberToChat,
     removeMemberFromChat,
     clearCurrentChat,
-    checkNewMessages,
   } = useAeonMessengerWithRedux();
 
   const scrollToBottom = () => {
@@ -301,18 +298,6 @@ const AeonMessenger: React.FC = () => {
             🔬 Диагностика проблемы
           </Button>
           <Button
-            variant="contained"
-            onClick={() => window.location.reload()}
-            sx={{
-              bgcolor: '#4a9eff',
-              '&:hover': {
-                bgcolor: '#3d8bdb',
-              },
-            }}
-          >
-            🔄 Перезагрузить приложение
-          </Button>
-          <Button
             variant="outlined"
             onClick={() => {
               if (window.Telegram?.WebApp) {
@@ -372,39 +357,9 @@ const AeonMessenger: React.FC = () => {
             >
               Чаты
             </Typography>
-            {autoRefresh && (
-              <Tooltip title="Автообновление включено">
-                <CircularProgress 
-                  size={isMobile ? 14 : 16} 
-                  sx={{ 
-                    color: '#4a9eff',
-                    animation: 'spin 2s linear infinite',
-                    '@keyframes spin': {
-                      '0%': { transform: 'rotate(0deg)' },
-                      '100%': { transform: 'rotate(360deg)' },
-                    }
-                  }} 
-                />
-              </Tooltip>
-            )}
           </Box>
           
           <Box sx={{ display: 'flex', gap: isMobile ? 0.5 : 1 }}>
-            <Tooltip title={autoRefresh ? "Отключить автообновление" : "Включить автообновление"}>
-              <IconButton
-                onClick={() => setAutoRefresh(!autoRefresh)}
-                sx={{
-                  color: autoRefresh ? '#4a9eff' : '#8b95a1',
-                  p: isMobile ? 0.75 : 1,
-                  '&:hover': {
-                    bgcolor: 'rgba(74, 158, 255, 0.1)',
-                  },
-                }}
-              >
-                <RefreshIcon fontSize={isMobile ? "small" : "medium"} />
-              </IconButton>
-            </Tooltip>
-            
             <Tooltip title="Создать новый чат">
               <IconButton
                 onClick={() => setShowNewChatDialog(true)}
@@ -553,9 +508,13 @@ const AeonMessenger: React.FC = () => {
           <>
             {/* Заголовок чата */}
             <Box sx={{
+              position: 'sticky',
+              top: 0,
+              zIndex: 10,
               p: isMobile ? 0.75 : 2,
               borderBottom: '1px solid rgba(43, 52, 65, 1)',
               bgcolor: 'rgba(35, 43, 59, 0.95)',
+              backdropFilter: 'blur(10px)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
@@ -637,21 +596,6 @@ const AeonMessenger: React.FC = () => {
               </Box>
               
               <Box sx={{ display: 'flex', gap: isMobile ? 0.25 : 1 }}>
-                <Tooltip title="Обновить сообщения">
-                  <IconButton
-                    onClick={() => currentChat && checkNewMessages()}
-                    sx={{
-                      color: '#4a9eff',
-                      p: isMobile ? 0.5 : 1.5,
-                      '&:hover': {
-                        bgcolor: 'rgba(74, 158, 255, 0.1)',
-                      },
-                    }}
-                  >
-                    <RefreshIcon fontSize={isMobile ? "small" : "medium"} />
-                  </IconButton>
-                </Tooltip>
-                
                 <Tooltip title="Информация о чате">
                   <IconButton
                     onClick={() => setShowChatInfoDialog(true)}
@@ -1011,6 +955,10 @@ const AeonMessenger: React.FC = () => {
         addMemberToChat={addMemberToChat}
         removeMemberFromChat={removeMemberFromChat}
         currentUserId={currentUser?.telegram_id}
+        onChatPhotoUpdate={(newPhotoUrl) => {
+          // Обновляем фото в списке чатов - фото будет обновлено при следующем обновлении
+          console.log('Chat photo updated:', newPhotoUrl);
+        }}
       />
     </Box>
   );
