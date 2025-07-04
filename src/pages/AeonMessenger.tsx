@@ -32,9 +32,10 @@ import {
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import backgroundImage from '../assets/background.png';
-import { useAeonMessenger } from '../hooks/useAeonMessenger';
+import { useAeonMessengerWithRedux } from '../hooks/useAeonMessengerWithRedux';
 import DiagnosticModal from '../components/DiagnosticModal';
 import ChatInfoDialog from '../components/ChatInfoDialog';
+import { ChatPhotoUpload } from '../components/ChatPhotoUpload';
 import type { AeonMessage } from '../types/api';
 
 const AeonMessenger: React.FC = () => {
@@ -44,6 +45,7 @@ const AeonMessenger: React.FC = () => {
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   const [newChatTitle, setNewChatTitle] = useState('');
   const [newChatMembers, setNewChatMembers] = useState('');
+  const [newChatPhoto, setNewChatPhoto] = useState<string | null>(null);
   const [createChatResult, setCreateChatResult] = useState<{type: 'success' | 'info' | 'warning', message: string} | null>(null);
   const [creatingChat, setCreatingChat] = useState(false);
   const [showDiagnosticModal, setShowDiagnosticModal] = useState(false);
@@ -71,7 +73,7 @@ const AeonMessenger: React.FC = () => {
     removeMemberFromChat,
     clearCurrentChat,
     checkNewMessages,
-  } = useAeonMessenger();
+  } = useAeonMessengerWithRedux();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -144,7 +146,7 @@ const AeonMessenger: React.FC = () => {
         });
       }
 
-      await createNewChat(newChatTitle.trim(), memberIds, memberUsernames);
+      await createNewChat(newChatTitle.trim(), memberIds, memberUsernames, newChatPhoto || undefined);
       
       // Показываем результат создания
       let message = `✅ Чат "${newChatTitle.trim()}" создан успешно!`;
@@ -168,6 +170,7 @@ const AeonMessenger: React.FC = () => {
       
       setNewChatTitle('');
       setNewChatMembers('');
+      setNewChatPhoto(null);
     } catch (err) {
       console.error('Error creating chat:', err);
       
@@ -723,7 +726,7 @@ const AeonMessenger: React.FC = () => {
                 </Box>
               ) : (
                 <AnimatePresence>
-                  {messages.map((message) => (
+                  {messages.map((message: AeonMessage) => (
                     <motion.div
                       key={message.id}
                       initial={{ opacity: 0, y: 20 }}
@@ -877,6 +880,7 @@ const AeonMessenger: React.FC = () => {
         onClose={() => {
           setShowNewChatDialog(false);
           setCreateChatResult(null);
+          setNewChatPhoto(null);
         }}
         maxWidth="sm"
         fullWidth
@@ -972,6 +976,19 @@ const AeonMessenger: React.FC = () => {
               },
             }}
           />
+          
+          {/* Загрузка фото чата */}
+          <Box sx={{ mt: 3, mb: 2 }}>
+            <Typography variant="subtitle2" sx={{ mb: 2, color: 'rgba(255, 255, 255, 0.8)' }}>
+              Фото чата (необязательно)
+            </Typography>
+            <ChatPhotoUpload
+              currentPhotoUrl={newChatPhoto || undefined}
+              onPhotoChange={setNewChatPhoto}
+              disabled={creatingChat}
+              size={100}
+            />
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => {

@@ -19,6 +19,7 @@
     "@lottiefiles/react-lottie-player": "^3.6.0",
     "@mui/icons-material": "^7.1.1",
     "@mui/material": "^7.1.1",
+    "@reduxjs/toolkit": "^2.8.2",
     "@telegram-apps/sdk": "^3.10.1",
     "@toolpad/core": "^0.16.0",
     "@types/node": "^24.0.4",
@@ -32,6 +33,7 @@
     "openai": "^4.57.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-redux": "^9.2.0",
     "react-router-dom": "^7.6.2"
   },
   "devDependencies": {
