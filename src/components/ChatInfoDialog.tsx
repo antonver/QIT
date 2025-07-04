@@ -24,9 +24,11 @@ import {
   PersonRemove as PersonRemoveIcon,
   AdminPanelSettings as AdminIcon,
   Person as PersonIcon,
+  CameraAlt as CameraIcon,
 } from '@mui/icons-material';
 import type { AeonChat, AeonChatList } from '../types/api';
 import { inviteMemberByUsername } from '../services/aeonMessengerApi';
+import { ChatPhotoUpload } from './ChatPhotoUpload';
 
 interface ChatInfoDialogProps {
   open: boolean;
@@ -36,6 +38,7 @@ interface ChatInfoDialogProps {
   addMemberToChat: (chatId: number, userId: number) => Promise<void>;
   removeMemberFromChat: (chatId: number, userId: number) => Promise<void>;
   currentUserId?: number;
+  onChatPhotoUpdate?: (newPhotoUrl: string) => void;
 }
 
 const ChatInfoDialog: React.FC<ChatInfoDialogProps> = ({
@@ -46,6 +49,7 @@ const ChatInfoDialog: React.FC<ChatInfoDialogProps> = ({
   addMemberToChat,
   removeMemberFromChat,
   currentUserId,
+  onChatPhotoUpdate,
 }) => {
   const [chatInfo, setChatInfo] = useState<AeonChat | null>(null);
   const [loading, setLoading] = useState(false);
@@ -55,6 +59,7 @@ const ChatInfoDialog: React.FC<ChatInfoDialogProps> = ({
   const [addMode, setAddMode] = useState<'id' | 'username'>('username');
   const [addingMember, setAddingMember] = useState(false);
   const [addResult, setAddResult] = useState<{type: 'success' | 'info' | 'warning', message: string} | null>(null);
+  const [showPhotoUpload, setShowPhotoUpload] = useState(false);
 
   useEffect(() => {
     if (open && currentChat) {
@@ -187,6 +192,18 @@ const ChatInfoDialog: React.FC<ChatInfoDialogProps> = ({
     }
   };
 
+  const handlePhotoUpdate = (newPhotoUrl: string) => {
+    // Обновляем локальную информацию о чате
+    if (chatInfo) {
+      setChatInfo({ ...chatInfo, photo_url: newPhotoUrl });
+    }
+    // Уведомляем родительский компонент
+    if (onChatPhotoUpdate) {
+      onChatPhotoUpdate(newPhotoUrl);
+    }
+    setShowPhotoUpload(false);
+  };
+
   if (!currentChat) return null;
 
   return (
@@ -203,12 +220,31 @@ const ChatInfoDialog: React.FC<ChatInfoDialogProps> = ({
       }}
     >
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        <Avatar
-          src={currentChat.photo_url || undefined}
-          sx={{ bgcolor: '#4a9eff' }}
-        >
-          {currentChat.title ? currentChat.title[0].toUpperCase() : <PersonIcon />}
-        </Avatar>
+        <Box sx={{ position: 'relative' }}>
+          <Avatar
+            src={chatInfo?.photo_url || currentChat.photo_url || undefined}
+            sx={{ bgcolor: '#4a9eff', width: 64, height: 64 }}
+          >
+            {currentChat.title ? currentChat.title[0].toUpperCase() : <PersonIcon />}
+          </Avatar>
+          <IconButton
+            onClick={() => setShowPhotoUpload(true)}
+            sx={{
+              position: 'absolute',
+              bottom: -4,
+              right: -4,
+              bgcolor: '#4a9eff',
+              color: 'white',
+              width: 24,
+              height: 24,
+              '&:hover': {
+                bgcolor: '#3d8bdb',
+              },
+            }}
+          >
+            <CameraIcon sx={{ fontSize: 14 }} />
+          </IconButton>
+        </Box>
         <Box>
           <Typography variant="h6">{currentChat.title || 'Безымянный чат'}</Typography>
           <Typography variant="caption" sx={{ color: '#8b95a1' }}>
@@ -472,6 +508,47 @@ const ChatInfoDialog: React.FC<ChatInfoDialogProps> = ({
           Закрыть
         </Button>
       </DialogActions>
+
+      {/* Диалог загрузки фото */}
+      <Dialog
+        open={showPhotoUpload}
+        onClose={() => setShowPhotoUpload(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: 'rgba(35, 43, 59, 0.95)',
+            color: 'white',
+          },
+        }}
+      >
+        <DialogTitle>
+          Изменить фото чата
+        </DialogTitle>
+        <DialogContent>
+          <ChatPhotoUpload
+            currentPhotoUrl={chatInfo?.photo_url || currentChat.photo_url || undefined}
+            onPhotoChange={(photoUrl) => {
+              if (photoUrl) {
+                handlePhotoUpdate(photoUrl);
+              } else {
+                // Если фото удалили, обновляем
+                if (chatInfo) {
+                  setChatInfo({ ...chatInfo, photo_url: undefined });
+                }
+                if (onChatPhotoUpdate) {
+                  onChatPhotoUpdate('');
+                }
+              }
+            }}
+          />
+          <Box sx={{ display: 'flex', gap: 1, mt: 2, justifyContent: 'flex-end' }}>
+            <Button onClick={() => setShowPhotoUpload(false)} sx={{ color: '#8b95a1' }}>
+              Отмена
+            </Button>
+          </Box>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 };
