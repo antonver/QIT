@@ -124,33 +124,38 @@ const AeonChat: React.FC = () => {
       height: '100vh',
       display: 'flex',
       flexDirection: 'column',
-      bgcolor: 'rgba(35, 43, 59, 0.95)', // Унифицированный цвет как у Drawer
+      bgcolor: 'transparent', // Убираем серый блок, оставляем чистый фон
       color: 'white',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      backgroundImage: `url(${backgroundImage})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
     }}>
-      {/* Область сообщений - теперь занимает всё пространство */}
+      {/* Фиксированная шапка чата */}
+      <Box sx={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 10,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        py: 1.5,
+        bgcolor: 'rgba(35, 43, 59, 0.8)',
+        backdropFilter: 'blur(6px)',
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
+      }}>
+        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          ÆON
+        </Typography>
+      </Box>
+      {/* Область сообщений */}
       <Box sx={{ 
         flex: 1,
         overflow: 'auto',
         p: isMobile ? 1 : 1.5,
-        bgcolor: 'rgba(35, 43, 59, 0.95)', // Унифицированный цвет
-        // Фон из background.png
-        backgroundImage: `url(${backgroundImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        bgcolor: 'transparent',
+        backgroundColor: 'rgba(0,0,0,0.35)', // лёгкий прозрачный слой для читабельности
         backgroundAttachment: 'local',
-        // Темный оверлей для лучшей читаемости
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(35, 43, 59, 0.8)', // Тот же цвет с прозрачностью
-          pointerEvents: 'none',
-          zIndex: 0
-        },
         position: 'relative',
         '&::-webkit-scrollbar': {
           width: '6px',
@@ -173,8 +178,6 @@ const AeonChat: React.FC = () => {
               display: 'flex',
               justifyContent: message.isUser ? 'flex-end' : 'flex-start',
               mb: 1.5,
-              position: 'relative',
-              zIndex: 1 // Выше фонового оверлея
             }}
           >
             <Box
@@ -208,7 +211,7 @@ const AeonChat: React.FC = () => {
             </Box>
           </Box>
         ))}
-        <div ref={messagesEndRef} style={{ position: 'relative', zIndex: 1 }} />
+        <div ref={messagesEndRef} />
       </Box>
 
       {/* Поле ввода в стиле Telegram */}
