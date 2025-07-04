@@ -8,6 +8,7 @@ import {
   markAllMessagesAsRead,
   addMemberToChat as apiAddMemberToChat,
   removeMemberFromChat as apiRemoveMemberFromChat,
+  checkAndAcceptInvitations,
 } from '../services/aeonMessengerApi';
 import { initTelegramWebApp, isTelegramWebApp, getTelegramUser } from '../utils/telegram';
 import type {
@@ -36,9 +37,17 @@ export const useAeonMessenger = () => {
   // Загружаем информацию о пользователе
   const loadCurrentUser = useCallback(async () => {
     try {
-      const user = await getCurrentUser();
-      setCurrentUser(user);
+      const userData = await getCurrentUser();
+      setCurrentUser(userData);
+      setError(null);
       setIsAuthError(false);
+      
+      // Проверяем и активируем приглашения при входе
+      try {
+        await checkAndAcceptInvitations();
+      } catch (err) {
+        console.log('No pending invitations or error checking invitations:', err);
+      }
     } catch (err: any) {
       console.error('Error loading current user:', err);
       
