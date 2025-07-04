@@ -12,6 +12,10 @@ interface MessagesState {
   errors: { [chatId: number]: string | null };
   // ID последнего сообщения для каждого чата (для проверки новых сообщений)
   lastMessageId: { [chatId: number]: number };
+  // Время создания сессии для автоочистки
+  sessionStartTime: number;
+  // Флаг активности сессии
+  isSessionActive: boolean;
 }
 
 const initialState: MessagesState = {
@@ -20,12 +24,39 @@ const initialState: MessagesState = {
   loading: {},
   errors: {},
   lastMessageId: {},
+  sessionStartTime: Date.now(),
+  isSessionActive: true,
+};
+
+// Функция для проверки валидности сессии (например, не старше 24 часов)
+const isSessionValid = (sessionStartTime: number): boolean => {
+  const maxSessionAge = 24 * 60 * 60 * 1000; // 24 часа в миллисекундах
+  return Date.now() - sessionStartTime < maxSessionAge;
 };
 
 const messagesSlice = createSlice({
   name: 'messages',
   initialState,
   reducers: {
+    // Инициализация новой сессии
+    initSession: (state) => {
+      state.sessionStartTime = Date.now();
+      state.isSessionActive = true;
+      // Очищаем старые данные если сессия истекла
+      if (!isSessionValid(state.sessionStartTime)) {
+        state.messagesByChat = {};
+        state.lastUpdated = {};
+        state.loading = {};
+        state.errors = {};
+        state.lastMessageId = {};
+      }
+    },
+
+    // Завершение сессии
+    endSession: (state) => {
+      state.isSessionActive = false;
+    },
+
     // Устанавливаем статус загрузки для чата
     setLoading: (state, action: PayloadAction<{ chatId: number; loading: boolean }>) => {
       const { chatId, loading } = action.payload;
@@ -41,6 +72,12 @@ const messagesSlice = createSlice({
     // Загружаем сообщения для чата (полная замена)
     loadMessages: (state, action: PayloadAction<{ chatId: number; messages: AeonMessage[] }>) => {
       const { chatId, messages } = action.payload;
+      
+      // Проверяем валидность сессии
+      if (!state.isSessionActive || !isSessionValid(state.sessionStartTime)) {
+        return;
+      }
+      
       state.messagesByChat[chatId] = messages;
       state.lastUpdated[chatId] = Date.now();
       state.loading[chatId] = false;
@@ -57,6 +94,11 @@ const messagesSlice = createSlice({
     addMessage: (state, action: PayloadAction<{ chatId: number; message: AeonMessage }>) => {
       const { chatId, message } = action.payload;
       
+      // Проверяем валидность сессии
+      if (!state.isSessionActive || !isSessionValid(state.sessionStartTime)) {
+        return;
+      }
+      
       if (!state.messagesByChat[chatId]) {
         state.messagesByChat[chatId] = [];
       }
@@ -66,12 +108,18 @@ const messagesSlice = createSlice({
       if (!exists) {
         state.messagesByChat[chatId].push(message);
         state.lastMessageId[chatId] = message.id;
+        state.lastUpdated[chatId] = Date.now();
       }
     },
 
     // Добавляем несколько новых сообщений
     addMessages: (state, action: PayloadAction<{ chatId: number; messages: AeonMessage[] }>) => {
       const { chatId, messages } = action.payload;
+      
+      // Проверяем валидность сессии
+      if (!state.isSessionActive || !isSessionValid(state.sessionStartTime)) {
+        return;
+      }
       
       if (!state.messagesByChat[chatId]) {
         state.messagesByChat[chatId] = [];
@@ -87,6 +135,7 @@ const messagesSlice = createSlice({
         // Обновляем ID последнего сообщения
         const lastMessage = newMessages[newMessages.length - 1];
         state.lastMessageId[chatId] = lastMessage.id;
+        state.lastUpdated[chatId] = Date.now();
       }
     },
 
@@ -101,6 +150,7 @@ const messagesSlice = createSlice({
             ...state.messagesByChat[chatId][messageIndex],
             ...updates,
           };
+          state.lastUpdated[chatId] = Date.now();
         }
       }
     },
@@ -111,6 +161,7 @@ const messagesSlice = createSlice({
       
       if (state.messagesByChat[chatId]) {
         state.messagesByChat[chatId] = state.messagesByChat[chatId].filter(m => m.id !== messageId);
+        state.lastUpdated[chatId] = Date.now();
       }
     },
 
@@ -131,6 +182,33 @@ const messagesSlice = createSlice({
       state.loading = {};
       state.errors = {};
       state.lastMessageId = {};
+      state.isSessionActive = false;
+    },
+
+    // Оптимизация: удаляем старые сообщения для экономии памяти
+    optimizeStorage: (state, action: PayloadAction<{ maxMessagesPerChat?: number; maxChatAge?: number }>) => {
+      const { maxMessagesPerChat = 1000, maxChatAge = 12 * 60 * 60 * 1000 } = action.payload; // 12 часов
+      const now = Date.now();
+      
+      Object.keys(state.messagesByChat).forEach(chatIdStr => {
+        const chatId = parseInt(chatIdStr);
+        const lastUpdated = state.lastUpdated[chatId] || 0;
+        
+        // Удаляем чаты которые не обновлялись долго
+        if (now - lastUpdated > maxChatAge) {
+          delete state.messagesByChat[chatId];
+          delete state.lastUpdated[chatId];
+          delete state.loading[chatId];
+          delete state.errors[chatId];
+          delete state.lastMessageId[chatId];
+        } else {
+          // Ограничиваем количество сообщений в чате
+          const messages = state.messagesByChat[chatId];
+          if (messages && messages.length > maxMessagesPerChat) {
+            state.messagesByChat[chatId] = messages.slice(-maxMessagesPerChat);
+          }
+        }
+      });
     },
 
     // Устанавливаем время последнего обновления
@@ -148,6 +226,8 @@ const messagesSlice = createSlice({
 });
 
 export const {
+  initSession,
+  endSession,
   setLoading,
   setError,
   loadMessages,
@@ -157,6 +237,7 @@ export const {
   deleteMessage,
   clearMessages,
   clearAllMessages,
+  optimizeStorage,
   setLastUpdated,
   setLastMessageId,
 } = messagesSlice.actions;
@@ -177,4 +258,14 @@ export const selectLastMessageId = (state: any, chatId: number) =>
   state.messages.lastMessageId[chatId] || 0;
 
 export const selectLastUpdated = (state: any, chatId: number) => 
-  state.messages.lastUpdated[chatId] || 0; 
+  state.messages.lastUpdated[chatId] || 0;
+
+export const selectSessionInfo = (state: any) => ({
+  sessionStartTime: state.messages.sessionStartTime,
+  isSessionActive: state.messages.isSessionActive,
+  isValid: isSessionValid(state.messages.sessionStartTime)
+});
+
+export const selectMessagesCount = (state: any) => 
+  Object.values(state.messages.messagesByChat).reduce((total: number, messages: any) => 
+    total + (messages?.length || 0), 0); 

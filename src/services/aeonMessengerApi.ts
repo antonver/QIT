@@ -100,11 +100,38 @@ aeonApi.interceptors.response.use(
   (error) => {
     console.error('=== Aeon API Error ===');
     console.error('URL:', error.config?.url);
+    console.error('Method:', error.config?.method);
     console.error('Status:', error.response?.status);
     console.error('Status Text:', error.response?.statusText);
     console.error('Response Data:', error.response?.data);
     console.error('Request Headers:', error.config?.headers);
     console.error('======================');
+    
+    // Обработка ошибки 405 - Method Not Allowed
+    if (error.response?.status === 405) {
+      console.error('❌ Method Not Allowed (405)');
+      console.error('❌ Possible reasons:');
+      console.error(`   1. HTTP method ${error.config?.method?.toUpperCase()} is not supported for URL: ${error.config?.url}`);
+      console.error('   2. Server endpoint configuration issue');
+      console.error('   3. API endpoint does not exist or is disabled');
+      console.error('❌ Solution: Check API documentation and server configuration');
+      
+      // Создаем более информативную ошибку
+      const enhancedError = {
+        ...error,
+        message: `HTTP method ${error.config?.method?.toUpperCase()} not allowed for this endpoint`,
+        isMethodError: true,
+        response: {
+          ...error.response,
+          data: {
+            ...error.response?.data,
+            error: 'HTTP метод не поддерживается для данного endpoint'
+          }
+        }
+      };
+      
+      throw enhancedError;
+    }
     
     // Enhanced error messages
     if (error.response?.status === 401) {
