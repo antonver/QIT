@@ -28,11 +28,14 @@ import {
   Add as AddIcon,
   Chat as ChatIcon,
   Person as PersonIcon,
+  Info as InfoIcon,
+  Group as GroupIcon,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import backgroundImage from '../assets/background.png';
 import { useAeonMessenger } from '../hooks/useAeonMessenger';
 import DiagnosticModal from '../components/DiagnosticModal';
+import ChatInfoDialog from '../components/ChatInfoDialog';
 import type { AeonMessage } from '../types/api';
 
 const AeonMessenger: React.FC = () => {
@@ -41,7 +44,10 @@ const AeonMessenger: React.FC = () => {
   const [inputValue, setInputValue] = useState('');
   const [showNewChatDialog, setShowNewChatDialog] = useState(false);
   const [newChatTitle, setNewChatTitle] = useState('');
+  const [newChatMembers, setNewChatMembers] = useState('');
+  const [newChatType, setNewChatType] = useState<'private' | 'group'>('group');
   const [showDiagnosticModal, setShowDiagnosticModal] = useState(false);
+  const [showChatInfoDialog, setShowChatInfoDialog] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -56,6 +62,9 @@ const AeonMessenger: React.FC = () => {
     sendNewMessage,
     createNewChat,
     selectChat,
+    loadChatInfo,
+    addMemberToChat,
+    removeMemberFromChat,
   } = useAeonMessenger();
 
   const scrollToBottom = () => {
@@ -87,8 +96,20 @@ const AeonMessenger: React.FC = () => {
     if (newChatTitle.trim() === '') return;
 
     try {
-      await createNewChat(newChatTitle.trim());
+      // Парсим список ID участников
+      const memberIds: number[] = [];
+      if (newChatMembers.trim()) {
+        const parsedIds = newChatMembers
+          .split(',')
+          .map(id => parseInt(id.trim()))
+          .filter(id => !isNaN(id) && id > 0);
+        memberIds.push(...parsedIds);
+      }
+
+      await createNewChat(newChatTitle.trim(), memberIds);
       setNewChatTitle('');
+      setNewChatMembers('');
+      setNewChatType('group');
       setShowNewChatDialog(false);
     } catch (err) {
       console.error('Error creating chat:', err);
@@ -416,26 +437,43 @@ const AeonMessenger: React.FC = () => {
               bgcolor: 'rgba(35, 43, 59, 0.95)',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'space-between',
             }}>
-              <Avatar
-                src={currentChat.photo_url || undefined}
-                sx={{
-                  bgcolor: '#4a9eff',
-                  width: 40,
-                  height: 40,
-                  mr: 2,
-                }}
-              >
-                {currentChat.title ? currentChat.title[0].toUpperCase() : <ChatIcon />}
-              </Avatar>
-              <Box>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  {currentChat.title || 'Безымянный чат'}
-                </Typography>
-                <Typography variant="caption" sx={{ color: '#8b95a1' }}>
-                  {currentChat.chat_type === 'private' ? 'Личный чат' : 'Групповой чат'}
-                </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Avatar
+                  src={currentChat.photo_url || undefined}
+                  sx={{
+                    bgcolor: '#4a9eff',
+                    width: 40,
+                    height: 40,
+                    mr: 2,
+                  }}
+                >
+                  {currentChat.title ? currentChat.title[0].toUpperCase() : <ChatIcon />}
+                </Avatar>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    {currentChat.title || 'Безымянный чат'}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: '#8b95a1' }}>
+                    {currentChat.chat_type === 'private' ? 'Личный чат' : 'Групповой чат'}
+                  </Typography>
+                </Box>
               </Box>
+              
+              <Tooltip title="Информация о чате">
+                <IconButton
+                  onClick={() => setShowChatInfoDialog(true)}
+                  sx={{
+                    color: '#4a9eff',
+                    '&:hover': {
+                      bgcolor: 'rgba(74, 158, 255, 0.1)',
+                    },
+                  }}
+                >
+                  <InfoIcon />
+                </IconButton>
+              </Tooltip>
             </Box>
 
             {/* Сообщения */}
@@ -657,6 +695,7 @@ const AeonMessenger: React.FC = () => {
             value={newChatTitle}
             onChange={(e) => setNewChatTitle(e.target.value)}
             sx={{
+              mb: 2,
               '& .MuiOutlinedInput-root': {
                 color: 'white',
                 '& fieldset': {
@@ -674,6 +713,42 @@ const AeonMessenger: React.FC = () => {
                 '&.Mui-focused': {
                   color: '#4a9eff',
                 },
+              },
+            }}
+          />
+          
+          <TextField
+            margin="dense"
+            label="ID участников (через запятую)"
+            fullWidth
+            variant="outlined"
+            placeholder="Например: 123456789, 987654321"
+            value={newChatMembers}
+            onChange={(e) => setNewChatMembers(e.target.value)}
+            helperText="Введите Telegram ID пользователей через запятую. Чтобы узнать свой ID, используйте @userinfobot в Telegram"
+            sx={{
+              mb: 1,
+              '& .MuiOutlinedInput-root': {
+                color: 'white',
+                '& fieldset': {
+                  borderColor: 'rgba(255, 255, 255, 0.3)',
+                },
+                '&:hover fieldset': {
+                  borderColor: '#4a9eff',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#4a9eff',
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: 'rgba(255, 255, 255, 0.7)',
+                '&.Mui-focused': {
+                  color: '#4a9eff',
+                },
+              },
+              '& .MuiFormHelperText-root': {
+                color: 'rgba(255, 255, 255, 0.6)',
+                fontSize: '0.75rem',
               },
             }}
           />
@@ -726,6 +801,17 @@ const AeonMessenger: React.FC = () => {
       <DiagnosticModal 
         open={showDiagnosticModal} 
         onClose={() => setShowDiagnosticModal(false)} 
+      />
+
+      {/* Диалог информации о чате */}
+      <ChatInfoDialog
+        open={showChatInfoDialog}
+        onClose={() => setShowChatInfoDialog(false)}
+        currentChat={currentChat}
+        loadChatInfo={loadChatInfo}
+        addMemberToChat={addMemberToChat}
+        removeMemberFromChat={removeMemberFromChat}
+        currentUserId={currentUser?.telegram_id}
       />
     </Box>
   );
