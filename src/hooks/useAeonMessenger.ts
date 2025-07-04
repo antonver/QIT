@@ -221,6 +221,12 @@ export const useAeonMessenger = () => {
     }
   }, [loadMessages]);
 
+  // Очищаем текущий чат (возврат к списку чатов)
+  const clearCurrentChat = useCallback(() => {
+    setCurrentChat(null);
+    setMessages([]);
+  }, []);
+
   // Загружаем подробную информацию о чате
   const loadChatInfo = useCallback(async (chatId: number) => {
     try {
@@ -282,5 +288,6 @@ export const useAeonMessenger = () => {
     loadChatInfo,
     addMemberToChat,
     removeMemberFromChat,
+    clearCurrentChat,
   };
 }; 

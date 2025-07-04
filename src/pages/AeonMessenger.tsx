@@ -20,7 +20,6 @@ import {
   Button,
   CircularProgress,
   Alert,
-  Fab,
   Tooltip,
 } from '@mui/material';
 import {
@@ -29,6 +28,7 @@ import {
   Chat as ChatIcon,
   Person as PersonIcon,
   Info as InfoIcon,
+  ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import backgroundImage from '../assets/background.png';
@@ -63,6 +63,7 @@ const AeonMessenger: React.FC = () => {
     loadChatInfo,
     addMemberToChat,
     removeMemberFromChat,
+    clearCurrentChat,
   } = useAeonMessenger();
 
   const scrollToBottom = () => {
@@ -71,7 +72,7 @@ const AeonMessenger: React.FC = () => {
 
   const handleBackToChats = () => {
     // Очищаем текущий чат для возврата к списку чатов
-    window.location.reload();
+    clearCurrentChat();
   };
 
   useEffect(scrollToBottom, [messages]);
@@ -311,12 +312,13 @@ const AeonMessenger: React.FC = () => {
                   selected={currentChat?.id === chat.id}
                   onClick={() => selectChat(chat)}
                   sx={{
-                    py: 1.5,
-                    px: 2,
+                    py: isMobile ? 2 : 1.5,
+                    px: isMobile ? 1.5 : 2,
                     bgcolor: currentChat?.id === chat.id ? 'rgba(74, 158, 255, 0.1)' : 'transparent',
                     '&:hover': {
                       bgcolor: currentChat?.id === chat.id ? 'rgba(74, 158, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
                     },
+                    minHeight: isMobile ? 72 : 'auto',
                   }}
                 >
                 <ListItemAvatar>
@@ -329,8 +331,8 @@ const AeonMessenger: React.FC = () => {
                       src={chat.photo_url || undefined}
                       sx={{
                         bgcolor: '#4a9eff',
-                        width: 45,
-                        height: 45,
+                        width: isMobile ? 50 : 45,
+                        height: isMobile ? 50 : 45,
                       }}
                     >
                       {chat.title ? chat.title[0].toUpperCase() : <ChatIcon />}
@@ -429,30 +431,61 @@ const AeonMessenger: React.FC = () => {
           <>
             {/* Заголовок чата */}
             <Box sx={{
-              p: 2,
+              p: isMobile ? 1.5 : 2,
               borderBottom: '1px solid rgba(43, 52, 65, 1)',
               bgcolor: 'rgba(35, 43, 59, 0.95)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
             }}>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                {/* Кнопка назад на мобильных */}
+                {isMobile && (
+                  <IconButton
+                    onClick={handleBackToChats}
+                    sx={{
+                      color: '#4a9eff',
+                      mr: 1,
+                      p: 1,
+                      '&:hover': {
+                        bgcolor: 'rgba(74, 158, 255, 0.1)',
+                      },
+                    }}
+                  >
+                    <ArrowBackIcon />
+                  </IconButton>
+                )}
+                
                 <Avatar
                   src={currentChat.photo_url || undefined}
                   sx={{
                     bgcolor: '#4a9eff',
-                    width: 40,
-                    height: 40,
-                    mr: 2,
+                    width: isMobile ? 36 : 40,
+                    height: isMobile ? 36 : 40,
+                    mr: isMobile ? 1.5 : 2,
                   }}
                 >
                   {currentChat.title ? currentChat.title[0].toUpperCase() : <ChatIcon />}
                 </Avatar>
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography 
+                    variant={isMobile ? "body1" : "h6"} 
+                    sx={{ 
+                      fontWeight: 600,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
                     {currentChat.title || 'Безымянный чат'}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: '#8b95a1' }}>
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      color: '#8b95a1',
+                      fontSize: isMobile ? '0.7rem' : '0.75rem',
+                    }}
+                  >
                     {currentChat.chat_type === 'private' ? 'Личный чат' : 'Групповой чат'}
                   </Typography>
                 </Box>
@@ -463,12 +496,13 @@ const AeonMessenger: React.FC = () => {
                   onClick={() => setShowChatInfoDialog(true)}
                   sx={{
                     color: '#4a9eff',
+                    p: isMobile ? 1 : 1.5,
                     '&:hover': {
                       bgcolor: 'rgba(74, 158, 255, 0.1)',
                     },
                   }}
                 >
-                  <InfoIcon />
+                  <InfoIcon fontSize={isMobile ? "small" : "medium"} />
                 </IconButton>
               </Tooltip>
             </Box>
@@ -774,25 +808,7 @@ const AeonMessenger: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Мобильная кнопка назад к списку чатов */}
-      {isMobile && currentChat && (
-        <Fab
-          onClick={handleBackToChats}
-          sx={{
-            position: 'fixed',
-            bottom: 16,
-            left: 16,
-            bgcolor: '#4a9eff',
-            color: 'white',
-            '&:hover': {
-              bgcolor: '#3d8bdb',
-            },
-            zIndex: 1000,
-          }}
-        >
-          <PersonIcon />
-        </Fab>
-      )}
+
 
       {/* Модальное окно диагностики */}
       <DiagnosticModal 
