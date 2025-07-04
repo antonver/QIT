@@ -54,6 +54,7 @@ const ChatInfoDialog: React.FC<ChatInfoDialogProps> = ({
   const [newMemberUsername, setNewMemberUsername] = useState('');
   const [addMode, setAddMode] = useState<'id' | 'username'>('username');
   const [addingMember, setAddingMember] = useState(false);
+  const [addResult, setAddResult] = useState<{type: 'success' | 'info' | 'warning', message: string} | null>(null);
 
   useEffect(() => {
     if (open && currentChat) {
@@ -85,7 +86,23 @@ const ChatInfoDialog: React.FC<ChatInfoDialogProps> = ({
 
   const tryAddMemberByUsername = async (username: string) => {
     if (!currentChat) return;
-    await inviteMemberByUsername(currentChat.id, username);
+    const result = await inviteMemberByUsername(currentChat.id, username);
+    
+    // Показываем результат для автоопределения
+    if (result.status === 'added') {
+      setAddResult({
+        type: 'success',
+        message: `✅ @${username} найден и добавлен в чат!`
+      });
+    } else if (result.status === 'invited') {
+      setAddResult({
+        type: 'info',
+        message: `📨 @${username} не найден в базе. Приглашение создано - пользователь будет добавлен при входе в приложение.`
+      });
+    }
+    
+    // Очищаем результат через 5 секунд
+    setTimeout(() => setAddResult(null), 5000);
   };
 
   // Добавление участника в режиме "ID". Если введён не-числовой текст – пробуем как username.
@@ -124,22 +141,34 @@ const ChatInfoDialog: React.FC<ChatInfoDialogProps> = ({
     try {
       setAddingMember(true);
       setError(null);
+      setAddResult(null);
       
       const result = await inviteMemberByUsername(currentChat.id, newMemberUsername.trim());
       
-      // Показываем результат пользователю
+      // Показываем результат в зависимости от статуса
       if (result.status === 'added') {
+        setAddResult({
+          type: 'success',
+          message: `✅ @${newMemberUsername.trim()} добавлен в чат!`
+        });
         setNewMemberUsername('');
         await loadChatDetails(); // Перезагружаем информацию о чате
       } else if (result.status === 'invited') {
+        setAddResult({
+          type: 'info', 
+          message: `📨 Приглашение отправлено @${newMemberUsername.trim()}. Пользователь будет добавлен автоматически при входе в приложение.`
+        });
         setNewMemberUsername('');
-        // Показываем уведомление об отправке приглашения
       }
       
-      console.log(result.message);
+      // Очищаем результат через 5 секунд
+      setTimeout(() => setAddResult(null), 5000);
     } catch (err) {
-      setError('Не удалось добавить участника');
       console.error('Error adding member by username:', err);
+      setAddResult({
+        type: 'warning',
+        message: 'Не удалось добавить участника. Проверьте username и попробуйте снова.'
+      });
     } finally {
       setAddingMember(false);
     }
@@ -301,12 +330,41 @@ const ChatInfoDialog: React.FC<ChatInfoDialogProps> = ({
                 Добавить участника
               </Typography>
               
+              {/* Результат добавления */}
+              {addResult && (
+                <Alert 
+                  severity={addResult.type === 'success' ? 'success' : addResult.type === 'info' ? 'info' : 'warning'} 
+                  sx={{ 
+                    mb: 2,
+                    '& .MuiAlert-message': {
+                      color: 'white',
+                    },
+                    bgcolor: addResult.type === 'success' ? 'rgba(76, 175, 80, 0.2)' : 
+                             addResult.type === 'info' ? 'rgba(33, 150, 243, 0.2)' : 
+                             'rgba(255, 152, 0, 0.2)',
+                    border: `1px solid ${addResult.type === 'success' ? '#4CAF50' : 
+                                         addResult.type === 'info' ? '#2196F3' : 
+                                         '#FF9800'}`,
+                  }}
+                >
+                  {addResult.message}
+                </Alert>
+              )}
+
               {/* Переключатель режима */}
               <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
                 <Button
                   variant={addMode === 'username' ? 'contained' : 'outlined'}
                   onClick={() => setAddMode('username')}
                   size="small"
+                  sx={{
+                    bgcolor: addMode === 'username' ? '#4a9eff' : 'transparent',
+                    color: addMode === 'username' ? 'white' : '#4a9eff',
+                    borderColor: '#4a9eff',
+                    '&:hover': {
+                      bgcolor: addMode === 'username' ? '#3d8bdb' : 'rgba(74, 158, 255, 0.1)',
+                    },
+                  }}
                 >
                   По @username
                 </Button>
@@ -314,8 +372,16 @@ const ChatInfoDialog: React.FC<ChatInfoDialogProps> = ({
                   variant={addMode === 'id' ? 'contained' : 'outlined'}
                   onClick={() => setAddMode('id')}
                   size="small"
+                  sx={{
+                    bgcolor: addMode === 'id' ? '#4a9eff' : 'transparent',
+                    color: addMode === 'id' ? 'white' : '#4a9eff',
+                    borderColor: '#4a9eff',
+                    '&:hover': {
+                      bgcolor: addMode === 'id' ? '#3d8bdb' : 'rgba(74, 158, 255, 0.1)',
+                    },
+                  }}
                 >
-                  По ID
+                  По ID (авто)
                 </Button>
               </Box>
               
@@ -326,7 +392,7 @@ const ChatInfoDialog: React.FC<ChatInfoDialogProps> = ({
                     placeholder="@username пользователя"
                     value={newMemberUsername}
                     onChange={(e) => setNewMemberUsername(e.target.value)}
-                    helperText="Введите @username или просто username"
+                    helperText="💡 Если пользователь уже использовал приложение - добавится сразу. Если нет - получит приглашение."
                     sx={{
                       flex: 1,
                       '& .MuiOutlinedInput-root': {
@@ -334,6 +400,10 @@ const ChatInfoDialog: React.FC<ChatInfoDialogProps> = ({
                         '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.3)' },
                         '&:hover fieldset': { borderColor: '#4a9eff' },
                         '&.Mui-focused fieldset': { borderColor: '#4a9eff' },
+                      },
+                      '& .MuiFormHelperText-root': {
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        fontSize: '0.75rem',
                       },
                     }}
                   />
@@ -345,19 +415,20 @@ const ChatInfoDialog: React.FC<ChatInfoDialogProps> = ({
                     sx={{
                       bgcolor: '#4a9eff',
                       '&:hover': { bgcolor: '#3d8bdb' },
+                      minWidth: '120px',
                     }}
                   >
-                    Добавить
+                    {addingMember ? 'Поиск...' : 'Добавить'}
                   </Button>
                 </Box>
               ) : (
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   <TextField
                     size="small"
-                    placeholder="Telegram ID пользователя"
+                    placeholder="ID или @username"
                     value={newMemberId}
                     onChange={(e) => setNewMemberId(e.target.value)}
-                    helperText="Чтобы узнать ID, используйте @userinfobot"
+                    helperText="💡 Можете ввести как Telegram ID (числа), так и @username - система определит автоматически"
                     sx={{
                       flex: 1,
                       '& .MuiOutlinedInput-root': {
@@ -365,6 +436,10 @@ const ChatInfoDialog: React.FC<ChatInfoDialogProps> = ({
                         '& fieldset': { borderColor: 'rgba(255, 255, 255, 0.3)' },
                         '&:hover fieldset': { borderColor: '#4a9eff' },
                         '&.Mui-focused fieldset': { borderColor: '#4a9eff' },
+                      },
+                      '& .MuiFormHelperText-root': {
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        fontSize: '0.75rem',
                       },
                     }}
                   />
@@ -376,9 +451,10 @@ const ChatInfoDialog: React.FC<ChatInfoDialogProps> = ({
                     sx={{
                       bgcolor: '#4a9eff',
                       '&:hover': { bgcolor: '#3d8bdb' },
+                      minWidth: '120px',
                     }}
                   >
-                    Добавить
+                    {addingMember ? 'Поиск...' : 'Добавить'}
                   </Button>
                 </Box>
               )}
