@@ -18,6 +18,7 @@ const logApiConfig = () => {
   console.log('VITE_CHAT_URL:', import.meta.env.VITE_CHAT_URL);
   console.log('Base URL:', import.meta.env.VITE_CHAT_URL || 'https://aeon-backend-2892-d50dfbe26b14.herokuapp.com');
   console.log('Environment:', import.meta.env.MODE);
+  console.log('🆕 NEW BACKEND URL: https://aeon-backend-2892-d50dfbe26b14.herokuapp.com');
   console.log('=========================================');
 };
 
@@ -26,7 +27,7 @@ logApiConfig();
 
 // Create axios instance for Aeon Messenger API
 const aeonApi = axios.create({
-  baseURL: import.meta.env.VITE_CHAT_URL || 'https://aeon-backend-2892-d50dfbe26b14.herokuapp.com',
+  baseURL: 'https://aeon-backend-2892-d50dfbe26b14.herokuapp.com',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
