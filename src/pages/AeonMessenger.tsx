@@ -28,6 +28,7 @@ import {
   Chat as ChatIcon,
   Info as InfoIcon,
   ArrowBack as ArrowBackIcon,
+  Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import backgroundImage from '../assets/background.png';
@@ -58,6 +59,10 @@ const AeonMessenger: React.FC = () => {
     messagesLoading,
     error,
     isAuthError,
+    autoRefresh,
+    setAutoRefresh,
+    hasNewMessages,
+    markMessagesAsViewed,
     sendNewMessage,
     createNewChat,
     selectChat,
@@ -65,6 +70,7 @@ const AeonMessenger: React.FC = () => {
     addMemberToChat,
     removeMemberFromChat,
     clearCurrentChat,
+    checkNewMessages,
   } = useAeonMessenger();
 
   const scrollToBottom = () => {
@@ -78,11 +84,31 @@ const AeonMessenger: React.FC = () => {
 
   useEffect(scrollToBottom, [messages]);
 
-  const handleSendMessage = async () => {
-    if (inputValue.trim() === '' || !currentChat) return;
+  // Сбрасываем флаг новых сообщений при просмотре
+  useEffect(() => {
+    if (hasNewMessages && messages.length > 0) {
+      // Задержка для того, чтобы пользователь успел увидеть новые сообщения
+      const timer = setTimeout(() => {
+        markMessagesAsViewed();
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [hasNewMessages, messages.length, markMessagesAsViewed]);
 
-    await sendNewMessage(currentChat.id, inputValue);
-    setInputValue('');
+  const handleSendMessage = async () => {
+    if (!inputValue.trim() || !currentChat) return;
+
+    try {
+      // Сбрасываем флаг новых сообщений при отправке
+      markMessagesAsViewed();
+      
+      await sendNewMessage(currentChat.id, inputValue.trim());
+      setInputValue('');
+      scrollToBottom();
+    } catch (err) {
+      console.error('Error sending message:', err);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -332,23 +358,57 @@ const AeonMessenger: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'space-between',
         }}>
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Чаты
-          </Typography>
-          <Tooltip title="Создать новый чат">
-            <IconButton
-              onClick={() => setShowNewChatDialog(true)}
-              sx={{
-                bgcolor: '#4a9eff',
-                color: 'white',
-                '&:hover': {
-                  bgcolor: '#3d8bdb',
-                },
-              }}
-            >
-              <AddIcon />
-            </IconButton>
-          </Tooltip>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Чаты
+            </Typography>
+            {autoRefresh && (
+              <Tooltip title="Автообновление включено">
+                <CircularProgress 
+                  size={16} 
+                  sx={{ 
+                    color: '#4a9eff',
+                    animation: 'spin 2s linear infinite',
+                    '@keyframes spin': {
+                      '0%': { transform: 'rotate(0deg)' },
+                      '100%': { transform: 'rotate(360deg)' },
+                    }
+                  }} 
+                />
+              </Tooltip>
+            )}
+          </Box>
+          
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Tooltip title={autoRefresh ? "Отключить автообновление" : "Включить автообновление"}>
+              <IconButton
+                onClick={() => setAutoRefresh(!autoRefresh)}
+                sx={{
+                  color: autoRefresh ? '#4a9eff' : '#8b95a1',
+                  '&:hover': {
+                    bgcolor: 'rgba(74, 158, 255, 0.1)',
+                  },
+                }}
+              >
+                <RefreshIcon />
+              </IconButton>
+            </Tooltip>
+            
+            <Tooltip title="Создать новый чат">
+              <IconButton
+                onClick={() => setShowNewChatDialog(true)}
+                sx={{
+                  bgcolor: '#4a9eff',
+                  color: 'white',
+                  '&:hover': {
+                    bgcolor: '#3d8bdb',
+                  },
+                }}
+              >
+                <AddIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Box>
 
         {/* Список чатов */}
@@ -532,9 +592,28 @@ const AeonMessenger: React.FC = () => {
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
                     }}
                   >
                     {currentChat.title || 'Безымянный чат'}
+                    {hasNewMessages && (
+                      <Box
+                        sx={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          bgcolor: '#4CAF50',
+                          animation: 'pulse 2s infinite',
+                          '@keyframes pulse': {
+                            '0%': { transform: 'scale(1)', opacity: 1 },
+                            '50%': { transform: 'scale(1.2)', opacity: 0.7 },
+                            '100%': { transform: 'scale(1)', opacity: 1 },
+                          },
+                        }}
+                      />
+                    )}
                   </Typography>
                   <Typography 
                     variant="caption" 
@@ -544,24 +623,42 @@ const AeonMessenger: React.FC = () => {
                     }}
                   >
                     {currentChat.chat_type === 'private' ? 'Личный чат' : 'Групповой чат'}
+                    {hasNewMessages && ' • Новые сообщения'}
                   </Typography>
                 </Box>
               </Box>
               
-              <Tooltip title="Информация о чате">
-                <IconButton
-                  onClick={() => setShowChatInfoDialog(true)}
-                  sx={{
-                    color: '#4a9eff',
-                    p: isMobile ? 1 : 1.5,
-                    '&:hover': {
-                      bgcolor: 'rgba(74, 158, 255, 0.1)',
-                    },
-                  }}
-                >
-                  <InfoIcon fontSize={isMobile ? "small" : "medium"} />
-                </IconButton>
-              </Tooltip>
+              <Box sx={{ display: 'flex', gap: isMobile ? 0.5 : 1 }}>
+                <Tooltip title="Обновить сообщения">
+                  <IconButton
+                    onClick={() => currentChat && checkNewMessages()}
+                    sx={{
+                      color: '#4a9eff',
+                      p: isMobile ? 1 : 1.5,
+                      '&:hover': {
+                        bgcolor: 'rgba(74, 158, 255, 0.1)',
+                      },
+                    }}
+                  >
+                    <RefreshIcon fontSize={isMobile ? "small" : "medium"} />
+                  </IconButton>
+                </Tooltip>
+                
+                <Tooltip title="Информация о чате">
+                  <IconButton
+                    onClick={() => setShowChatInfoDialog(true)}
+                    sx={{
+                      color: '#4a9eff',
+                      p: isMobile ? 1 : 1.5,
+                      '&:hover': {
+                        bgcolor: 'rgba(74, 158, 255, 0.1)',
+                      },
+                    }}
+                  >
+                    <InfoIcon fontSize={isMobile ? "small" : "medium"} />
+                  </IconButton>
+                </Tooltip>
+              </Box>
             </Box>
 
             {/* Сообщения */}
