@@ -201,4 +201,19 @@ export const healthCheck = async (): Promise<{ status: string }> => {
   return response.data;
 };
 
+// Debug functions for diagnosing server issues
+export const debugAuthConfig = async (): Promise<any> => {
+  const response = await aeonApi.get('/api/v1/debug/auth');
+  return response.data;
+};
+
+export const debugValidateTelegramData = async (initData: string): Promise<any> => {
+  const response = await aeonApi.post('/api/v1/debug/validate-telegram-data', initData, {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  return response.data;
+};
+
 export default aeonApi; 

@@ -227,6 +227,63 @@ export const testAuthData = () => {
   }
 };
 
+// Function to diagnose server-side issues
+export const diagnoseServerAuth = async () => {
+  console.log('🔬 Диагностика проблемы авторизации на сервере...');
+  
+  try {
+    // Import debug functions dynamically to avoid circular dependencies
+    const { debugAuthConfig, debugValidateTelegramData } = await import('../services/aeonMessengerApi');
+    
+    // Check server auth configuration
+    console.log('🔍 Проверяем конфигурацию сервера...');
+    try {
+      const authConfig = await debugAuthConfig();
+      console.log('🏃 Конфигурация сервера:', authConfig);
+      
+      if (!authConfig.telegram_bot_token_set) {
+        console.error('❌ На сервере не установлен токен Telegram бота!');
+        console.error('💡 Решение: Администратор должен установить TELEGRAM_BOT_TOKEN на сервере');
+        return 'server_no_token';
+      }
+      
+      console.log('✅ Токен бота на сервере установлен');
+    } catch (error) {
+      console.error('❌ Ошибка получения конфигурации сервера:', error);
+      return 'server_config_error';
+    }
+    
+    // Test validation with current data
+    const initData = getTelegramInitData();
+    if (initData) {
+      console.log('🧪 Тестируем валидацию данных на сервере...');
+      try {
+        const validationResult = await debugValidateTelegramData(initData);
+        console.log('📊 Результат валидации:', validationResult);
+        
+        if (validationResult.success) {
+          console.log('✅ Валидация на сервере прошла успешно!');
+          console.log('❓ Возможно, проблема в другом месте');
+          return 'validation_success';
+        } else {
+          console.error('❌ Валидация на сервере не прошла');
+          console.error('💡 Причина: Неправильная подпись или истекшие данные');
+          return 'validation_failed';
+        }
+      } catch (error) {
+        console.error('❌ Ошибка тестирования валидации:', error);
+        return 'validation_error';
+      }
+    } else {
+      console.error('❌ Нет данных для тестирования');
+      return 'no_data';
+    }
+  } catch (error) {
+    console.error('❌ Общая ошибка диагностики:', error);
+    return 'general_error';
+  }
+};
+
 // Make functions available globally for debugging
 if (typeof window !== 'undefined') {
   (window as any).telegramUtils = {
@@ -236,6 +293,7 @@ if (typeof window !== 'undefined') {
     cleanupOldAuthData,
     testAuthData,
     initTelegramWebApp,
+    diagnoseServerAuth,
   };
   
   console.log('🔧 Утилиты Telegram доступны через window.telegramUtils');
