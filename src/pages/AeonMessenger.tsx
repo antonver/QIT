@@ -352,20 +352,27 @@ const AeonMessenger: React.FC = () => {
       }}>
         {/* Заголовок списка чатов */}
         <Box sx={{
-          p: 2,
+          p: isMobile ? 1 : 2,
           borderBottom: '1px solid rgba(43, 52, 65, 1)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          minHeight: isMobile ? '52px' : 'auto',
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            <Typography 
+              variant={isMobile ? "body1" : "h6"} 
+              sx={{ 
+                fontWeight: 600,
+                fontSize: isMobile ? '1rem' : 'inherit',
+              }}
+            >
               Чаты
             </Typography>
             {autoRefresh && (
               <Tooltip title="Автообновление включено">
                 <CircularProgress 
-                  size={16} 
+                  size={isMobile ? 14 : 16} 
                   sx={{ 
                     color: '#4a9eff',
                     animation: 'spin 2s linear infinite',
@@ -379,18 +386,19 @@ const AeonMessenger: React.FC = () => {
             )}
           </Box>
           
-          <Box sx={{ display: 'flex', gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: isMobile ? 0.5 : 1 }}>
             <Tooltip title={autoRefresh ? "Отключить автообновление" : "Включить автообновление"}>
               <IconButton
                 onClick={() => setAutoRefresh(!autoRefresh)}
                 sx={{
                   color: autoRefresh ? '#4a9eff' : '#8b95a1',
+                  p: isMobile ? 0.75 : 1,
                   '&:hover': {
                     bgcolor: 'rgba(74, 158, 255, 0.1)',
                   },
                 }}
               >
-                <RefreshIcon />
+                <RefreshIcon fontSize={isMobile ? "small" : "medium"} />
               </IconButton>
             </Tooltip>
             
@@ -400,12 +408,13 @@ const AeonMessenger: React.FC = () => {
                 sx={{
                   bgcolor: '#4a9eff',
                   color: 'white',
+                  p: isMobile ? 0.75 : 1,
                   '&:hover': {
                     bgcolor: '#3d8bdb',
                   },
                 }}
               >
-                <AddIcon />
+                <AddIcon fontSize={isMobile ? "small" : "medium"} />
               </IconButton>
             </Tooltip>
           </Box>
@@ -429,13 +438,13 @@ const AeonMessenger: React.FC = () => {
                   selected={currentChat?.id === chat.id}
                   onClick={() => selectChat(chat)}
                   sx={{
-                    py: isMobile ? 2 : 1.5,
-                    px: isMobile ? 1.5 : 2,
+                    py: isMobile ? 1.25 : 1.5,
+                    px: isMobile ? 1 : 2,
                     bgcolor: currentChat?.id === chat.id ? 'rgba(74, 158, 255, 0.1)' : 'transparent',
                     '&:hover': {
                       bgcolor: currentChat?.id === chat.id ? 'rgba(74, 158, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
                     },
-                    minHeight: isMobile ? 72 : 'auto',
+                    minHeight: isMobile ? 64 : 'auto',
                   }}
                 >
                 <ListItemAvatar>
@@ -448,8 +457,8 @@ const AeonMessenger: React.FC = () => {
                       src={chat.photo_url || undefined}
                       sx={{
                         bgcolor: '#4a9eff',
-                        width: isMobile ? 50 : 45,
-                        height: isMobile ? 50 : 45,
+                        width: isMobile ? 44 : 45,
+                        height: isMobile ? 44 : 45,
                       }}
                     >
                       {chat.title ? chat.title[0].toUpperCase() : <ChatIcon />}
@@ -463,6 +472,7 @@ const AeonMessenger: React.FC = () => {
                       sx={{
                         fontWeight: chat.unread_count > 0 ? 600 : 400,
                         color: 'white',
+                        fontSize: isMobile ? '0.9rem' : 'inherit',
                       }}
                     >
                       {chat.title || 'Безымянный чат'}
@@ -477,7 +487,8 @@ const AeonMessenger: React.FC = () => {
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
-                          maxWidth: '150px',
+                          maxWidth: isMobile ? '120px' : '150px',
+                          fontSize: isMobile ? '0.75rem' : 'inherit',
                         }}
                       >
                         {chat.last_message || 'Нет сообщений'}
@@ -487,7 +498,7 @@ const AeonMessenger: React.FC = () => {
                           variant="caption"
                           sx={{
                             color: '#8b95a1',
-                            fontSize: '0.7rem',
+                            fontSize: isMobile ? '0.65rem' : '0.7rem',
                             ml: 1,
                           }}
                         >
@@ -548,12 +559,13 @@ const AeonMessenger: React.FC = () => {
           <>
             {/* Заголовок чата */}
             <Box sx={{
-              p: isMobile ? 1.5 : 2,
+              p: isMobile ? 0.75 : 2,
               borderBottom: '1px solid rgba(43, 52, 65, 1)',
               bgcolor: 'rgba(35, 43, 59, 0.95)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
+              minHeight: isMobile ? '56px' : 'auto',
             }}>
               <Box sx={{ display: 'flex', alignItems: 'center', flex: 1 }}>
                 {/* Кнопка назад на мобильных */}
@@ -562,8 +574,8 @@ const AeonMessenger: React.FC = () => {
                     onClick={handleBackToChats}
                     sx={{
                       color: '#4a9eff',
-                      mr: 1,
-                      p: 1,
+                      mr: 0.5,
+                      p: 0.5,
                       '&:hover': {
                         bgcolor: 'rgba(74, 158, 255, 0.1)',
                       },
@@ -577,16 +589,16 @@ const AeonMessenger: React.FC = () => {
                   src={currentChat.photo_url || undefined}
                   sx={{
                     bgcolor: '#4a9eff',
-                    width: isMobile ? 36 : 40,
-                    height: isMobile ? 36 : 40,
-                    mr: isMobile ? 1.5 : 2,
+                    width: isMobile ? 32 : 40,
+                    height: isMobile ? 32 : 40,
+                    mr: isMobile ? 1 : 2,
                   }}
                 >
                   {currentChat.title ? currentChat.title[0].toUpperCase() : <ChatIcon />}
                 </Avatar>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography 
-                    variant={isMobile ? "body1" : "h6"} 
+                    variant={isMobile ? "body2" : "h6"} 
                     sx={{ 
                       fontWeight: 600,
                       overflow: 'hidden',
@@ -594,15 +606,16 @@ const AeonMessenger: React.FC = () => {
                       whiteSpace: 'nowrap',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 1,
+                      gap: isMobile ? 0.5 : 1,
+                      fontSize: isMobile ? '0.875rem' : 'inherit',
                     }}
                   >
                     {currentChat.title || 'Безымянный чат'}
                     {hasNewMessages && (
                       <Box
                         sx={{
-                          width: 8,
-                          height: 8,
+                          width: isMobile ? 6 : 8,
+                          height: isMobile ? 6 : 8,
                           borderRadius: '50%',
                           bgcolor: '#4CAF50',
                           animation: 'pulse 2s infinite',
@@ -619,22 +632,23 @@ const AeonMessenger: React.FC = () => {
                     variant="caption" 
                     sx={{ 
                       color: '#8b95a1',
-                      fontSize: isMobile ? '0.7rem' : '0.75rem',
+                      fontSize: isMobile ? '0.65rem' : '0.75rem',
+                      lineHeight: isMobile ? 1.2 : 'inherit',
                     }}
                   >
                     {currentChat.chat_type === 'private' ? 'Личный чат' : 'Групповой чат'}
-                    {hasNewMessages && ' • Новые сообщения'}
+                    {hasNewMessages && (isMobile ? ' • Новые' : ' • Новые сообщения')}
                   </Typography>
                 </Box>
               </Box>
               
-              <Box sx={{ display: 'flex', gap: isMobile ? 0.5 : 1 }}>
+              <Box sx={{ display: 'flex', gap: isMobile ? 0.25 : 1 }}>
                 <Tooltip title="Обновить сообщения">
                   <IconButton
                     onClick={() => currentChat && checkNewMessages()}
                     sx={{
                       color: '#4a9eff',
-                      p: isMobile ? 1 : 1.5,
+                      p: isMobile ? 0.5 : 1.5,
                       '&:hover': {
                         bgcolor: 'rgba(74, 158, 255, 0.1)',
                       },
@@ -649,7 +663,7 @@ const AeonMessenger: React.FC = () => {
                     onClick={() => setShowChatInfoDialog(true)}
                     sx={{
                       color: '#4a9eff',
-                      p: isMobile ? 1 : 1.5,
+                      p: isMobile ? 0.5 : 1.5,
                       '&:hover': {
                         bgcolor: 'rgba(74, 158, 255, 0.1)',
                       },
@@ -665,7 +679,7 @@ const AeonMessenger: React.FC = () => {
             <Box sx={{
               flex: 1,
               overflow: 'auto',
-              p: isMobile ? 1 : 1.5,
+              p: isMobile ? 0.5 : 1.5,
               bgcolor: 'rgba(35, 43, 59, 0.95)',
               backgroundImage: `url(${backgroundImage})`,
               backgroundSize: 'cover',
@@ -684,27 +698,27 @@ const AeonMessenger: React.FC = () => {
               },
               position: 'relative',
               '&::-webkit-scrollbar': {
-                width: '6px',
+                width: isMobile ? '3px' : '6px',
               },
               '&::-webkit-scrollbar-track': {
                 background: 'transparent',
               },
               '&::-webkit-scrollbar-thumb': {
                 background: 'rgba(255, 255, 255, 0.2)',
-                borderRadius: '3px',
+                borderRadius: isMobile ? '1.5px' : '3px',
               },
               '&::-webkit-scrollbar-thumb:hover': {
                 background: 'rgba(255, 255, 255, 0.3)',
               },
             }}>
               {error && (
-                <Alert severity="error" sx={{ mb: 2, zIndex: 1, position: 'relative' }}>
+                <Alert severity="error" sx={{ mb: isMobile ? 1 : 2, zIndex: 1, position: 'relative' }}>
                   {error}
                 </Alert>
               )}
 
               {messagesLoading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4, zIndex: 1, position: 'relative' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: isMobile ? 2 : 4, zIndex: 1, position: 'relative' }}>
                   <CircularProgress sx={{ color: '#4a9eff' }} />
                 </Box>
               ) : (
@@ -719,7 +733,7 @@ const AeonMessenger: React.FC = () => {
                       style={{
                         display: 'flex',
                         justifyContent: isMyMessage(message) ? 'flex-end' : 'flex-start',
-                        marginBottom: '12px',
+                        marginBottom: isMobile ? '8px' : '12px',
                         position: 'relative',
                         zIndex: 1,
                       }}
@@ -727,8 +741,8 @@ const AeonMessenger: React.FC = () => {
                       <Box
                         sx={{
                           maxWidth: isMobile ? '85%' : '70%',
-                          px: isMobile ? 1.5 : 2,
-                          py: isMobile ? 1 : 1.2,
+                          px: isMobile ? 1.25 : 2,
+                          py: isMobile ? 0.75 : 1.2,
                           borderRadius: isMyMessage(message) ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
                           bgcolor: isMyMessage(message) ? '#4a9eff' : 'rgba(43, 52, 65, 0.9)',
                           color: 'white',
@@ -743,7 +757,8 @@ const AeonMessenger: React.FC = () => {
                               color: '#40C4FF',
                               fontWeight: 600,
                               display: 'block',
-                              mb: 0.5,
+                              mb: isMobile ? 0.25 : 0.5,
+                              fontSize: isMobile ? '0.7rem' : '0.75rem',
                             }}
                           >
                             {getDisplayName(message)}
@@ -752,9 +767,9 @@ const AeonMessenger: React.FC = () => {
                         <Typography
                           variant="body1"
                           sx={{
-                            mb: 0.5,
-                            fontSize: isMobile ? '0.9rem' : '0.95rem',
-                            lineHeight: 1.4,
+                            mb: isMobile ? 0.25 : 0.5,
+                            fontSize: isMobile ? '0.875rem' : '0.95rem',
+                            lineHeight: isMobile ? 1.3 : 1.4,
                           }}
                         >
                           {message.text}
@@ -763,10 +778,10 @@ const AeonMessenger: React.FC = () => {
                           variant="caption"
                           sx={{
                             opacity: 0.7,
-                            fontSize: isMobile ? '0.65rem' : '0.7rem',
+                            fontSize: isMobile ? '0.6rem' : '0.7rem',
                             display: 'block',
                             textAlign: 'right',
-                            mt: 0.25,
+                            mt: isMobile ? 0.125 : 0.25,
                             color: isMyMessage(message) ? 'rgba(255,255,255,0.8)' : '#8b95a1',
                           }}
                         >
@@ -782,18 +797,18 @@ const AeonMessenger: React.FC = () => {
 
             {/* Поле ввода */}
             <Box sx={{
-              p: isMobile ? 1.5 : 2,
+              p: isMobile ? 1 : 2,
               bgcolor: 'rgba(35, 43, 59, 0.95)',
               display: 'flex',
-              gap: isMobile ? 1 : 1.5,
+              gap: isMobile ? 0.75 : 1.5,
               alignItems: 'flex-end',
               borderTop: '1px solid rgba(43, 52, 65, 1)',
-              pb: isMobile ? 'max(1.5rem, env(safe-area-inset-bottom))' : 2,
+              pb: isMobile ? 'max(1rem, env(safe-area-inset-bottom))' : 2,
             }}>
               <TextField
                 fullWidth
                 multiline
-                maxRows={isMobile ? 3 : 4}
+                maxRows={isMobile ? 2 : 4}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
@@ -802,10 +817,10 @@ const AeonMessenger: React.FC = () => {
                 size={isMobile ? 'small' : 'small'}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: '20px',
+                    borderRadius: isMobile ? '16px' : '20px',
                     bgcolor: 'rgba(35, 46, 60, 1)',
                     border: 'none',
-                    fontSize: isMobile ? '0.9rem' : '0.95rem',
+                    fontSize: isMobile ? '0.875rem' : '0.95rem',
                     color: 'white',
                     '& fieldset': {
                       border: '1px solid rgba(60, 72, 84, 1)',
@@ -817,7 +832,7 @@ const AeonMessenger: React.FC = () => {
                       border: '2px solid #4a9eff',
                     },
                     '& .MuiInputBase-input': {
-                      padding: isMobile ? '10px 14px' : '12px 16px',
+                      padding: isMobile ? '8px 12px' : '12px 16px',
                       color: 'white',
                       '&::placeholder': {
                         color: 'rgba(255, 255, 255, 0.5)',
@@ -834,10 +849,10 @@ const AeonMessenger: React.FC = () => {
                 sx={{
                   bgcolor: '#4a9eff',
                   color: 'white',
-                  width: isMobile ? 40 : 44,
-                  height: isMobile ? 40 : 44,
-                  minWidth: isMobile ? 40 : 44,
-                  minHeight: isMobile ? 40 : 44,
+                  width: isMobile ? 36 : 44,
+                  height: isMobile ? 36 : 44,
+                  minWidth: isMobile ? 36 : 44,
+                  minHeight: isMobile ? 36 : 44,
                   '&:hover': {
                     bgcolor: '#3d8bdb',
                     transform: 'scale(1.05)',
@@ -849,7 +864,7 @@ const AeonMessenger: React.FC = () => {
                   transition: 'all 0.2s ease',
                 }}
               >
-                <SendIcon sx={{ fontSize: isMobile ? '1.1rem' : '1.2rem' }} />
+                <SendIcon sx={{ fontSize: isMobile ? '1rem' : '1.2rem' }} />
               </IconButton>
             </Box>
           </>
