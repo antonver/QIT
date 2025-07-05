@@ -80,10 +80,13 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
       setError('');
       
       // Check if we've reached 10 questions
-      if (questionNumber > 10) {
+      if (questionNumber >= 10) {
+        console.log('Reached 10 questions, generating summary...');
         await handleGenerateSummary();
         return;
       }
+      
+      console.log(`Fetching question ${questionNumber + 1}/10...`);
       
       // Use improved hrBotAPI instead of the old API
       const questionData = await hrBotAPI.getNextQuestion(sessionToken, {
@@ -97,6 +100,8 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
         setTimeLeft(90); // Reset timer
         setIsTimerRunning(true); // Start timer
         
+        console.log(`Question ${questionNumber + 1} loaded:`, questionData.text.substring(0, 50) + '...');
+        
         // Focus on the text field
         setTimeout(() => {
           if (textFieldRef.current) {
@@ -105,6 +110,7 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
         }, 100);
       } else {
         // No more questions, generate summary
+        console.log('No more questions available, generating summary...');
         await handleGenerateSummary();
       }
       
@@ -124,6 +130,8 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
       setIsSavingAnswer(true);
       setIsTimerRunning(false); // Stop timer
       
+      console.log(`Saving answer for question ${questionNumber} (${currentQuestion.id})...`);
+      
       // Use improved hrBotAPI
       await hrBotAPI.submitAnswer(sessionToken, {
         question_id: currentQuestion.id,
@@ -140,7 +148,11 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
       setCurrentAnswer('');
       
       // Increment question number
-      setQuestionNumber(prev => prev + 1);
+      setQuestionNumber(prev => {
+        const newNumber = prev + 1;
+        console.log(`Question number incremented to ${newNumber}/10`);
+        return newNumber;
+      });
       
       // Get next question after saving
       setTimeout(() => {
@@ -153,7 +165,7 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
     } finally {
       setIsSavingAnswer(false);
     }
-  }, [currentQuestion, sessionToken, fetchNextQuestion]);
+  }, [currentQuestion, sessionToken, fetchNextQuestion, questionNumber]);
 
   // Generate summary using improved API
   const handleGenerateSummary = useCallback(async () => {
