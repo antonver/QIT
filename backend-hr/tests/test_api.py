@@ -252,8 +252,43 @@ def test_aeon_next_question(monkeypatch):
     response = client.post("/aeon/question", json=payload)
     assert response.status_code == 200
     data = response.json()
-    assert data["question"]
-    assert data["type"] == "technical"
+    assert "questions" in data
+    assert len(data["questions"]) > 0
+    assert "text" in data["questions"][0]
+    assert "type" in data["questions"][0]
+    assert "total_questions" in data
+    assert "remaining_questions" in data
+    assert data["total_questions"] == 10
+
+def test_aeon_next_question_with_history(monkeypatch):
+    mock_openai(monkeypatch, '{"question": "Какой ваш любимый язык программирования?", "type": "technical"}')
+    payload = {
+        "candidate": "Иван Иванов",
+        "position": "Backend Developer",
+        "history": ["q_1", "q_2", "q_3"]
+    }
+    response = client.post("/aeon/question", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert "questions" in data
+    assert len(data["questions"]) > 0
+    assert data["total_questions"] == 10
+    assert data["remaining_questions"] == 7
+
+def test_aeon_next_question_completed(monkeypatch):
+    mock_openai(monkeypatch, '{"question": "Какой ваш любимый язык программирования?", "type": "technical"}')
+    payload = {
+        "candidate": "Иван Иванов",
+        "position": "Backend Developer",
+        "history": ["q_1", "q_2", "q_3", "q_4", "q_5", "q_6", "q_7", "q_8", "q_9", "q_10"]
+    }
+    response = client.post("/aeon/question", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert "questions" in data
+    assert len(data["questions"]) == 0
+    assert data["total_questions"] == 10
+    assert data["remaining_questions"] == 0
 
 def test_aeon_summary(monkeypatch):
     mock_openai(monkeypatch, '{"glyph": "🧬", "summary": "Кандидат проявил себя отлично", "recommendation": "Брать"}')

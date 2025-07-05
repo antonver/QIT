@@ -991,13 +991,14 @@ async def aeon_next_question_legacy(data: dict):
     history = data.get("history", [])
     
     if len(history) >= len(AEON_QUESTIONS):
-        return {"question": None}
+        return {"questions": []}
     
-    # Возвращаем вопрос по индексу
-    question = AEON_QUESTIONS[len(history)]
+    # Возвращаем все оставшиеся вопросы
+    remaining_questions = AEON_QUESTIONS[len(history):]
     return {
-        "question": question["text"],
-        "type": question["type"]
+        "questions": [{"text": q["text"], "type": q["type"]} for q in remaining_questions],
+        "total_questions": len(AEON_QUESTIONS),
+        "remaining_questions": len(remaining_questions)
     }
 
 @router.post("/aeon/summary")
