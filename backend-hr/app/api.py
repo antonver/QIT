@@ -566,7 +566,7 @@ async def generate_question_with_openai(session_state: SessionState, question_ty
 # Обновляем функцию получения следующего вопроса
 @router.post("/aeon/question/{token}")
 async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
-    """Улучшенная логика получения следующего вопроса с AI-генерацией"""
+    """Улучшенная логика получения следующего вопроса с AI-генерацией и отладкой"""
     session_state = sessions.get(token)
     if not session_state:
         raise HTTPException(status_code=404, detail="Сессия не найдена")
@@ -576,11 +576,27 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
     # Обновляем активность
     update_session_activity(session_state)
     
+    # Подробное логирование для отладки
+    log_event("question_request", {
+        "token": token,
+        "asked_questions": list(session_state.asked_questions),
+        "question_order": session_state.question_order,
+        "total_aeon_questions": len(AEON_QUESTIONS),
+        "request_data": data
+    })
+    
     # Получаем все незаданные вопросы из базового пула
     available_questions = [q for q in AEON_QUESTIONS if q["id"] not in session_state.asked_questions]
     
+    log_event("available_questions", {
+        "token": token,
+        "available_count": len(available_questions),
+        "available_ids": [q["id"] for q in available_questions]
+    })
+    
     # Если базовые вопросы закончились, пробуем сгенерировать новый через AI
     if not available_questions:
+        log_event("no_available_questions", {"token": token})
         ai_question = await generate_question_with_openai(session_state)
         if ai_question:
             # Добавляем AI-вопрос в список заданных
@@ -624,9 +640,10 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
     session_state.question_order.append(question["id"])
     
     # Логируем выбор вопроса
-    log_event("aeon_question", {
+    log_event("aeon_question_selected", {
         "token": token,
         "question_id": question["id"],
+        "question_text": question["text"][:50] + "...",
         "questions_asked": len(session_state.asked_questions),
         "total_questions": len(AEON_QUESTIONS),
         "remaining_questions": len(AEON_QUESTIONS) - len(session_state.asked_questions)

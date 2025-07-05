@@ -1,5 +1,5 @@
 // API сервис для HRBot
-const API_BASE_URL = 'https://aeon-hr-interview-c0238c9f48f7.herokuapp.com';
+const API_BASE_URL = 'https://aeon-hr-fixed-backend-540e49434c71.herokuapp.com';
 
 export interface SessionResponse {
   token: string;
@@ -123,50 +123,17 @@ class HRBotAPI {
       throw new Error('Session not found');
     }
     
-    // Проверяем, достигли ли мы лимита вопросов
-    if (sessionState.questionIndex >= sessionState.totalQuestions) {
-      console.log(`🔚 Reached question limit: ${sessionState.questionIndex}/${sessionState.totalQuestions}`);
-      return null;
-    }
-    
     try {
-      // Передаем информацию о текущем состоянии сессии
-      const requestData = {
-        ...data,
-        current_question_index: sessionState.questionIndex,
-        asked_questions: Array.from(sessionState.askedQuestions),
-        answers: sessionState.answers
-      };
-      
-      console.log(`📤 API: Requesting question ${sessionState.questionIndex + 1} for token ${token}`);
-      console.log(`📋 API: Already asked questions:`, Array.from(sessionState.askedQuestions));
+      console.log(`📤 API: Requesting question for token ${token}`);
       
       const response = await this.request<ApiQuestionResponse>(`/aeon/question/${token}`, {
         method: 'POST',
-        body: JSON.stringify(requestData),
+        body: JSON.stringify(data),
       });
       
       // Преобразуем ответ API в наш формат
       if (response && response.question) {
-        // Используем стабильный ID на основе индекса вопроса
         const questionId = response.question_id || `q_${sessionState.questionIndex + 1}`;
-        
-        // Проверяем, не задавали ли мы уже этот вопрос
-        if (sessionState.askedQuestions.has(questionId)) {
-          console.warn(`⚠️ API: Question ${questionId} already asked, attempting to get next`);
-          // Попытаемся получить следующий вопрос
-          if (sessionState.questionIndex + 1 < sessionState.totalQuestions) {
-            sessionState.questionIndex++;
-            return this.getNextQuestion(token, data);
-          }
-          return null;
-        }
-        
-        // Проверяем, не повторяется ли текст вопроса
-        if (sessionState.lastQuestionId && sessionState.lastQuestionId === questionId) {
-          console.warn(`⚠️ API: Same question ID ${questionId} requested twice, skipping`);
-          return null;
-        }
         
         const question: Question = {
           id: questionId,
@@ -174,11 +141,10 @@ class HRBotAPI {
           type: 'text' // Все вопросы открытые
         };
         
-        // Добавляем вопрос в список заданных ТОЛЬКО после успешного создания
-        sessionState.askedQuestions.add(questionId);
-        sessionState.lastQuestionId = questionId;
+        // Увеличиваем индекс вопроса
+        sessionState.questionIndex++;
         
-        console.log(`✅ API: Question ${questionId} prepared:`, question.text.substring(0, 50) + '...');
+        console.log(`✅ API: Question received:`, question.text.substring(0, 50) + '...');
         
         return question;
       }
@@ -187,7 +153,6 @@ class HRBotAPI {
       return null;
     } catch (error) {
       console.error('API: Error getting next question:', error);
-      // Если нет больше вопросов, API может вернуть ошибку
       return null;
     }
   }
