@@ -9,6 +9,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://aeon-messenger.vercel.app",
+        "https://qit-5mzhhnk1m-antonvers-projects.vercel.app",
         "http://localhost:3000",
         "http://localhost:5173",
         "http://127.0.0.1:5173",
