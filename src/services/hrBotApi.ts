@@ -141,8 +141,10 @@ class HRBotAPI {
           type: 'text' // Все вопросы открытые
         };
         
-        // НЕ увеличиваем индекс здесь - он будет увеличен в submitAnswer
+        // Увеличиваем индекс вопроса при получении
+        sessionState.questionIndex++;
         console.log(`✅ API: Question received:`, question.text.substring(0, 50) + '...');
+        console.log(`📊 API: Question index incremented to ${sessionState.questionIndex}`);
         
         return question;
       }
@@ -164,11 +166,7 @@ class HRBotAPI {
       sessionState.answers[answer.question_id] = answer.answer.toString();
       
       console.log(`📝 API: Answer saved for question ${answer.question_id}, current index: ${sessionState.questionIndex}`);
-      
-      // Увеличиваем индекс только после успешной отправки ответа
-      sessionState.questionIndex++;
-      
-      console.log(`✅ API: Answer submitted for question ${answer.question_id}, index incremented to ${sessionState.questionIndex}`);
+      console.log(`✅ API: Answer submitted for question ${answer.question_id}`);
     }
     
     return this.request<AnswerResponse>(`/session/${token}/answer`, {
