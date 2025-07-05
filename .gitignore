@@ -132,3 +132,16 @@ fabric.properties
 
 # End of https://www.toptal.com/developers/gitignore/api/react,webstormbackend-hr-deploy/
 backend-hr-deploy/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables and secrets
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
