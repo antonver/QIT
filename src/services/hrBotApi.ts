@@ -124,7 +124,7 @@ class HRBotAPI {
     }
     
     try {
-      console.log(`📤 API: Requesting question for token ${token}`);
+      console.log(`📤 API: Requesting question for token ${token}, current index: ${sessionState.questionIndex}`);
       
       const response = await this.request<ApiQuestionResponse>(`/aeon/question/${token}`, {
         method: 'POST',
@@ -141,9 +141,7 @@ class HRBotAPI {
           type: 'text' // Все вопросы открытые
         };
         
-        // Увеличиваем индекс вопроса
-        sessionState.questionIndex++;
-        
+        // НЕ увеличиваем индекс здесь - он будет увеличен в submitAnswer
         console.log(`✅ API: Question received:`, question.text.substring(0, 50) + '...');
         
         return question;
@@ -164,10 +162,13 @@ class HRBotAPI {
     if (sessionState && answer.question_id) {
       // Сохраняем ответ в состоянии сессии
       sessionState.answers[answer.question_id] = answer.answer.toString();
+      
+      console.log(`📝 API: Answer saved for question ${answer.question_id}, current index: ${sessionState.questionIndex}`);
+      
       // Увеличиваем индекс только после успешной отправки ответа
       sessionState.questionIndex++;
       
-      console.log(`✅ Answer submitted for question ${answer.question_id}, moving to question ${sessionState.questionIndex + 1}`);
+      console.log(`✅ API: Answer submitted for question ${answer.question_id}, index incremented to ${sessionState.questionIndex}`);
     }
     
     return this.request<AnswerResponse>(`/session/${token}/answer`, {
