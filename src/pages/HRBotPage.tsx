@@ -162,8 +162,10 @@ const HRBotPage: React.FC = () => {
       }
 
       // Получаем следующий вопрос
+      console.log(`📋 Requesting next question, current index: ${questionIndex}`);
       const nextQuestion = await hrBotAPI.getNextQuestion(sessionToken);
       if (nextQuestion && questionIndex < totalQuestions) {
+        console.log(`📝 Got next question: ${nextQuestion.id}`);
         setCurrentQuestion(nextQuestion);
         setQuestionIndex(prev => prev + 1);
         setCurrentAnswer('');
@@ -172,6 +174,7 @@ const HRBotPage: React.FC = () => {
         // При успешном получении следующего вопроса убираем сообщение об ошибке
         setError('');
       } else {
+        console.log(`🔚 No more questions or limit reached, completing session`);
         // Завершаем сессию
         await completeSession();
       }
@@ -214,6 +217,8 @@ const HRBotPage: React.FC = () => {
       setLoading(true);
       clearTimer();
 
+      console.log('🏁 Starting session completion...');
+
       // 1. Завершаем сессию - /session/token/complete
       await hrBotAPI.completeSession(sessionToken);
 
@@ -233,7 +238,9 @@ const HRBotPage: React.FC = () => {
       }));
       
       setSessionState('completed');
+      console.log('✅ Session completed successfully');
     } catch (err) {
+      console.error('❌ Error completing session:', err);
       setError(err instanceof Error ? err.message : 'Ошибка завершения сессии');
       setSessionState('error');
     } finally {
@@ -248,23 +255,29 @@ const HRBotPage: React.FC = () => {
       setError('');
       setSessionState('initializing');
       
+      console.log('🚀 Starting HR Bot session initialization...');
       const sessionResponse = await hrBotAPI.createSession();
       setSessionToken(sessionResponse.token);
+      console.log('✅ Session created:', sessionResponse.token);
       
       // Получить первый вопрос
+      console.log('📋 Requesting first question...');
       const firstQuestion = await hrBotAPI.getNextQuestion(sessionResponse.token);
       
       if (firstQuestion) {
+        console.log('📝 First question received:', firstQuestion.id);
         setCurrentQuestion(firstQuestion);
         setQuestionIndex(1);
         setQuestionStartTime(Date.now());
         setSessionState('in_progress');
         startTimer();
       } else {
+        console.error('❌ Failed to load first question');
         setError('Не удалось загрузить вопросы');
         setSessionState('error');
       }
     } catch (err) {
+      console.error('❌ Session initialization error:', err);
       setError(err instanceof Error ? err.message : 'Ошибка инициализации');
       setSessionState('error');
     } finally {
@@ -323,8 +336,18 @@ ${sessionResults.answerTimes.map((time, index) =>
   };
 
   // Рестарт
-  const restart = () => {
+  const restart = async () => {
     clearTimer();
+    
+    // Очищаем сессию на сервере если она была создана
+    if (sessionToken) {
+      try {
+        await hrBotAPI.cleanupSession(sessionToken);
+      } catch (err) {
+        console.warn('Failed to cleanup session:', err);
+      }
+    }
+    
     setSessionState('welcome');
     setSessionToken('');
     setCurrentQuestion(null);
@@ -337,14 +360,22 @@ ${sessionResults.answerTimes.map((time, index) =>
       answerTimes: []
     });
     setError('');
+    
+    console.log('🔄 Session restarted');
   };
 
   // Очистка при размонтировании
   useEffect(() => {
     return () => {
       clearTimer();
+      // Очищаем сессию при размонтировании компонента
+      if (sessionToken) {
+        hrBotAPI.cleanupSession(sessionToken).catch(err => 
+          console.warn('Failed to cleanup session on unmount:', err)
+        );
+      }
     };
-  }, [clearTimer]);
+  }, [clearTimer, sessionToken]);
 
   return (
     <Box sx={{ 
@@ -373,7 +404,7 @@ ${sessionResults.answerTimes.map((time, index) =>
         {error && (
           <Alert severity="error" sx={{ mb: { xs: 2, md: 3 } }}
             action={error.includes('Не удалось отправить') ? undefined : (
-              <Button color="inherit" size="small" onClick={restart}>
+              <Button color="inherit" size="small" onClick={() => restart()}>
                 Попробовать снова
               </Button>
             )}
@@ -762,7 +793,7 @@ ${sessionResults.answerTimes.map((time, index) =>
                 <Button
                   variant="outlined"
                   size="large"
-                  onClick={restart}
+                                      onClick={() => restart()}
                   sx={{ 
                     px: { xs: 3, md: 4 },
                     py: { xs: 1.2, md: 1.5 },
