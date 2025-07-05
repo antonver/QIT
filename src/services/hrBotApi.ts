@@ -710,7 +710,6 @@ function createMockAPI() {
       const shortAnswers = answers.filter(answer => answer.length < 20).length;
       
       // Более строгий анализ для summary
-      const veryDetailedAnswers = answers.filter(answer => answer.length > 100).length;
       const veryShortAnswers = answers.filter(answer => answer.length < 10).length;
       
       const shortPercentage = totalAnswers > 0 ? (shortAnswers / totalAnswers) * 100 : 0;
