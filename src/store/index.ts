@@ -1,9 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
 import messagesReducer from './messagesSlice';
+import aeonChatReducer from './aeonChatSlice';
 
 export const store = configureStore({
   reducer: {
     messages: messagesReducer,
+    aeonChat: aeonChatReducer,
   },
 });
 
