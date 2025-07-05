@@ -154,98 +154,142 @@ SESSION_TTL = timedelta(hours=1)
 def _save_session_in_memory(token: str, session_state: SessionState):
     """Сохраняем/обновляем сессию в словаре sessions как fallback"""
     sessions[token] = session_state
+    print(f"DEBUG: Saved session {token} to memory")
 
-# Функция для сохранения сессии в PostgreSQL
-def save_session_to_db(token: str, session_state: SessionState):
-    """Сохраняет сессию в PostgreSQL базу данных"""
+# Функция для проверки подключения к БД
+def check_database_connection():
+    """Проверяет подключение к базе данных"""
     try:
-        from app.models import SessionLocal, Session
-        import json
-        
+        from app.models import SessionLocal
         db = SessionLocal()
-        
-        # Проверяем, существует ли сессия
-        db_session = db.query(Session).filter(Session.token == token).first()
-        
-        if db_session:
-            # Обновляем существующую сессию
-            db_session.answers = json.dumps(session_state.answers)
-            db_session.aeon_answers = json.dumps(session_state.aeon_answers)
-            db_session.asked_questions = json.dumps(list(session_state.asked_questions))
-            db_session.current_question_index = session_state.current_question_index
-            db_session.completed = session_state.completed
-            db_session.question_order = json.dumps(session_state.question_order)
-            db_session.last_activity = session_state.last_activity
-        else:
-            # Создаем новую сессию
-            db_session = Session(
-                token=token,
-                answers=json.dumps(session_state.answers),
-                aeon_answers=json.dumps(session_state.aeon_answers),
-                asked_questions=json.dumps(list(session_state.asked_questions)),
-                current_question_index=session_state.current_question_index,
-                created_at=session_state.created_at,
-                completed=session_state.completed,
-                question_order=json.dumps(session_state.question_order),
-                last_activity=session_state.last_activity
-            )
-            db.add(db_session)
-        
-        db.commit()
+        db.execute("SELECT 1")
         db.close()
-        
-        print(f"DEBUG: Saved session {token} to PostgreSQL")
+        print("DEBUG: Database connection successful")
+        return True
     except Exception as e:
-        print(f"ERROR: Failed to save session to PostgreSQL: {e}")
-    finally:
-        # Всегда обновляем in-memory fallback
-        _save_session_in_memory(token, session_state)
-
-# Функция для загрузки сессии из PostgreSQL
-def load_session_from_db(token: str) -> SessionState:
-    """Загружает сессию из PostgreSQL базы данных"""
-    try:
-        from app.models import SessionLocal, Session
-        import json
-        from datetime import datetime
-        
-        db = SessionLocal()
-        db_session = db.query(Session).filter(Session.token == token).first()
-        db.close()
-        
-        if not db_session:
-            # Пытаемся вернуть из памяти
-            return sessions.get(token)
-        
-        session_state = SessionState()
-        session_state.answers = json.loads(db_session.answers)
-        session_state.aeon_answers = json.loads(db_session.aeon_answers)
-        session_state.asked_questions = set(json.loads(db_session.asked_questions))
-        session_state.current_question_index = db_session.current_question_index
-        session_state.created_at = db_session.created_at
-        session_state.completed = db_session.completed
-        session_state.question_order = json.loads(db_session.question_order)
-        session_state.last_activity = db_session.last_activity
-        
-        print(f"DEBUG: Loaded session {token} from PostgreSQL")
-        return session_state
-    except Exception as e:
-        print(f"ERROR: Failed to load session from PostgreSQL: {e}")
-        # Fallback to in-memory storage
-        return sessions.get(token)
+        print(f"ERROR: Database connection failed: {e}")
+        return False
 
 # Инициализируем базу данных при запуске
 def init_database():
     """Инициализирует базу данных"""
     try:
         from app.models import create_tables
+        
+        # Проверяем подключение к БД
+        if not check_database_connection():
+            print("WARNING: Using in-memory storage only")
+            return False
+            
+        # Создаем таблицы
         create_tables()
-        print("DEBUG: Database initialized")
+        print("DEBUG: Database tables created")
+        return True
     except Exception as e:
         print(f"ERROR: Failed to initialize database: {e}")
+        print("WARNING: Using in-memory storage only")
+        return False
+
+# Функция для сохранения сессии в PostgreSQL
+def save_session_to_db(token: str, session_state: SessionState):
+    """Сохраняет сессию в PostgreSQL базу данных"""
+    # Всегда сначала сохраняем в память как fallback
+    _save_session_in_memory(token, session_state)
+    
+    try:
+        from app.models import SessionLocal, Session
+        import json
+        
+        if not check_database_connection():
+            return
+        
+        db = SessionLocal()
+        
+        try:
+            # Проверяем, существует ли сессия
+            db_session = db.query(Session).filter(Session.token == token).first()
+            
+            if db_session:
+                # Обновляем существующую сессию
+                db_session.answers = json.dumps(session_state.answers)
+                db_session.aeon_answers = json.dumps(session_state.aeon_answers)
+                db_session.asked_questions = json.dumps(list(session_state.asked_questions))
+                db_session.current_question_index = session_state.current_question_index
+                db_session.completed = session_state.completed
+                db_session.question_order = json.dumps(session_state.question_order)
+                db_session.last_activity = session_state.last_activity
+            else:
+                # Создаем новую сессию
+                db_session = Session(
+                    token=token,
+                    answers=json.dumps(session_state.answers),
+                    aeon_answers=json.dumps(session_state.aeon_answers),
+                    asked_questions=json.dumps(list(session_state.asked_questions)),
+                    current_question_index=session_state.current_question_index,
+                    created_at=session_state.created_at,
+                    completed=session_state.completed,
+                    question_order=json.dumps(session_state.question_order),
+                    last_activity=session_state.last_activity
+                )
+                db.add(db_session)
+            
+            db.commit()
+            print(f"DEBUG: Saved session {token} to PostgreSQL")
+        except Exception as e:
+            print(f"ERROR: Failed to save session to PostgreSQL: {e}")
+            db.rollback()
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"ERROR: Database error while saving session: {e}")
+
+# Функция для загрузки сессии из PostgreSQL
+def load_session_from_db(token: str) -> SessionState:
+    """Загружает сессию из PostgreSQL базы данных"""
+    # Сначала пробуем загрузить из памяти
+    session_state = sessions.get(token)
+    if session_state:
+        print(f"DEBUG: Loaded session {token} from memory")
+        return session_state
+        
+    try:
+        from app.models import SessionLocal, Session
+        import json
+        
+        if not check_database_connection():
+            return None
+            
+        db = SessionLocal()
+        try:
+            db_session = db.query(Session).filter(Session.token == token).first()
+            
+            if not db_session:
+                print(f"DEBUG: Session {token} not found in database")
+                return None
+            
+            session_state = SessionState()
+            session_state.answers = json.loads(db_session.answers)
+            session_state.aeon_answers = json.loads(db_session.aeon_answers)
+            session_state.asked_questions = set(json.loads(db_session.asked_questions))
+            session_state.current_question_index = db_session.current_question_index
+            session_state.created_at = db_session.created_at
+            session_state.completed = db_session.completed
+            session_state.question_order = json.loads(db_session.question_order)
+            session_state.last_activity = db_session.last_activity
+            
+            # Сохраняем в память для быстрого доступа
+            _save_session_in_memory(token, session_state)
+            
+            print(f"DEBUG: Loaded session {token} from PostgreSQL")
+            return session_state
+        finally:
+            db.close()
+    except Exception as e:
+        print(f"ERROR: Database error while loading session: {e}")
+        return None
 
 # Инициализируем базу данных при запуске
-init_database()
+db_initialized = init_database()
 
 def is_token_expired(session_state: SessionState) -> bool:
     """Проверка истечения срока действия токена"""
