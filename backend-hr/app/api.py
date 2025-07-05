@@ -347,7 +347,15 @@ def create_session():
     """Создание новой сессии с улучшенным отслеживанием"""
     token = str(uuid.uuid4())
     sessions[token] = SessionState()
-    log_event("create_session", {"token": token})
+    
+    log_event("create_session", {
+        "token": token,
+        "total_sessions": len(sessions),
+        "session_keys": list(sessions.keys())
+    })
+    
+    print(f"DEBUG: Created session {token}, total sessions: {len(sessions)}")
+    
     return {"token": token}
 
 @router.post("/session/{token}/answer")
@@ -567,8 +575,12 @@ async def generate_question_with_openai(session_state: SessionState, question_ty
 @router.post("/aeon/question/{token}")
 async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
     """Улучшенная логика получения следующего вопроса с AI-генерацией и отладкой"""
+    print(f"DEBUG: Requesting question for token: {token}")
+    print(f"DEBUG: Available sessions: {list(sessions.keys())}")
+    
     session_state = sessions.get(token)
     if not session_state:
+        print(f"DEBUG: Session {token} not found!")
         raise HTTPException(status_code=404, detail="Сессия не найдена")
     if is_token_expired(session_state):
         raise HTTPException(status_code=403, detail="Срок действия токена истёк")
@@ -648,6 +660,8 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
         "total_questions": len(AEON_QUESTIONS),
         "remaining_questions": len(AEON_QUESTIONS) - len(session_state.asked_questions)
     })
+    
+    print(f"DEBUG: Returning question: {question['text'][:50]}...")
     
     return {
         "question": question["text"],
