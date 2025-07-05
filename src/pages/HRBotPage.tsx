@@ -122,8 +122,25 @@ const HRBotPage: React.FC = () => {
     }
   }, [timer.intervalId]);
 
+  // Запуск таймера
+  const startTimer = useCallback((): void => {
+    clearTimer();
+    
+    const id = setInterval(() => {
+      setTimer(prev => {
+        if (prev.timeLeft <= 1) {
+          clearInterval(id);
+          return { ...prev, timeLeft: 0, isRunning: false, intervalId: null };
+        }
+        return { ...prev, timeLeft: prev.timeLeft - 1 };
+      });
+    }, 1000);
+    
+    setTimer(prev => ({ ...prev, isRunning: true, intervalId: id }));
+  }, [clearTimer]);
+
   // Обработчик отправки ответа
-  const handleSubmitAnswer = useCallback(async () => {
+  const handleSubmitAnswer = useCallback(async (): Promise<void> => {
     if (!sessionToken || !currentQuestion) return;
 
     try {
@@ -194,27 +211,6 @@ const HRBotPage: React.FC = () => {
       setLoading(false);
     }
   }, [sessionToken, currentQuestion, currentAnswer, clearTimer, currentQuestionIndex, questions.length, totalQuestions, questionStartTime, startTimer]);
-
-  // Запуск таймера
-  const startTimer = useCallback(() => {
-    clearTimer();
-    
-    setTimer(prev => ({ ...prev, timeLeft: 90, isRunning: true }));
-    
-    const intervalId = setInterval(() => {
-      setTimer(prev => {
-        if (prev.timeLeft <= 1) {
-          clearTimer();
-          // Автоматически отправить ответ когда время закончилось
-          handleSubmitAnswer();
-          return { ...prev, timeLeft: 0, isRunning: false };
-        }
-        return { ...prev, timeLeft: prev.timeLeft - 1 };
-      });
-    }, 1000);
-
-    setTimer(prev => ({ ...prev, intervalId }));
-  }, [clearTimer, handleSubmitAnswer]);
 
   // Завершение сессии
   const completeSession = async () => {

@@ -16,7 +16,12 @@ export interface Question {
 
 // Реальная структура ответа API
 export interface ApiQuestionResponse {
-  questions: Question[];
+  questions: {
+    id: string;
+    text: string;
+    type: 'text' | 'choice' | 'scale' | 'technical';
+    options?: string[];
+  }[];
   total_questions: number;
   remaining_questions: number;
   completed?: boolean;
@@ -139,10 +144,10 @@ class HRBotAPI {
       
       // Преобразуем ответ API в наш формат
       if (response && response.questions) {
-        const questions = response.questions.map((q, index) => ({
+        const questions: Question[] = response.questions.map((q, index) => ({
           id: q.id || `q_${sessionState.questionIndex + index + 1}`,
           text: q.text,
-          type: 'text' // Все вопросы открытые
+          type: q.type || 'text' as const // Используем тип из API или 'text' по умолчанию
         }));
         
         // Обновляем индекс вопроса

@@ -89,18 +89,19 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
       console.log(`🔄 Fetching question ${questionNumber + 1}/10...`);
       
       // Use improved hrBotAPI instead of the old API
-      const questionData = await hrBotAPI.getNextQuestion(sessionToken, {
+      const questions = await hrBotAPI.getNextQuestion(sessionToken, {
         current_answers: answers,
         question_number: questionNumber
       });
       
-      if (questionData) {
-        setCurrentQuestion(questionData);
+      if (questions && questions.length > 0) {
+        const nextQuestion = questions[0]; // Получаем первый вопрос
+        setCurrentQuestion(nextQuestion); // Устанавливаем один вопрос
         setCurrentAnswer(''); // Clear the form
         setTimeLeft(90); // Reset timer
         setIsTimerRunning(true); // Start timer
         
-        console.log(`✅ Question ${questionNumber + 1}/10 loaded:`, questionData.text.substring(0, 50) + '...');
+        console.log(`✅ Question ${questionNumber + 1}/10 loaded:`, nextQuestion.text.substring(0, 50) + '...');
         
         // Focus on the text field
         setTimeout(() => {
