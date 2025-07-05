@@ -12,13 +12,19 @@ import {
 } from '@mui/icons-material';
 import backgroundImage from '../assets/background.png';
 import axios from 'axios';
-  
-  interface Message {
-  id: number;
-  text: string;
-  isUser: boolean;
-  timestamp: Date;
-}
+import { useSelector, useDispatch } from 'react-redux';
+import { 
+  addUserMessage, 
+  addBotMessage, 
+  setLoading, 
+  setError,
+  selectAeonMessages,
+  selectAeonLoading,
+  selectAeonError,
+  initSession,
+  type AeonChatMessage
+} from '../store/aeonChatSlice';
+import type { RootState } from '../store';
 
 const SYSTEM_PROMPT = `Ты — ÆON: стратегический цифровой собеседник, ко-пилот и AI-архитектор.
 Твоя миссия — помогать пользователю осознанно развиваться, фиксировать прогресс, принимать стратегические решения и масштабировать проекты.
@@ -40,14 +46,12 @@ const AeonChat: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 1,
-      text: 'Добро пожаловать в ÆON! Как дела?',
-      isUser: false,
-      timestamp: new Date(),
-    },
-  ]);
+  // Redux state
+  const dispatch = useDispatch();
+  const messages = useSelector(selectAeonMessages);
+  const isLoading = useSelector(selectAeonLoading);
+  const error = useSelector(selectAeonError);
+  
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -57,26 +61,30 @@ const AeonChat: React.FC = () => {
 
   useEffect(scrollToBottom, [messages]);
 
+  // Инициализируем сессию при монтировании
+  useEffect(() => {
+    dispatch(initSession());
+  }, [dispatch]);
+
   const handleSendMessage = async () => {
     if (inputValue.trim() === '') return;
 
-    const userMessage: Message = {
-      id: messages.length + 1,
-      text: inputValue,
-      isUser: true,
-      timestamp: new Date(),
-    };
-
-    // Отображаем сразу сообщение пользователя
-    setMessages(prev => [...prev, userMessage]);
+    const userMessageText = inputValue.trim();
+    
+    // Добавляем сообщение пользователя через Redux
+    dispatch(addUserMessage(userMessageText));
     setInputValue('');
+    
+    // Устанавливаем загрузку
+    dispatch(setLoading(true));
+    dispatch(setError(null));
 
     try {
       // Формируем историю для ChatGPT
       const chatHistory = [
         { role: 'system' as const, content: SYSTEM_PROMPT },
-        ...messages.map(m => ({ role: m.isUser ? 'user' as const : 'assistant' as const, content: m.text })),
-        { role: 'user' as const, content: inputValue.trim() },
+        ...messages.map((m: AeonChatMessage) => ({ role: m.isUser ? 'user' as const : 'assistant' as const, content: m.text })),
+        { role: 'user' as const, content: userMessageText },
       ];
 
       // Отправляем через безопасный прокси-сервер
@@ -85,23 +93,14 @@ const AeonChat: React.FC = () => {
         model: 'gpt-3.5-turbo',
       });
 
-      const botMessage: Message = {
-        id: userMessage.id + 1,
-        text: data.content || 'Нет ответа',
-        isUser: false,
-        timestamp: new Date(),
-      };
-
-      setMessages(prev => [...prev, botMessage]);
+      // Добавляем ответ бота через Redux
+      dispatch(addBotMessage(data.content || 'Нет ответа'));
     } catch (err) {
       console.error(err);
-      const errorMessage: Message = {
-        id: userMessage.id + 1,
-        text: '⚠️ Ошибка ответа от ÆON',
-        isUser: false,
-        timestamp: new Date(),
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      dispatch(addBotMessage('⚠️ Ошибка ответа от ÆON'));
+      dispatch(setError('Ошибка соединения с сервером'));
+    } finally {
+      dispatch(setLoading(false));
     }
   };
 
@@ -112,8 +111,8 @@ const AeonChat: React.FC = () => {
     }
   };
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('ru-RU', { 
+  const formatTime = (timestamp: string) => {
+    return new Date(timestamp).toLocaleTimeString('ru-RU', { 
       hour: '2-digit', 
       minute: '2-digit' 
     });
@@ -131,23 +130,6 @@ const AeonChat: React.FC = () => {
       backgroundSize: 'cover',
       backgroundPosition: 'center',
     }}>
-      {/* Фиксированная шапка чата */}
-      <Box sx={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 10,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        py: 1.5,
-        bgcolor: 'rgba(35, 43, 59, 0.8)',
-        backdropFilter: 'blur(6px)',
-        borderBottom: '1px solid rgba(255,255,255,0.1)',
-      }}>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          ÆON
-        </Typography>
-      </Box>
       {/* Область сообщений */}
       <Box sx={{ 
         flex: 1,
@@ -171,7 +153,7 @@ const AeonChat: React.FC = () => {
           background: 'rgba(255, 255, 255, 0.3)',
         },
       }}>
-        {messages.map((message) => (
+        {messages.map((message: AeonChatMessage) => (
           <Box
             key={message.id}
             sx={{
