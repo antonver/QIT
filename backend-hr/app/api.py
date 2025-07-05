@@ -668,7 +668,7 @@ async def generate_question_with_openai(session_state: SessionState, question_ty
 # Обновляем функцию получения следующего вопроса
 @router.post("/aeon/question/{token}")
 async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
-    """Гарантированно выдает ровно 10 уникальных вопросов"""
+    """Гарантированно выдает ровно 10 уникальных вопросов по порядку"""
     print(f"DEBUG: Requesting question for token: {token}")
     
     # Загружаем состояние сессии из PostgreSQL
@@ -706,30 +706,21 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
         "request_data": data
     })
     
-    # Получаем все незаданные вопросы из базового пула
-    available_questions = [q for q in AEON_QUESTIONS if q["id"] not in session_state.asked_questions]
-    
-    log_event("available_questions", {
-        "token": token,
-        "available_count": len(available_questions),
-        "available_ids": [q["id"] for q in available_questions]
-    })
-    
-    # Если базовые вопросы закончились, генерируем AI-вопрос
-    if not available_questions:
+    # Берем следующий вопрос по порядку из AEON_QUESTIONS
+    current_index = len(session_state.asked_questions)
+    if current_index < len(AEON_QUESTIONS):
+        question = AEON_QUESTIONS[current_index]
+    else:
+        # Если почему-то индекс больше количества вопросов (не должно случиться),
+        # генерируем AI-вопрос
         log_event("generating_ai_question", {"token": token})
         ai_question = await generate_question_with_openai(session_state)
         if ai_question:
-            # Добавляем AI-вопрос в список заданных
             session_state.asked_questions.add(ai_question["id"])
             session_state.question_order.append(ai_question["id"])
             
-            log_event("ai_question_generated", {
-                "token": token,
-                "question_id": ai_question["id"],
-                "questions_asked": len(session_state.asked_questions),
-                "total_questions": 10
-            })
+            # Сохраняем сессию в PostgreSQL
+            save_session_to_db(token, session_state)
             
             return {
                 "question": ai_question["text"],
@@ -741,41 +732,7 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
                 "ai_generated": True
             }
         else:
-            # Если AI не сработал, возвращаем ошибку
-            log_event("ai_generation_failed", {"token": token})
             return JSONResponse(content={"detail": "Не удалось сгенерировать вопрос"}, status_code=500)
-    
-    # Выбираем случайный вопрос из доступных
-    question = random.choice(available_questions)
-    
-    # Дополнительная проверка на дубликаты
-    if question["id"] in session_state.asked_questions:
-        log_event("question_duplicate_prevented", {
-            "token": token,
-            "question_id": question["id"],
-            "asked_questions": list(session_state.asked_questions)
-        })
-        # Пробуем выбрать другой вопрос
-        remaining_questions = [q for q in available_questions if q["id"] != question["id"]]
-        if not remaining_questions:
-            # Если больше нет доступных вопросов, генерируем AI-вопрос
-            log_event("no_more_available_questions", {"token": token})
-            ai_question = await generate_question_with_openai(session_state)
-            if ai_question:
-                session_state.asked_questions.add(ai_question["id"])
-                session_state.question_order.append(ai_question["id"])
-                return {
-                    "question": ai_question["text"],
-                    "type": ai_question["type"],
-                    "question_id": ai_question["id"],
-                    "question_number": len(session_state.asked_questions),
-                    "total_questions": 10,
-                    "remaining_questions": 10 - len(session_state.asked_questions),
-                    "ai_generated": True
-                }
-            else:
-                return JSONResponse(content={"detail": "Не удалось сгенерировать вопрос"}, status_code=500)
-        question = random.choice(remaining_questions)
     
     # Добавляем вопрос в список заданных
     session_state.asked_questions.add(question["id"])
