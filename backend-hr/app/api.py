@@ -574,7 +574,7 @@ async def generate_question_with_openai(session_state: SessionState, question_ty
 # Обновляем функцию получения следующего вопроса
 @router.post("/aeon/question/{token}")
 async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
-    """Улучшенная логика получения следующего вопроса с AI-генерацией и отладкой"""
+    """Гарантированно выдает ровно 10 уникальных вопросов"""
     print(f"DEBUG: Requesting question for token: {token}")
     print(f"DEBUG: Available sessions: {list(sessions.keys())}")
     
@@ -588,12 +588,22 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
     # Обновляем активность
     update_session_activity(session_state)
     
+    # Проверяем, не превысили ли лимит в 10 вопросов
+    if len(session_state.asked_questions) >= 10:
+        log_event("max_questions_reached", {
+            "token": token,
+            "asked_questions": list(session_state.asked_questions),
+            "total_asked": len(session_state.asked_questions)
+        })
+        return JSONResponse(content={"detail": "Достигнут лимит в 10 вопросов"}, status_code=404)
+    
     # Подробное логирование для отладки
     log_event("question_request", {
         "token": token,
         "asked_questions": list(session_state.asked_questions),
         "question_order": session_state.question_order,
         "total_aeon_questions": len(AEON_QUESTIONS),
+        "questions_asked": len(session_state.asked_questions),
         "request_data": data
     })
     
@@ -606,9 +616,9 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
         "available_ids": [q["id"] for q in available_questions]
     })
     
-    # Если базовые вопросы закончились, пробуем сгенерировать новый через AI
+    # Если базовые вопросы закончились, генерируем AI-вопрос
     if not available_questions:
-        log_event("no_available_questions", {"token": token})
+        log_event("generating_ai_question", {"token": token})
         ai_question = await generate_question_with_openai(session_state)
         if ai_question:
             # Добавляем AI-вопрос в список заданных
@@ -618,7 +628,8 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
             log_event("ai_question_generated", {
                 "token": token,
                 "question_id": ai_question["id"],
-                "questions_asked": len(session_state.asked_questions)
+                "questions_asked": len(session_state.asked_questions),
+                "total_questions": 10
             })
             
             return {
@@ -626,15 +637,19 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
                 "type": ai_question["type"],
                 "question_id": ai_question["id"],
                 "question_number": len(session_state.asked_questions),
+                "total_questions": 10,
+                "remaining_questions": 10 - len(session_state.asked_questions),
                 "ai_generated": True
             }
         else:
-            return JSONResponse(content={"detail": "Все вопросы заданы"}, status_code=404)
+            # Если AI не сработал, возвращаем ошибку
+            log_event("ai_generation_failed", {"token": token})
+            return JSONResponse(content={"detail": "Не удалось сгенерировать вопрос"}, status_code=500)
     
     # Выбираем случайный вопрос из доступных
     question = random.choice(available_questions)
     
-    # Проверяем, не был ли этот вопрос уже задан (дополнительная проверка)
+    # Дополнительная проверка на дубликаты
     if question["id"] in session_state.asked_questions:
         log_event("question_duplicate_prevented", {
             "token": token,
@@ -644,7 +659,23 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
         # Пробуем выбрать другой вопрос
         remaining_questions = [q for q in available_questions if q["id"] != question["id"]]
         if not remaining_questions:
-            return JSONResponse(content={"detail": "Все вопросы заданы"}, status_code=404)
+            # Если больше нет доступных вопросов, генерируем AI-вопрос
+            log_event("no_more_available_questions", {"token": token})
+            ai_question = await generate_question_with_openai(session_state)
+            if ai_question:
+                session_state.asked_questions.add(ai_question["id"])
+                session_state.question_order.append(ai_question["id"])
+                return {
+                    "question": ai_question["text"],
+                    "type": ai_question["type"],
+                    "question_id": ai_question["id"],
+                    "question_number": len(session_state.asked_questions),
+                    "total_questions": 10,
+                    "remaining_questions": 10 - len(session_state.asked_questions),
+                    "ai_generated": True
+                }
+            else:
+                return JSONResponse(content={"detail": "Не удалось сгенерировать вопрос"}, status_code=500)
         question = random.choice(remaining_questions)
     
     # Добавляем вопрос в список заданных
@@ -657,19 +688,19 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
         "question_id": question["id"],
         "question_text": question["text"][:50] + "...",
         "questions_asked": len(session_state.asked_questions),
-        "total_questions": len(AEON_QUESTIONS),
-        "remaining_questions": len(AEON_QUESTIONS) - len(session_state.asked_questions)
+        "total_questions": 10,
+        "remaining_questions": 10 - len(session_state.asked_questions)
     })
     
-    print(f"DEBUG: Returning question: {question['text'][:50]}...")
+    print(f"DEBUG: Returning question {len(session_state.asked_questions)}/10: {question['text'][:50]}...")
     
     return {
         "question": question["text"],
         "type": question["type"],
         "question_id": question["id"],
         "question_number": len(session_state.asked_questions),
-        "total_questions": len(AEON_QUESTIONS),
-        "remaining_questions": len(AEON_QUESTIONS) - len(session_state.asked_questions),
+        "total_questions": 10,
+        "remaining_questions": 10 - len(session_state.asked_questions),
         "ai_generated": False
     }
 
