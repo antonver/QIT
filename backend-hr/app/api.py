@@ -149,71 +149,103 @@ sessions: Dict[str, SessionState] = {}
 
 SESSION_TTL = timedelta(hours=1)
 
-# Функция для сохранения сессий в файл
-def save_sessions_to_file():
-    """Сохраняет сессии в файл для персистентности"""
+# Функция для сохранения сессий в SQLite
+def save_sessions_to_db():
+    """Сохраняет сессии в SQLite базу данных"""
     try:
+        import sqlite3
         import json
         import os
         
-        # Создаем папку для данных, если её нет
-        os.makedirs('/tmp/sessions', exist_ok=True)
+        # Создаем папку для базы данных
+        os.makedirs('/tmp', exist_ok=True)
+        db_path = '/tmp/sessions.db'
+        
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        # Создаем таблицу, если её нет
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS sessions (
+                token TEXT PRIMARY KEY,
+                answers TEXT,
+                aeon_answers TEXT,
+                asked_questions TEXT,
+                current_question_index INTEGER,
+                created_at TEXT,
+                completed BOOLEAN,
+                question_order TEXT,
+                last_activity TEXT
+            )
+        ''')
+        
+        # Очищаем старые записи
+        cursor.execute('DELETE FROM sessions')
         
         # Сохраняем сессии
-        sessions_data = {}
         for token, session in sessions.items():
-            sessions_data[token] = {
-                'answers': session.answers,
-                'aeon_answers': session.aeon_answers,
-                'asked_questions': list(session.asked_questions),
-                'current_question_index': session.current_question_index,
-                'created_at': session.created_at.isoformat(),
-                'completed': session.completed,
-                'question_order': session.question_order,
-                'last_activity': session.last_activity.isoformat()
-            }
+            cursor.execute('''
+                INSERT INTO sessions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                token,
+                json.dumps(session.answers),
+                json.dumps(session.aeon_answers),
+                json.dumps(list(session.asked_questions)),
+                session.current_question_index,
+                session.created_at.isoformat(),
+                session.completed,
+                json.dumps(session.question_order),
+                session.last_activity.isoformat()
+            ))
         
-        with open('/tmp/sessions/sessions.json', 'w') as f:
-            json.dump(sessions_data, f)
-            
-        print(f"DEBUG: Saved {len(sessions)} sessions to file")
+        conn.commit()
+        conn.close()
+        
+        print(f"DEBUG: Saved {len(sessions)} sessions to database")
     except Exception as e:
-        print(f"ERROR: Failed to save sessions: {e}")
+        print(f"ERROR: Failed to save sessions to database: {e}")
 
-# Функция для загрузки сессий из файла
-def load_sessions_from_file():
-    """Загружает сессии из файла"""
+# Функция для загрузки сессий из SQLite
+def load_sessions_from_db():
+    """Загружает сессии из SQLite базы данных"""
     try:
+        import sqlite3
         import json
         import os
         from datetime import datetime
         
-        file_path = '/tmp/sessions/sessions.json'
-        if not os.path.exists(file_path):
-            print("DEBUG: No sessions file found")
+        db_path = '/tmp/sessions.db'
+        if not os.path.exists(db_path):
+            print("DEBUG: No sessions database found")
             return
         
-        with open(file_path, 'r') as f:
-            sessions_data = json.load(f)
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
         
-        for token, data in sessions_data.items():
+        cursor.execute('SELECT * FROM sessions')
+        rows = cursor.fetchall()
+        
+        for row in rows:
+            token, answers_json, aeon_answers_json, asked_questions_json, current_question_index, created_at, completed, question_order_json, last_activity = row
+            
             session = SessionState()
-            session.answers = data.get('answers', [])
-            session.aeon_answers = data.get('aeon_answers', {})
-            session.asked_questions = set(data.get('asked_questions', []))
-            session.current_question_index = data.get('current_question_index', 0)
-            session.created_at = datetime.fromisoformat(data.get('created_at'))
-            session.completed = data.get('completed', False)
-            session.question_order = data.get('question_order', [])
-            session.last_activity = datetime.fromisoformat(data.get('last_activity'))
+            session.answers = json.loads(answers_json)
+            session.aeon_answers = json.loads(aeon_answers_json)
+            session.asked_questions = set(json.loads(asked_questions_json))
+            session.current_question_index = current_question_index
+            session.created_at = datetime.fromisoformat(created_at)
+            session.completed = bool(completed)
+            session.question_order = json.loads(question_order_json)
+            session.last_activity = datetime.fromisoformat(last_activity)
             sessions[token] = session
         
-        print(f"DEBUG: Loaded {len(sessions)} sessions from file")
+        conn.close()
+        print(f"DEBUG: Loaded {len(sessions)} sessions from database")
     except Exception as e:
-        print(f"ERROR: Failed to load sessions: {e}")
+        print(f"ERROR: Failed to load sessions from database: {e}")
 
 # Загружаем сессии при запуске
-load_sessions_from_file()
+load_sessions_from_db()
 
 def is_token_expired(session_state: SessionState) -> bool:
     """Проверка истечения срока действия токена"""
@@ -414,8 +446,8 @@ def create_session():
     token = str(uuid.uuid4())
     sessions[token] = SessionState()
     
-    # Сохраняем сессии в файл после создания
-    save_sessions_to_file()
+    # Сохраняем сессии в базу данных после создания
+    save_sessions_to_db()
     
     log_event("create_session", {
         "token": token,
@@ -480,8 +512,8 @@ def save_answer(token: str, answer: dict = Body(...)):
     session_state.aeon_answers[question_id] = answer_text
     session_state.answers.append(answer)
     
-    # Сохраняем сессии в файл после сохранения ответа
-    save_sessions_to_file()
+    # Сохраняем сессии в базу данных после сохранения ответа
+    save_sessions_to_db()
     
     log_event("save_answer", {
         "token": token,
@@ -759,8 +791,8 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
     session_state.asked_questions.add(question["id"])
     session_state.question_order.append(question["id"])
     
-    # Сохраняем сессии в файл после получения вопроса
-    save_sessions_to_file()
+    # Сохраняем сессии в базу данных после получения вопроса
+    save_sessions_to_db()
     
     # Логируем выбор вопроса
     log_event("aeon_question_selected", {
