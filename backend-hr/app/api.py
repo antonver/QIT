@@ -490,9 +490,18 @@ def create_session():
     token = str(uuid.uuid4())
     session_state = SessionState()
     
+    print(f"DEBUG: Creating new session with token: {token}")
+    
     # Сохраняем сессию в БД (если доступно) и в памяти
     save_session_to_db(token, session_state)
     _save_session_in_memory(token, session_state)
+    
+    # Проверяем, что сессия действительно сохранена
+    saved_session = load_session_from_db(token)
+    if saved_session:
+        print(f"DEBUG: Session {token} successfully saved and loaded")
+    else:
+        print(f"ERROR: Failed to save/load session {token}")
     
     log_event("create_session", {
         "token": token,
@@ -726,12 +735,18 @@ async def generate_question_with_openai(session_state: SessionState, question_ty
 async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
     """Гарантированно выдает ровно 10 уникальных вопросов по порядку"""
     print(f"DEBUG: Requesting question for token: {token}")
+    print(f"DEBUG: Request data: {data}")
     
     # Загружаем состояние сессии из PostgreSQL
     session_state = load_session_from_db(token)
     if not session_state:
-        print(f"DEBUG: Session {token} not found in database!")
+        print(f"ERROR: Session {token} not found in database!")
+        print(f"DEBUG: Available sessions in memory: {list(sessions.keys())}")
         raise HTTPException(status_code=404, detail="Сессия не найдена")
+    
+    print(f"DEBUG: Session {token} loaded successfully")
+    print(f"DEBUG: Session state: asked_questions={list(session_state.asked_questions)}, current_index={session_state.current_question_index}")
+    
     if is_token_expired(session_state):
         raise HTTPException(status_code=403, detail="Срок действия токена истёк")
     
@@ -766,6 +781,7 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
     current_index = len(session_state.asked_questions)
     if current_index < len(AEON_QUESTIONS):
         question = AEON_QUESTIONS[current_index]
+        print(f"DEBUG: Using question {current_index}: {question['id']}")
     else:
         # Если почему-то индекс больше количества вопросов (не должно случиться),
         # генерируем AI-вопрос
@@ -794,20 +810,13 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
     session_state.asked_questions.add(question["id"])
     session_state.question_order.append(question["id"])
     
+    print(f"DEBUG: Added question {question['id']} to asked_questions")
+    print(f"DEBUG: Updated session state: asked_questions={list(session_state.asked_questions)}")
+    
     # Сохраняем сессию в PostgreSQL после получения вопроса
     save_session_to_db(token, session_state)
     
-    # Логируем выбор вопроса
-    log_event("aeon_question_selected", {
-        "token": token,
-        "question_id": question["id"],
-        "question_text": question["text"][:50] + "...",
-        "questions_asked": len(session_state.asked_questions),
-        "total_questions": 10,
-        "remaining_questions": 10 - len(session_state.asked_questions)
-    })
-    
-    print(f"DEBUG: Returning question {len(session_state.asked_questions)}/10: {question['text'][:50]}...")
+    print(f"DEBUG: Returning question: {question['text']}")
     
     return {
         "question": question["text"],
@@ -815,8 +824,7 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
         "question_id": question["id"],
         "question_number": len(session_state.asked_questions),
         "total_questions": 10,
-        "remaining_questions": 10 - len(session_state.asked_questions),
-        "ai_generated": False
+        "remaining_questions": 10 - len(session_state.asked_questions)
     }
 
 @router.post("/aeon/glyph/{token}")
