@@ -161,8 +161,9 @@ def check_database_connection():
     """Проверяет подключение к базе данных"""
     try:
         from app.models import SessionLocal
+        from sqlalchemy import text
         db = SessionLocal()
-        result = db.execute("SELECT 1")
+        result = db.execute(text("SELECT 1"))
         print(f"DEBUG: Database connection test result: {result.fetchone()}")
         db.close()
         print("DEBUG: Database connection successful")
