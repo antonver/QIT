@@ -270,6 +270,12 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
   const handleSubmitAnswer = (answer: string) => {
     if (!answer.trim()) return;
     
+    // Проверяем длину ответа
+    if (answer.trim().length < 10) {
+      setError('Ответ должен содержать минимум 10 символов');
+      return;
+    }
+    
     // Дополнительная проверка на достижение лимита в 10 вопросов
     if (questionNumber >= 10) {
       console.log('🎯 Test already completed with 10 questions, generating summary...');
@@ -277,6 +283,7 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
       return;
     }
     
+    setError(''); // Очищаем предыдущую ошибку
     saveCurrentAnswer(answer.trim());
   };
 
