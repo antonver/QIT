@@ -16,13 +16,10 @@ export interface Question {
 
 // Реальная структура ответа API
 export interface ApiQuestionResponse {
-  question: string;
-  type: string;
-  question_id?: string;
+  questions: Question[];
+  total_questions: number;
+  remaining_questions: number;
   completed?: boolean;
-  total_questions?: number;
-  questions_asked?: number;
-  [key: string]: any;
 }
 
 export interface Answer {
@@ -119,7 +116,7 @@ class HRBotAPI {
   }
 
   // Получить следующий вопрос - POST /aeon/question/{token}
-  async getNextQuestion(token: string, data: any = {}): Promise<Question | null> {
+  async getNextQuestion(token: string, data: any = {}): Promise<Question[]> {
     const sessionState = sessionStates.get(token);
     
     if (!sessionState) {
@@ -127,7 +124,7 @@ class HRBotAPI {
     }
     
     try {
-      console.log(`📤 API: Requesting question for token ${token}, current index: ${sessionState.questionIndex}`);
+      console.log(`📤 API: Requesting questions for token ${token}`);
       
       const response = await this.request<ApiQuestionResponse>(`/aeon/question/${token}`, {
         method: 'POST',
@@ -137,32 +134,29 @@ class HRBotAPI {
       // Проверяем, не завершен ли тест
       if (response && response.completed) {
         console.log('🎯 API: Test completed, no more questions');
-        return null;
+        return [];
       }
       
       // Преобразуем ответ API в наш формат
-      if (response && response.question) {
-        const questionId = response.question_id || `q_${sessionState.questionIndex + 1}`;
-        
-        const question: Question = {
-          id: questionId,
-          text: response.question,
+      if (response && response.questions) {
+        const questions = response.questions.map((q, index) => ({
+          id: q.id || `q_${sessionState.questionIndex + index + 1}`,
+          text: q.text,
           type: 'text' // Все вопросы открытые
-        };
+        }));
         
-        // Увеличиваем индекс вопроса при получении
-        sessionState.questionIndex++;
-        console.log(`✅ API: Question received:`, question.text.substring(0, 50) + '...');
-        console.log(`📊 API: Question index incremented to ${sessionState.questionIndex}`);
+        // Обновляем индекс вопроса
+        sessionState.questionIndex += questions.length;
+        console.log(`✅ API: Received ${questions.length} questions`);
         
-        return question;
+        return questions;
       }
       
-      console.log(`❌ API: No question received from API`);
-      return null;
+      console.log(`❌ API: No questions received from API`);
+      return [];
     } catch (error) {
-      console.error('API: Error getting next question:', error);
-      return null;
+      console.error('API: Error getting questions:', error);
+      return [];
     }
   }
 
@@ -253,7 +247,7 @@ function createHybridAPI() {
       }
     },
     
-    async getNextQuestion(token: string, data: any = {}): Promise<Question | null> {
+    async getNextQuestion(token: string, data: any = {}): Promise<Question[]> {
       if (token.startsWith('mock_')) {
         console.log('🔄 Using mock API for getNextQuestion');
         return mockAPI.getNextQuestion(token, data);
@@ -455,7 +449,7 @@ function createMockAPI() {
     },
 
     // Получить следующий вопрос
-    async getNextQuestion(token: string, _data: any = {}): Promise<Question | null> {
+    async getNextQuestion(token: string, _data: any = {}): Promise<Question[]> {
       await delay(600);
       
       let sessionState = mockSessionStates.get(token);
@@ -470,7 +464,7 @@ function createMockAPI() {
       // Гарантированно выдаем ровно 10 вопросов
       if (sessionState.currentQuestionIndex >= 10) {
         console.log(`🔚 Mock: Reached question limit: ${sessionState.currentQuestionIndex}/10`);
-        return null;
+        return [];
       }
       
       // Ищем следующий незаданный вопрос
@@ -486,7 +480,7 @@ function createMockAPI() {
           
           console.log(`✅ Mock: Question ${question.id} prepared (index ${questionIndex + 1}/10):`, question.text.substring(0, 50) + '...');
           
-          return { ...question };
+          return [question];
         }
         
         console.warn(`⚠️ Mock: Question ${question.id} already asked, trying next`);
@@ -506,15 +500,12 @@ function createMockAPI() {
         
         console.log(`✅ Mock: Reused question prepared (${sessionState.currentQuestionIndex}/10):`, reusedQuestion.text.substring(0, 50) + '...');
         
-        return { 
-          ...reusedQuestion, 
-          id: newQuestionId 
-        };
+        return [reusedQuestion];
       }
       
       // Если не найдено незаданных вопросов
       console.log(`🔚 Mock: No more unasked questions available`);
-      return null;
+      return [];
     },
 
     // Отправить ответ

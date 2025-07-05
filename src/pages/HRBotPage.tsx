@@ -50,9 +50,9 @@ const HRBotPage: React.FC = () => {
   // Основные состояния
   const [sessionState, setSessionState] = useState<SessionState>('welcome');
   const [sessionToken, setSessionToken] = useState<string>('');
-  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
-  const [questionIndex, setQuestionIndex] = useState<number>(0);
-  const [totalQuestions] = useState<number>(10); // Фиксируем на 10 вопросах
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
+  const [totalQuestions] = useState<number>(10);
 
   // Состояние ответов
   const [currentAnswer, setCurrentAnswer] = useState<string>('');
@@ -76,6 +76,9 @@ const HRBotPage: React.FC = () => {
   });
   const [error, setError] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+
+  // Получить текущий вопрос
+  const currentQuestion = questions[currentQuestionIndex];
 
   // Функция для форматирования времени
   const formatTime = (seconds: number): string => {
@@ -119,7 +122,7 @@ const HRBotPage: React.FC = () => {
     }
   }, [timer.intervalId]);
 
-  // Отправка ответа
+  // Обработчик отправки ответа
   const handleSubmitAnswer = useCallback(async () => {
     if (!sessionToken || !currentQuestion) return;
 
@@ -155,31 +158,33 @@ const HRBotPage: React.FC = () => {
       
       console.log('⏱️ Answer times so far:', [...sessionResults.answerTimes, actualTimeSpent]);
 
-      // Проверяем, если это последний вопрос (10-й)
-      if (questionIndex >= totalQuestions) {
+      // Проверяем, если это последний вопрос
+      if (currentQuestionIndex >= questions.length - 1 && currentQuestionIndex >= totalQuestions - 1) {
         await completeSession();
         return;
       }
 
-      // Получаем следующий вопрос
-      console.log(`📋 Requesting next question, current index: ${questionIndex}`);
-      const nextQuestion = await hrBotAPI.getNextQuestion(sessionToken);
-      if (nextQuestion && questionIndex < totalQuestions) {
-        console.log(`📝 Got next question: ${nextQuestion.id}`);
-        setCurrentQuestion(nextQuestion);
-        setQuestionIndex(prev => prev + 1);
+      // Переходим к следующему вопросу, если он есть в массиве
+      if (currentQuestionIndex < questions.length - 1) {
+        setCurrentQuestionIndex(prev => prev + 1);
         setCurrentAnswer('');
         setQuestionStartTime(Date.now());
         startTimer();
-        // При успешном получении следующего вопроса убираем сообщение об ошибке
-        setError('');
       } else {
-        console.log(`🔚 No more questions or limit reached, completing session`);
-        // Завершаем сессию
-        await completeSession();
+        // Если вопросов в массиве больше нет, запрашиваем новые
+        const newQuestions = await hrBotAPI.getNextQuestion(sessionToken);
+        if (newQuestions.length > 0) {
+          setQuestions(prev => [...prev, ...newQuestions]);
+          setCurrentQuestionIndex(prev => prev + 1);
+          setCurrentAnswer('');
+          setQuestionStartTime(Date.now());
+          startTimer();
+        } else {
+          // Если новых вопросов нет, завершаем сессию
+          await completeSession();
+        }
       }
     } catch (err) {
-      // Если сервер временно отвечает 404, даём пользователю шанс повторить
       if (err instanceof Error && err.message.includes('404')) {
         setError('Не удалось отправить. Подождите 5 секунд и отправьте ещё раз.');
       } else {
@@ -188,7 +193,7 @@ const HRBotPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [sessionToken, currentQuestion, currentAnswer, clearTimer, questionIndex, totalQuestions, questionStartTime]);
+  }, [sessionToken, currentQuestion, currentAnswer, clearTimer, currentQuestionIndex, questions.length, totalQuestions, questionStartTime, startTimer]);
 
   // Запуск таймера
   const startTimer = useCallback(() => {
@@ -260,19 +265,19 @@ const HRBotPage: React.FC = () => {
       setSessionToken(sessionResponse.token);
       console.log('✅ Session created:', sessionResponse.token);
       
-      // Получить первый вопрос
-      console.log('📋 Requesting first question...');
-      const firstQuestion = await hrBotAPI.getNextQuestion(sessionResponse.token);
+      // Получить первые вопросы
+      console.log('📋 Requesting first questions...');
+      const initialQuestions = await hrBotAPI.getNextQuestion(sessionResponse.token);
       
-      if (firstQuestion) {
-        console.log('📝 First question received:', firstQuestion.id);
-        setCurrentQuestion(firstQuestion);
-        setQuestionIndex(1);
+      if (initialQuestions.length > 0) {
+        console.log('📝 Initial questions received:', initialQuestions.length);
+        setQuestions(initialQuestions);
+        setCurrentQuestionIndex(0);
         setQuestionStartTime(Date.now());
         setSessionState('in_progress');
         startTimer();
       } else {
-        console.error('❌ Failed to load first question');
+        console.error('❌ Failed to load questions');
         setError('Не удалось загрузить вопросы');
         setSessionState('error');
       }
@@ -350,8 +355,8 @@ ${sessionResults.answerTimes.map((time, index) =>
     
     setSessionState('welcome');
     setSessionToken('');
-    setCurrentQuestion(null);
-    setQuestionIndex(0);
+    setQuestions([]);
+    setCurrentQuestionIndex(0);
     setCurrentAnswer('');
     setAnswers([]);
     setSessionResults({
@@ -529,7 +534,7 @@ ${sessionResults.answerTimes.map((time, index) =>
             }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: { xs: 'wrap', sm: 'nowrap' }, gap: { xs: 1, sm: 0 } }}>
                 <Typography variant="h5" fontWeight="bold" sx={{ fontSize: { xs: '1.25rem', md: '1.5rem' } }}>
-                  Вопрос {questionIndex} из {totalQuestions}
+                  Вопрос {currentQuestionIndex + 1} из {totalQuestions}
                 </Typography>
                 <Chip
                   icon={<TimerOutlined />}
@@ -545,7 +550,7 @@ ${sessionResults.answerTimes.map((time, index) =>
               </Box>
               <LinearProgress
                 variant="determinate"
-                value={(questionIndex / totalQuestions) * 100}
+                value={((currentQuestionIndex + 1) / totalQuestions) * 100}
                 sx={{ 
                   height: { xs: 6, md: 8 }, 
                   borderRadius: 4,
@@ -565,7 +570,7 @@ ${sessionResults.answerTimes.map((time, index) =>
               <TextField
                 fullWidth
                 multiline
-                                  rows={isMobile ? 6 : 8} // Меньше строк на мобильных
+                rows={isMobile ? 6 : 8}
                 value={currentAnswer}
                 onChange={(e) => setCurrentAnswer(e.target.value)}
                 placeholder="Поделитесь своими мыслями и опытом..."
