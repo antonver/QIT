@@ -10,6 +10,7 @@ import AeonTest from '../components/AeonTest';
 import { useAuth } from '../hooks/useAuth';
 import { createSession } from '../services/api';
 import type { AeonSummary, GlyphData } from '../types/api';
+import type { GlyphResponse } from '../services/hrBotApi';
 
 // Main HRBot page component
 const HRBot: React.FC = () => {
@@ -77,8 +78,15 @@ const HRBot: React.FC = () => {
   };
 
   // Handle ÆON test completion
-  const handleAeonTestComplete = (summary: AeonSummary, glyph: GlyphData) => {
-    setTestResult({ summary, glyph });
+  const handleAeonTestComplete = (summary: AeonSummary, glyph: GlyphResponse) => {
+    // Convert GlyphResponse to GlyphData for compatibility
+    const glyphData: GlyphData = {
+      svg: glyph.svg || `<svg width="300" height="300" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+        <text x="150" y="150" text-anchor="middle" font-size="24" fill="#40C4FF">${glyph.glyph}</text>
+      </svg>`
+    };
+    
+    setTestResult({ summary, glyph: glyphData });
     setCurrentView('result');
   };
 
