@@ -522,7 +522,7 @@ def save_answer(token: str, answer: dict = Body(...)):
 @router.get("/session/{token}")
 def get_session(token: str):
     """Получение состояния сессии"""
-    session_state = sessions.get(token)
+    session_state = load_session_from_db(token)
     if not session_state:
         raise HTTPException(status_code=404, detail="Сессия не найдена")
     if is_token_expired(session_state):
@@ -540,18 +540,19 @@ def get_session(token: str):
 
 @router.post("/session/{token}/complete")
 def complete_session(token: str):
-    session_state = sessions.get(token)
+    session_state = load_session_from_db(token)
     if not session_state:
         raise HTTPException(status_code=404, detail="Сессия не найдена")
     if is_token_expired(session_state):
         raise HTTPException(status_code=403, detail="Срок действия токена истёк")
     session_state.completed = True
+    save_session_to_db(token, session_state)
     log_event("complete_session", {"token": token})
     return {"status": "completed"}
 
 @router.get("/result/{token}")
 def get_result_by_token(token: str):
-    session_state = sessions.get(token)
+    session_state = load_session_from_db(token)
     if not session_state:
         raise HTTPException(status_code=404, detail="Сессия не найдена")
     
