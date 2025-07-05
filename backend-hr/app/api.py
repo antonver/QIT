@@ -149,103 +149,92 @@ sessions: Dict[str, SessionState] = {}
 
 SESSION_TTL = timedelta(hours=1)
 
-# Функция для сохранения сессий в SQLite
-def save_sessions_to_db():
-    """Сохраняет сессии в SQLite базу данных"""
+# Функция для сохранения сессии в PostgreSQL
+def save_session_to_db(token: str, session_state: SessionState):
+    """Сохраняет сессию в PostgreSQL базу данных"""
     try:
-        import sqlite3
+        from app.models import SessionLocal, Session
         import json
-        import os
         
-        # Создаем папку для базы данных
-        os.makedirs('/tmp', exist_ok=True)
-        db_path = '/tmp/sessions.db'
+        db = SessionLocal()
         
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
+        # Проверяем, существует ли сессия
+        db_session = db.query(Session).filter(Session.token == token).first()
         
-        # Создаем таблицу, если её нет
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS sessions (
-                token TEXT PRIMARY KEY,
-                answers TEXT,
-                aeon_answers TEXT,
-                asked_questions TEXT,
-                current_question_index INTEGER,
-                created_at TEXT,
-                completed BOOLEAN,
-                question_order TEXT,
-                last_activity TEXT
+        if db_session:
+            # Обновляем существующую сессию
+            db_session.answers = json.dumps(session_state.answers)
+            db_session.aeon_answers = json.dumps(session_state.aeon_answers)
+            db_session.asked_questions = json.dumps(list(session_state.asked_questions))
+            db_session.current_question_index = session_state.current_question_index
+            db_session.completed = session_state.completed
+            db_session.question_order = json.dumps(session_state.question_order)
+            db_session.last_activity = session_state.last_activity
+        else:
+            # Создаем новую сессию
+            db_session = Session(
+                token=token,
+                answers=json.dumps(session_state.answers),
+                aeon_answers=json.dumps(session_state.aeon_answers),
+                asked_questions=json.dumps(list(session_state.asked_questions)),
+                current_question_index=session_state.current_question_index,
+                created_at=session_state.created_at,
+                completed=session_state.completed,
+                question_order=json.dumps(session_state.question_order),
+                last_activity=session_state.last_activity
             )
-        ''')
+            db.add(db_session)
         
-        # Очищаем старые записи
-        cursor.execute('DELETE FROM sessions')
+        db.commit()
+        db.close()
         
-        # Сохраняем сессии
-        for token, session in sessions.items():
-            cursor.execute('''
-                INSERT INTO sessions VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                token,
-                json.dumps(session.answers),
-                json.dumps(session.aeon_answers),
-                json.dumps(list(session.asked_questions)),
-                session.current_question_index,
-                session.created_at.isoformat(),
-                session.completed,
-                json.dumps(session.question_order),
-                session.last_activity.isoformat()
-            ))
-        
-        conn.commit()
-        conn.close()
-        
-        print(f"DEBUG: Saved {len(sessions)} sessions to database")
+        print(f"DEBUG: Saved session {token} to PostgreSQL")
     except Exception as e:
-        print(f"ERROR: Failed to save sessions to database: {e}")
+        print(f"ERROR: Failed to save session to PostgreSQL: {e}")
 
-# Функция для загрузки сессий из SQLite
-def load_sessions_from_db():
-    """Загружает сессии из SQLite базы данных"""
+# Функция для загрузки сессии из PostgreSQL
+def load_session_from_db(token: str) -> SessionState:
+    """Загружает сессию из PostgreSQL базы данных"""
     try:
-        import sqlite3
+        from app.models import SessionLocal, Session
         import json
-        import os
         from datetime import datetime
         
-        db_path = '/tmp/sessions.db'
-        if not os.path.exists(db_path):
-            print("DEBUG: No sessions database found")
-            return
+        db = SessionLocal()
+        db_session = db.query(Session).filter(Session.token == token).first()
+        db.close()
         
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
+        if not db_session:
+            return None
         
-        cursor.execute('SELECT * FROM sessions')
-        rows = cursor.fetchall()
+        session_state = SessionState()
+        session_state.answers = json.loads(db_session.answers)
+        session_state.aeon_answers = json.loads(db_session.aeon_answers)
+        session_state.asked_questions = set(json.loads(db_session.asked_questions))
+        session_state.current_question_index = db_session.current_question_index
+        session_state.created_at = db_session.created_at
+        session_state.completed = db_session.completed
+        session_state.question_order = json.loads(db_session.question_order)
+        session_state.last_activity = db_session.last_activity
         
-        for row in rows:
-            token, answers_json, aeon_answers_json, asked_questions_json, current_question_index, created_at, completed, question_order_json, last_activity = row
-            
-            session = SessionState()
-            session.answers = json.loads(answers_json)
-            session.aeon_answers = json.loads(aeon_answers_json)
-            session.asked_questions = set(json.loads(asked_questions_json))
-            session.current_question_index = current_question_index
-            session.created_at = datetime.fromisoformat(created_at)
-            session.completed = bool(completed)
-            session.question_order = json.loads(question_order_json)
-            session.last_activity = datetime.fromisoformat(last_activity)
-            sessions[token] = session
-        
-        conn.close()
-        print(f"DEBUG: Loaded {len(sessions)} sessions from database")
+        print(f"DEBUG: Loaded session {token} from PostgreSQL")
+        return session_state
     except Exception as e:
-        print(f"ERROR: Failed to load sessions from database: {e}")
+        print(f"ERROR: Failed to load session from PostgreSQL: {e}")
+        return None
 
-# Загружаем сессии при запуске
-load_sessions_from_db()
+# Инициализируем базу данных при запуске
+def init_database():
+    """Инициализирует базу данных"""
+    try:
+        from app.models import create_tables
+        create_tables()
+        print("DEBUG: Database initialized")
+    except Exception as e:
+        print(f"ERROR: Failed to initialize database: {e}")
+
+# Инициализируем базу данных при запуске
+init_database()
 
 def is_token_expired(session_state: SessionState) -> bool:
     """Проверка истечения срока действия токена"""
@@ -444,25 +433,25 @@ def autosave_answers(test_id: int, request: SubmitAnswersRequest):
 def create_session():
     """Создание новой сессии с улучшенным отслеживанием"""
     token = str(uuid.uuid4())
-    sessions[token] = SessionState()
+    session_state = SessionState()
     
-    # Сохраняем сессии в базу данных после создания
-    save_sessions_to_db()
+    # Сохраняем сессию в PostgreSQL
+    save_session_to_db(token, session_state)
     
     log_event("create_session", {
         "token": token,
-        "total_sessions": len(sessions),
-        "session_keys": list(sessions.keys())
+        "session_created": True
     })
     
-    print(f"DEBUG: Created session {token}, total sessions: {len(sessions)}")
+    print(f"DEBUG: Created session {token}")
     
     return {"token": token}
 
 @router.post("/session/{token}/answer")
 def save_answer(token: str, answer: dict = Body(...)):
     """Сохранение ответа с улучшенной валидацией и защитой от дубликатов"""
-    session_state = sessions.get(token)
+    # Загружаем состояние сессии из PostgreSQL
+    session_state = load_session_from_db(token)
     if not session_state:
         raise HTTPException(status_code=404, detail="Сессия не найдена")
     if is_token_expired(session_state):
@@ -512,8 +501,8 @@ def save_answer(token: str, answer: dict = Body(...)):
     session_state.aeon_answers[question_id] = answer_text
     session_state.answers.append(answer)
     
-    # Сохраняем сессии в базу данных после сохранения ответа
-    save_sessions_to_db()
+    # Сохраняем сессию в PostgreSQL после сохранения ответа
+    save_session_to_db(token, session_state)
     
     log_event("save_answer", {
         "token": token,
@@ -680,11 +669,11 @@ async def generate_question_with_openai(session_state: SessionState, question_ty
 async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
     """Гарантированно выдает ровно 10 уникальных вопросов"""
     print(f"DEBUG: Requesting question for token: {token}")
-    print(f"DEBUG: Available sessions: {list(sessions.keys())}")
     
-    session_state = sessions.get(token)
+    # Загружаем состояние сессии из PostgreSQL
+    session_state = load_session_from_db(token)
     if not session_state:
-        print(f"DEBUG: Session {token} not found!")
+        print(f"DEBUG: Session {token} not found in database!")
         raise HTTPException(status_code=404, detail="Сессия не найдена")
     if is_token_expired(session_state):
         raise HTTPException(status_code=403, detail="Срок действия токена истёк")
@@ -791,8 +780,8 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
     session_state.asked_questions.add(question["id"])
     session_state.question_order.append(question["id"])
     
-    # Сохраняем сессии в базу данных после получения вопроса
-    save_sessions_to_db()
+    # Сохраняем сессию в PostgreSQL после получения вопроса
+    save_session_to_db(token, session_state)
     
     # Логируем выбор вопроса
     log_event("aeon_question_selected", {
