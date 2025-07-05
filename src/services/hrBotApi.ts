@@ -508,6 +508,7 @@ function createMockAPI() {
           // Найден незаданный вопрос
           sessionState.askedQuestions.add(question.id);
           sessionState.questionStartTime = Date.now();
+          sessionState.currentQuestionIndex = questionIndex + 1;
           
           console.log(`✅ Mock: Question ${question.id} prepared (index ${questionIndex}):`, question.text.substring(0, 50) + '...');
           
@@ -543,8 +544,6 @@ function createMockAPI() {
       } else {
         console.warn(`⚠️ Mock: No question_id provided for answer:`, answer);
       }
-      
-      sessionState.currentQuestionIndex++;
       
       console.log(`✅ Mock: Answer submitted, moving to question ${sessionState.currentQuestionIndex + 1}`);
       console.log(`📊 Mock: Total answers saved so far:`, Object.keys(sessionState.answers).length);
