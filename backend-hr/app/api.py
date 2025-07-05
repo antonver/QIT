@@ -157,7 +157,7 @@ def update_session_activity(session_state: SessionState):
     """Обновление времени последней активности"""
     session_state.last_activity = datetime.now(timezone.utc)
 
-def analyze_answer_quality(answer: str, question_keywords: List[str]) -> Dict[str, Any]:
+def analyze_answer_quality(answer: str, question_keywords: List[str] = None) -> Dict[str, Any]:
     """Анализ качества ответа на основе содержания и ключевых слов"""
     if not answer or not isinstance(answer, str):
         return {"score": 0, "details": "Пустой ответ"}
@@ -168,9 +168,12 @@ def analyze_answer_quality(answer: str, question_keywords: List[str]) -> Dict[st
     word_count = len(answer.split())
     sentence_count = len([s for s in answer.split('.') if s.strip()])
     
-    # Анализ содержания
-    keyword_matches = sum(1 for keyword in question_keywords if keyword.lower() in answer_lower)
-    keyword_ratio = keyword_matches / len(question_keywords) if question_keywords else 0
+    # Анализ содержания (если есть ключевые слова)
+    keyword_matches = 0
+    keyword_ratio = 0
+    if question_keywords:
+        keyword_matches = sum(1 for keyword in question_keywords if keyword.lower() in answer_lower)
+        keyword_ratio = keyword_matches / len(question_keywords) if question_keywords else 0
     
     # Анализ структуры
     has_examples = any(word in answer_lower for word in ['например', 'пример', 'случай', 'ситуация'])
@@ -187,8 +190,12 @@ def analyze_answer_quality(answer: str, question_keywords: List[str]) -> Dict[st
     elif word_count >= 10:
         score += 10
     
-    # Бонус за релевантность
-    score += min(30, keyword_ratio * 100)
+    # Бонус за релевантность (если есть ключевые слова)
+    if question_keywords:
+        score += min(30, keyword_ratio * 100)
+    else:
+        # Если нет ключевых слов, оцениваем по общему качеству
+        score += min(30, (word_count / 100) * 100)
     
     # Бонус за примеры и конкретику
     if has_examples:
@@ -474,11 +481,92 @@ def get_stats():
         "avg_score": avg_score
     }
 
-# ===== ИСПРАВЛЕННЫЕ AEON ЭНДПОИНТЫ =====
+# Добавляем функцию для генерации вопросов через OpenAI
+async def generate_question_with_openai(session_state: SessionState, question_type: str = None) -> dict:
+    """Генерирует новый вопрос через OpenAI API"""
+    if not OPENAI_API_KEY or OPENAI_API_KEY.startswith("sk-proj-X1"):
+        return None
+    
+    try:
+        # Определяем тип вопроса на основе предыдущих ответов
+        if not question_type:
+            technical_count = sum(1 for q_id in session_state.asked_questions 
+                                if any(q["id"] == q_id and q["type"] == "technical" for q in AEON_QUESTIONS))
+            soft_count = len(session_state.asked_questions) - technical_count
+            
+            if technical_count < soft_count:
+                question_type = "technical"
+            else:
+                question_type = "soft"
+        
+        # Создаем промпт для генерации вопроса
+        context = f"""
+        Ты - опытный HR-специалист, проводящий интервью. 
+        Сгенерируй профессиональный вопрос для кандидата.
+        
+        Тип вопроса: {question_type}
+        Уже задано вопросов: {len(session_state.asked_questions)}
+        
+        Вопрос должен быть:
+        - Профессиональным и релевантным
+        - Открытым (требующим развернутого ответа)
+        - Адаптированным под уровень кандидата
+        - Не повторяющим стандартные вопросы
+        
+        Верни ответ в формате JSON:
+        {{
+            "text": "текст вопроса",
+            "type": "{question_type}",
+            "keywords": ["ключевые", "слова", "для", "анализа"]
+        }}
+        """
+        
+        payload = {
+            "model": "gpt-3.5-turbo",
+            "messages": [
+                {"role": "system", "content": "Ты - опытный HR-специалист. Генерируй только валидный JSON."},
+                {"role": "user", "content": context}
+            ],
+            "max_tokens": 300,
+            "temperature": 0.7
+        }
+        
+        headers = {
+            "Authorization": f"Bearer {OPENAI_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post("https://api.openai.com/v1/chat/completions", 
+                                       json=payload, headers=headers, timeout=10.0)
+            
+            if response.status_code == 200:
+                content = response.json()["choices"][0]["message"]["content"]
+                try:
+                    import json as pyjson
+                    result = pyjson.loads(content)
+                    
+                    # Генерируем уникальный ID для вопроса
+                    question_id = f"ai_q_{len(session_state.asked_questions) + 1}_{int(datetime.now().timestamp())}"
+                    
+                    return {
+                        "id": question_id,
+                        "text": result.get("text", "Расскажите о своем опыте работы в команде."),
+                        "type": result.get("type", "soft"),
+                        "keywords": result.get("keywords", ["опыт", "команда", "работа"]),
+                        "ai_generated": True
+                    }
+                except:
+                    pass
+    except Exception as e:
+        log_event("openai_error", {"error": str(e)})
+    
+    return None
 
+# Обновляем функцию получения следующего вопроса
 @router.post("/aeon/question/{token}")
 async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
-    """Улучшенная логика получения следующего вопроса AEON с рандомизацией"""
+    """Улучшенная логика получения следующего вопроса с AI-генерацией"""
     session_state = sessions.get(token)
     if not session_state:
         raise HTTPException(status_code=404, detail="Сессия не найдена")
@@ -488,11 +576,32 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
     # Обновляем активность
     update_session_activity(session_state)
     
-    # Получаем все незаданные вопросы
+    # Получаем все незаданные вопросы из базового пула
     available_questions = [q for q in AEON_QUESTIONS if q["id"] not in session_state.asked_questions]
     
+    # Если базовые вопросы закончились, пробуем сгенерировать новый через AI
     if not available_questions:
-        return JSONResponse(content={"detail": "Все вопросы заданы"}, status_code=404)
+        ai_question = await generate_question_with_openai(session_state)
+        if ai_question:
+            # Добавляем AI-вопрос в список заданных
+            session_state.asked_questions.add(ai_question["id"])
+            session_state.question_order.append(ai_question["id"])
+            
+            log_event("ai_question_generated", {
+                "token": token,
+                "question_id": ai_question["id"],
+                "questions_asked": len(session_state.asked_questions)
+            })
+            
+            return {
+                "question": ai_question["text"],
+                "type": ai_question["type"],
+                "question_id": ai_question["id"],
+                "question_number": len(session_state.asked_questions),
+                "ai_generated": True
+            }
+        else:
+            return JSONResponse(content={"detail": "Все вопросы заданы"}, status_code=404)
     
     # Выбираем случайный вопрос из доступных
     question = random.choice(available_questions)
@@ -529,7 +638,8 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
         "question_id": question["id"],
         "question_number": len(session_state.asked_questions),
         "total_questions": len(AEON_QUESTIONS),
-        "remaining_questions": len(AEON_QUESTIONS) - len(session_state.asked_questions)
+        "remaining_questions": len(AEON_QUESTIONS) - len(session_state.asked_questions),
+        "ai_generated": False
     }
 
 @router.post("/aeon/glyph/{token}")
