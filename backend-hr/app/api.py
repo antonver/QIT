@@ -761,9 +761,10 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
             "total_asked": len(session_state.asked_questions)
         })
         return JSONResponse(content={
-            "detail": "Достигнут лимит в 10 вопросов",
-            "completed": True,
+            "questions": [],
             "total_questions": 10,
+            "remaining_questions": 0,
+            "completed": True,
             "questions_asked": len(session_state.asked_questions)
         }, status_code=200)
     
@@ -795,10 +796,11 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
             save_session_to_db(token, session_state)
             
             return {
-                "question": ai_question["text"],
-                "type": ai_question["type"],
-                "question_id": ai_question["id"],
-                "question_number": len(session_state.asked_questions),
+                "questions": [{
+                    "id": ai_question["id"],
+                    "text": ai_question["text"],
+                    "type": ai_question["type"]
+                }],
                 "total_questions": 10,
                 "remaining_questions": 10 - len(session_state.asked_questions),
                 "ai_generated": True
@@ -818,11 +820,13 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
     
     print(f"DEBUG: Returning question: {question['text']}")
     
+    # Возвращаем в формате, который ожидает фронтенд
     return {
-        "question": question["text"],
-        "type": question["type"],
-        "question_id": question["id"],
-        "question_number": len(session_state.asked_questions),
+        "questions": [{
+            "id": question["id"],
+            "text": question["text"],
+            "type": question["type"]
+        }],
         "total_questions": 10,
         "remaining_questions": 10 - len(session_state.asked_questions)
     }
