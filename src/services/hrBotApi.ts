@@ -16,14 +16,15 @@ export interface Question {
 
 // Реальная структура ответа API
 export interface ApiQuestionResponse {
-  questions: {
+  question?: string;
+  questions?: {
     id: string;
     text: string;
     type: 'text' | 'choice' | 'scale' | 'technical';
     options?: string[];
   }[];
-  total_questions: number;
-  remaining_questions: number;
+  total_questions?: number;
+  remaining_questions?: number;
   completed?: boolean;
 }
 
@@ -136,18 +137,35 @@ class HRBotAPI {
         body: JSON.stringify(data),
       });
       
+      console.log('📥 API: Received response:', response);
+      
       // Проверяем, не завершен ли тест
       if (response && response.completed) {
         console.log('🎯 API: Test completed, no more questions');
         return [];
       }
       
-      // Преобразуем ответ API в наш формат
+      // Обрабатываем ответ в новом формате (одиночный вопрос)
+      if (response && response.question) {
+        const question: Question = {
+          id: `q_${sessionState.questionIndex + 1}`,
+          text: response.question,
+          type: 'text'
+        };
+        
+        // Обновляем индекс вопроса
+        sessionState.questionIndex += 1;
+        console.log(`✅ API: Received single question`);
+        
+        return [question];
+      }
+      
+      // Обрабатываем ответ в старом формате (массив вопросов)
       if (response && response.questions) {
         const questions: Question[] = response.questions.map((q, index) => ({
           id: q.id || `q_${sessionState.questionIndex + index + 1}`,
           text: q.text,
-          type: q.type || 'text' as const // Используем тип из API или 'text' по умолчанию
+          type: q.type || 'text'
         }));
         
         // Обновляем индекс вопроса
@@ -161,7 +179,7 @@ class HRBotAPI {
       return [];
     } catch (error) {
       console.error('API: Error getting questions:', error);
-      return [];
+      throw error; // Пробрасываем ошибку дальше для обработки в компоненте
     }
   }
 

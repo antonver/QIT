@@ -256,38 +256,42 @@ const HRBotPage: React.FC = () => {
       setError('');
       setSessionState('initializing');
       
-      console.log('🚀 Starting HR Bot session initialization...');
-      const sessionResponse = await hrBotAPI.createSession();
-      setSessionToken(sessionResponse.token);
-      console.log('✅ Session created:', sessionResponse.token);
+      console.log('🚀 Initializing session...');
       
-      // Получить первые вопросы
-      console.log('📋 Requesting first questions...');
-      const initialQuestions = await hrBotAPI.getNextQuestion(sessionResponse.token);
+      // 1. Создаем новую сессию
+      const session = await hrBotAPI.createSession();
+      setSessionToken(session.token);
       
-      if (initialQuestions.length > 0) {
-        console.log('📝 Initial questions received:', initialQuestions.length);
-        setQuestions(initialQuestions);
-        setCurrentQuestionIndex(0);
-        setQuestionStartTime(Date.now());
-        setSessionState('in_progress');
-        startTimer();
-      } else {
-        console.error('❌ Failed to load questions');
-        setError('Не удалось загрузить вопросы');
-        setSessionState('error');
+      console.log('✅ Session created:', session.token);
+      
+      // 2. Получаем первый вопрос
+      const initialQuestions = await hrBotAPI.getNextQuestion(session.token);
+      
+      if (!initialQuestions || initialQuestions.length === 0) {
+        throw new Error('Failed to load first question');
       }
+      
+      console.log('✅ Initial questions loaded:', initialQuestions);
+      
+      setQuestions(initialQuestions);
+      setCurrentQuestionIndex(0);
+      setSessionState('in_progress');
+      setQuestionStartTime(Date.now());
+      startTimer();
+      
+      console.log('✅ Session initialized successfully');
     } catch (err) {
-      console.error('❌ Session initialization error:', err);
-      setError(err instanceof Error ? err.message : 'Ошибка инициализации');
+      console.error('❌ Error initializing session:', err);
+      setError(err instanceof Error ? err.message : 'Failed to initialize session');
       setSessionState('error');
     } finally {
       setLoading(false);
     }
   };
 
-  // Начать интервью
+  // Начало интервью
   const startInterview = () => {
+    setSessionState('initializing');
     initializeSession();
   };
 
