@@ -81,12 +81,12 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
       
       // Check if we've reached 10 questions
       if (questionNumber >= 10) {
-        console.log('Reached 10 questions, generating summary...');
+        console.log('✅ Reached 10 questions, generating summary...');
         await handleGenerateSummary();
         return;
       }
       
-      console.log(`Fetching question ${questionNumber + 1}/10...`);
+      console.log(`🔄 Fetching question ${questionNumber + 1}/10...`);
       
       // Use improved hrBotAPI instead of the old API
       const questionData = await hrBotAPI.getNextQuestion(sessionToken, {
@@ -100,7 +100,7 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
         setTimeLeft(90); // Reset timer
         setIsTimerRunning(true); // Start timer
         
-        console.log(`Question ${questionNumber + 1} loaded:`, questionData.text.substring(0, 50) + '...');
+        console.log(`✅ Question ${questionNumber + 1}/10 loaded:`, questionData.text.substring(0, 50) + '...');
         
         // Focus on the text field
         setTimeout(() => {
@@ -109,9 +109,17 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
           }
         }, 100);
       } else {
-        // No more questions, generate summary
-        console.log('No more questions available, generating summary...');
-        await handleGenerateSummary();
+        // Check if we've completed 10 questions
+        if (questionNumber >= 10) {
+          console.log('🎉 Test completed with 10 questions, generating summary...');
+          await handleGenerateSummary();
+        } else if (Object.keys(answers).length >= 5) {
+          console.log('📊 Have enough answers, generating summary...');
+          await handleGenerateSummary();
+        } else {
+          console.log('⚠️ No question received from API, retrying...');
+          setError('Не удалось получить вопрос. Попробуйте еще раз.');
+        }
       }
       
     } catch (err) {
@@ -130,7 +138,7 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
       setIsSavingAnswer(true);
       setIsTimerRunning(false); // Stop timer
       
-      console.log(`Saving answer for question ${questionNumber} (${currentQuestion.id})...`);
+      console.log(`💾 Saving answer for question ${questionNumber}/10 (${currentQuestion.id})...`);
       
       // Use improved hrBotAPI
       await hrBotAPI.submitAnswer(sessionToken, {
@@ -150,9 +158,11 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
       // Increment question number
       setQuestionNumber(prev => {
         const newNumber = prev + 1;
-        console.log(`Question number incremented to ${newNumber}/10`);
+        console.log(`📈 Question number incremented to ${newNumber}/10`);
         return newNumber;
       });
+      
+      console.log(`✅ Answer saved successfully, moving to question ${questionNumber + 1}/10`);
       
       // Get next question after saving
       setTimeout(() => {
@@ -160,7 +170,7 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
       }, 500);
       
     } catch (err) {
-      console.error('Failed to save answer:', err);
+      console.error('❌ Failed to save answer:', err);
       setError('Не удалось сохранить ответ. Попробуйте еще раз.');
     } finally {
       setIsSavingAnswer(false);
@@ -259,6 +269,14 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
   // Handle answer submission
   const handleSubmitAnswer = (answer: string) => {
     if (!answer.trim()) return;
+    
+    // Дополнительная проверка на достижение лимита в 10 вопросов
+    if (questionNumber >= 10) {
+      console.log('🎯 Test already completed with 10 questions, generating summary...');
+      handleGenerateSummary();
+      return;
+    }
+    
     saveCurrentAnswer(answer.trim());
   };
 
@@ -273,6 +291,16 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
   useEffect(() => {
     fetchNextQuestion();
   }, [fetchNextQuestion]);
+
+  // Monitor question count and ensure exactly 10 questions
+  useEffect(() => {
+    console.log(`📊 Question monitor: ${questionNumber}/10 questions completed`);
+    
+    if (questionNumber >= 10 && !summary) {
+      console.log('🎯 Force completing test after 10 questions');
+      handleGenerateSummary();
+    }
+  }, [questionNumber, summary]);
 
   // Show loading state
   if (isLoadingQuestion && !currentQuestion && !summary) {

@@ -595,7 +595,12 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
             "asked_questions": list(session_state.asked_questions),
             "total_asked": len(session_state.asked_questions)
         })
-        return JSONResponse(content={"detail": "Достигнут лимит в 10 вопросов"}, status_code=404)
+        return JSONResponse(content={
+            "detail": "Достигнут лимит в 10 вопросов",
+            "completed": True,
+            "total_questions": 10,
+            "questions_asked": len(session_state.asked_questions)
+        }, status_code=200)
     
     # Подробное логирование для отладки
     log_event("question_request", {

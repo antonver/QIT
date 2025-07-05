@@ -19,6 +19,9 @@ export interface ApiQuestionResponse {
   question: string;
   type: string;
   question_id?: string;
+  completed?: boolean;
+  total_questions?: number;
+  questions_asked?: number;
   [key: string]: any;
 }
 
@@ -130,6 +133,12 @@ class HRBotAPI {
         method: 'POST',
         body: JSON.stringify(data),
       });
+      
+      // Проверяем, не завершен ли тест
+      if (response && response.completed) {
+        console.log('🎯 API: Test completed, no more questions');
+        return null;
+      }
       
       // Преобразуем ответ API в наш формат
       if (response && response.question) {
@@ -458,14 +467,15 @@ function createMockAPI() {
       console.log(`📋 Mock: Getting question with index ${sessionState.currentQuestionIndex}, total questions: ${MOCK_QUESTIONS.length}`);
       console.log(`📋 Mock: Already asked questions:`, Array.from(sessionState.askedQuestions));
       
-      if (sessionState.currentQuestionIndex >= MOCK_QUESTIONS.length) {
-        console.log(`🔚 Mock: Reached question limit: ${sessionState.currentQuestionIndex}/${MOCK_QUESTIONS.length}`);
+      // Гарантированно выдаем ровно 10 вопросов
+      if (sessionState.currentQuestionIndex >= 10) {
+        console.log(`🔚 Mock: Reached question limit: ${sessionState.currentQuestionIndex}/10`);
         return null;
       }
       
       // Ищем следующий незаданный вопрос
       let questionIndex = sessionState.currentQuestionIndex;
-      while (questionIndex < MOCK_QUESTIONS.length) {
+      while (questionIndex < MOCK_QUESTIONS.length && questionIndex < 10) {
         const question = MOCK_QUESTIONS[questionIndex];
         
         if (!sessionState.askedQuestions.has(question.id)) {
@@ -474,13 +484,32 @@ function createMockAPI() {
           sessionState.questionStartTime = Date.now();
           sessionState.currentQuestionIndex = questionIndex + 1;
           
-          console.log(`✅ Mock: Question ${question.id} prepared (index ${questionIndex}):`, question.text.substring(0, 50) + '...');
+          console.log(`✅ Mock: Question ${question.id} prepared (index ${questionIndex + 1}/10):`, question.text.substring(0, 50) + '...');
           
           return { ...question };
         }
         
         console.warn(`⚠️ Mock: Question ${question.id} already asked, trying next`);
         questionIndex++;
+      }
+      
+      // Если не найдено незаданных вопросов, но мы еще не достигли лимита в 10
+      if (sessionState.currentQuestionIndex < 10) {
+        console.log(`🔄 Mock: Reusing questions to reach 10 total`);
+        // Переиспользуем вопросы, но с новыми ID
+        const reusedQuestion = MOCK_QUESTIONS[sessionState.currentQuestionIndex % MOCK_QUESTIONS.length];
+        const newQuestionId = `q_reused_${sessionState.currentQuestionIndex + 1}`;
+        
+        sessionState.askedQuestions.add(newQuestionId);
+        sessionState.questionStartTime = Date.now();
+        sessionState.currentQuestionIndex++;
+        
+        console.log(`✅ Mock: Reused question prepared (${sessionState.currentQuestionIndex}/10):`, reusedQuestion.text.substring(0, 50) + '...');
+        
+        return { 
+          ...reusedQuestion, 
+          id: newQuestionId 
+        };
       }
       
       // Если не найдено незаданных вопросов
