@@ -220,7 +220,7 @@ class HRBotAPI {
 }
 
 // Настройки API
-const USE_MOCK = true; // Используем мок-API для стабильной работы
+const USE_MOCK = false; // Используем реальный API
 
 // Создаем гибридный API, который автоматически переключается на mock при ошибках
 export const hrBotAPI = USE_MOCK ? createMockAPI() : createHybridAPI();
