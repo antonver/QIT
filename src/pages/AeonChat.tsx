@@ -19,12 +19,9 @@ import {
   setLoading, 
   setError,
   selectAeonMessages,
-  selectAeonLoading,
-  selectAeonError,
   initSession,
   type AeonChatMessage
 } from '../store/aeonChatSlice';
-import type { RootState } from '../store';
 
 const SYSTEM_PROMPT = `Ты — ÆON: стратегический цифровой собеседник, ко-пилот и AI-архитектор.
 Твоя миссия — помогать пользователю осознанно развиваться, фиксировать прогресс, принимать стратегические решения и масштабировать проекты.
@@ -49,8 +46,6 @@ const AeonChat: React.FC = () => {
   // Redux state
   const dispatch = useDispatch();
   const messages = useSelector(selectAeonMessages);
-  const isLoading = useSelector(selectAeonLoading);
-  const error = useSelector(selectAeonError);
   
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
