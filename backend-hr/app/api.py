@@ -149,6 +149,12 @@ sessions: Dict[str, SessionState] = {}
 
 SESSION_TTL = timedelta(hours=1)
 
+# ===== Helper: save to in-memory dict =====
+
+def _save_session_in_memory(token: str, session_state: SessionState):
+    """Сохраняем/обновляем сессию в словаре sessions как fallback"""
+    sessions[token] = session_state
+
 # Функция для сохранения сессии в PostgreSQL
 def save_session_to_db(token: str, session_state: SessionState):
     """Сохраняет сессию в PostgreSQL базу данных"""
@@ -191,6 +197,9 @@ def save_session_to_db(token: str, session_state: SessionState):
         print(f"DEBUG: Saved session {token} to PostgreSQL")
     except Exception as e:
         print(f"ERROR: Failed to save session to PostgreSQL: {e}")
+    finally:
+        # Всегда обновляем in-memory fallback
+        _save_session_in_memory(token, session_state)
 
 # Функция для загрузки сессии из PostgreSQL
 def load_session_from_db(token: str) -> SessionState:
@@ -205,7 +214,8 @@ def load_session_from_db(token: str) -> SessionState:
         db.close()
         
         if not db_session:
-            return None
+            # Пытаемся вернуть из памяти
+            return sessions.get(token)
         
         session_state = SessionState()
         session_state.answers = json.loads(db_session.answers)
@@ -221,7 +231,8 @@ def load_session_from_db(token: str) -> SessionState:
         return session_state
     except Exception as e:
         print(f"ERROR: Failed to load session from PostgreSQL: {e}")
-        return None
+        # Fallback to in-memory storage
+        return sessions.get(token)
 
 # Инициализируем базу данных при запуске
 def init_database():
@@ -435,8 +446,9 @@ def create_session():
     token = str(uuid.uuid4())
     session_state = SessionState()
     
-    # Сохраняем сессию в PostgreSQL
+    # Сохраняем сессию в БД (если доступно) и в памяти
     save_session_to_db(token, session_state)
+    _save_session_in_memory(token, session_state)
     
     log_event("create_session", {
         "token": token,
