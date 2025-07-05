@@ -268,7 +268,7 @@ const HRBotPage: React.FC = () => {
       const initialQuestions = await hrBotAPI.getNextQuestion(session.token);
       
       if (!initialQuestions || initialQuestions.length === 0) {
-        throw new Error('Failed to load first question');
+        throw new Error('Не удалось загрузить первый вопрос. Возможно, сервер временно недоступен или вопросы закончились.');
       }
       
       console.log('✅ Initial questions loaded:', initialQuestions);
@@ -282,7 +282,7 @@ const HRBotPage: React.FC = () => {
       console.log('✅ Session initialized successfully');
     } catch (err) {
       console.error('❌ Error initializing session:', err);
-      setError(err instanceof Error ? err.message : 'Failed to initialize session');
+      setError(err instanceof Error ? err.message : 'Не удалось инициализировать сессию. Проверьте подключение к интернету и попробуйте снова.');
       setSessionState('error');
     } finally {
       setLoading(false);
