@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, status, Body, Request
-from app.models import Test, Question, Answer
+from app.models import Test, Question, Answer, SessionLocal, Session, create_tables
 from app.schemas import SubmitAnswersRequest, SubmitAnswersResponse, GetResultResponse
 from typing import Optional, Dict, List, Any
 import uuid
@@ -12,6 +12,7 @@ import csv
 from io import StringIO
 from dataclasses import dataclass, field
 import random
+from sqlalchemy.orm import sessionmaker, Session
 
 router = APIRouter()
 admin_router = APIRouter()
@@ -500,111 +501,86 @@ def autosave_answers(test_id: int, request: SubmitAnswersRequest):
 
 @router.post("/session")
 def create_session():
-    """Создание новой сессии с улучшенным отслеживанием"""
-    token = str(uuid.uuid4())
-    session_state = SessionState()
-    
-    print(f"DEBUG: Creating new session with token: {token}")
-    print(f"DEBUG: Database initialized: {db_initialized}")
-    
-    # Сохраняем сессию в БД (если доступно) и в памяти
-    save_session_to_db(token, session_state)
-    _save_session_in_memory(token, session_state)
-    
-    # Проверяем, что сессия действительно сохранена
-    saved_session = load_session_from_db(token)
-    if saved_session:
-        print(f"DEBUG: Session {token} successfully saved and loaded")
-        print(f"DEBUG: Total sessions in memory: {len(sessions)}")
-    else:
-        print(f"ERROR: Failed to save/load session {token}")
-        print(f"DEBUG: Available sessions in memory: {list(sessions.keys())}")
-    
-    log_event("create_session", {
-        "token": token,
-        "session_created": True
-    })
-    
-    print(f"DEBUG: Created session {token}, total sessions: {len(sessions)}")
-    
-    return {"token": token}
+    try:
+        token = str(uuid.uuid4())
+        session_state = SessionState()
+        
+        print(f"DEBUG: Creating new session with token: {token}")
+        print(f"DEBUG: Database initialized: {db_initialized}")
+        
+        # Сохраняем сессию в БД (если доступно) и в памяти
+        save_session_to_db(token, session_state)
+        _save_session_in_memory(token, session_state)
+        
+        # Проверяем, что сессия действительно сохранена
+        saved_session = load_session_from_db(token)
+        if saved_session:
+            print(f"DEBUG: Session {token} successfully saved and loaded")
+            print(f"DEBUG: Total sessions in memory: {len(sessions)}")
+        else:
+            print(f"ERROR: Failed to save/load session {token}")
+            print(f"DEBUG: Available sessions in memory: {list(sessions.keys())}")
+        
+        log_event("create_session", {
+            "token": token,
+            "session_created": True
+        })
+        
+        print(f"DEBUG: Created session {token}, total sessions: {len(sessions)}")
+        
+        return {"token": token}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating session: {str(e)}")
 
 @router.post("/session/{token}/answer")
-def save_answer(token: str, answer: dict = Body(...)):
-    """Сохранение ответа с улучшенной валидацией и защитой от дубликатов"""
-    # Загружаем состояние сессии из PostgreSQL
-    session_state = load_session_from_db(token)
-    if not session_state:
-        raise HTTPException(status_code=404, detail="Сессия не найдена")
-    if is_token_expired(session_state):
-        raise HTTPException(status_code=403, detail="Срок действия токена истёк")
-    if session_state.completed:
-        raise HTTPException(status_code=403, detail="Тест уже завершён")
-    
-    # Обновляем активность
-    update_session_activity(session_state)
-    
-    # Проверяем наличие необходимых полей
-    if "question_id" not in answer:
-        raise HTTPException(status_code=400, detail="Отсутствует ID вопроса")
-    if "answer" not in answer:
-        raise HTTPException(status_code=400, detail="Отсутствует текст ответа")
-    
-    question_id = answer["question_id"]
-    answer_text = answer["answer"]
-    
-    # Проверяем, что вопрос действительно был задан
-    if question_id not in session_state.asked_questions:
-        log_event("invalid_answer", {
-            "token": token,
-            "question_id": question_id,
-            "error": "Question not asked",
-            "asked_questions": list(session_state.asked_questions)
-        })
-        raise HTTPException(status_code=400, detail="Вопрос не был задан")
-    
-    # Проверяем, не отвечал ли уже пользователь на этот вопрос
-    if question_id in session_state.aeon_answers:
-        log_event("duplicate_answer_prevented", {
-            "token": token,
-            "question_id": question_id,
-            "previous_answer": session_state.aeon_answers[question_id],
-            "new_answer": answer_text
-        })
-        raise HTTPException(status_code=400, detail="На этот вопрос уже был дан ответ")
-    
-    # Валидация текста ответа
-    if not answer_text or not isinstance(answer_text, str):
-        raise HTTPException(status_code=400, detail="Некорректный формат ответа")
-    if len(answer_text.strip()) < 10:
-        raise HTTPException(status_code=400, detail="Ответ слишком короткий")
-    
-    # Сохраняем ответ
-    session_state.aeon_answers[question_id] = answer_text
-    session_state.answers.append(answer)
-    
-    # Проверяем, если это был последний вопрос
-    if len(session_state.aeon_answers) >= 10:
-        session_state.completed = True
-    
-    # Сохраняем сессию в PostgreSQL после сохранения ответа
-    save_session_to_db(token, session_state)
-    
-    log_event("save_answer", {
-        "token": token,
-        "question_id": question_id,
-        "answer_length": len(answer_text),
-        "answers_count": len(session_state.aeon_answers),
-        "total_questions": len(AEON_QUESTIONS)
-    })
-    
-    return {
-        "status": "saved",
-        "answers_saved": len(session_state.aeon_answers),
-        "total_questions": len(AEON_QUESTIONS),
-        "remaining_questions": len(AEON_QUESTIONS) - len(session_state.aeon_answers),
-        "completed": session_state.completed
-    }
+async def save_answer(token: str, answer: dict = Body(...)):
+    try:
+        session_state = load_session_from_db(token)
+        if not session_state:
+            raise HTTPException(status_code=404, detail="Сессия не найдена")
+        if is_token_expired(session_state):
+            raise HTTPException(status_code=403, detail="Срок действия токена истёк")
+        if session_state.completed:
+            raise HTTPException(status_code=403, detail="Тест уже завершён")
+
+        update_session_activity(session_state)
+
+        if "question_id" not in answer:
+            raise HTTPException(status_code=400, detail="Отсутствует ID вопроса")
+        if "answer" not in answer:
+            raise HTTPException(status_code=400, detail="Отсутствует текст ответа")
+
+        question_id = answer["question_id"]
+        answer_text = answer["answer"]
+
+        if question_id not in session_state.asked_questions:
+            raise HTTPException(status_code=400, detail="Вопрос не был задан")
+
+        if question_id in session_state.aeon_answers:
+            raise HTTPException(status_code=400, detail="На этот вопрос уже был дан ответ")
+
+        if not answer_text or not isinstance(answer_text, str):
+            raise HTTPException(status_code=400, detail="Некорректный формат ответа")
+        if len(answer_text.strip()) < 10:
+            raise HTTPException(status_code=400, detail="Ответ слишком короткий")
+
+        session_state.aeon_answers[question_id] = answer_text
+        session_state.answers.append(answer)
+
+        if len(session_state.aeon_answers) >= 10:
+            session_state.completed = True
+
+        save_session_to_db(token, session_state)
+
+        return {
+            "status": "saved",
+            "answers_saved": len(session_state.aeon_answers),
+            "total_questions": len(AEON_QUESTIONS),
+            "remaining_questions": len(AEON_QUESTIONS) - len(session_state.aeon_answers),
+            "completed": session_state.completed
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving answer: {str(e)}")
 
 @router.get("/session/{token}")
 def get_session(token: str):
