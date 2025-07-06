@@ -778,7 +778,6 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
     update_session_activity(session_state)
     
     # Проверяем, не превысили ли лимит в 10 вопросов
-    # Используем current_question_index для точного отслеживания
     if session_state.current_question_index >= 10:
         log_event("max_questions_reached", {
             "token": token,
@@ -803,37 +802,27 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
         "request_data": data
     })
     
+    # Проверяем, доступны ли все 10 вопросов
+    if len(AEON_QUESTIONS) < 10:
+        log_event("error_not_enough_questions", {
+            "available_questions": len(AEON_QUESTIONS),
+            "required_questions": 10
+        })
+        return JSONResponse(content={"detail": "Недостаточно вопросов в базе"}, status_code=500)
+
+    # Проверяем, не вышли ли за границы массива (защита от ошибок)
+    if session_state.current_question_index >= len(AEON_QUESTIONS):
+        log_event("error_index_out_of_range", {
+            "current_index": session_state.current_question_index,
+            "total_questions": len(AEON_QUESTIONS)
+        })
+        # Сброс индекса до последнего доступного вопроса, если вышли за границы
+        session_state.current_question_index = len(AEON_QUESTIONS) - 1
+
     # Берем следующий вопрос по порядку из AEON_QUESTIONS
-    # Используем current_question_index вместо len(asked_questions)
-    if session_state.current_question_index < len(AEON_QUESTIONS):
-        question = AEON_QUESTIONS[session_state.current_question_index]
-        print(f"DEBUG: Using question {session_state.current_question_index}: {question['id']}")
-    else:
-        # Если почему-то индекс больше количества вопросов (не должно случиться),
-        # генерируем AI-вопрос
-        log_event("generating_ai_question", {"token": token})
-        ai_question = await generate_question_with_openai(session_state)
-        if ai_question:
-            session_state.asked_questions.add(ai_question["id"])
-            session_state.question_order.append(ai_question["id"])
-            session_state.current_question_index += 1
-            
-            # Сохраняем сессию в PostgreSQL
-            save_session_to_db(token, session_state)
-            
-            return {
-                "questions": [{
-                    "id": ai_question["id"],
-                    "text": ai_question["text"],
-                    "type": ai_question["type"]
-                }],
-                "total_questions": 10,
-                "remaining_questions": 10 - session_state.current_question_index,
-                "ai_generated": True
-            }
-        else:
-            return JSONResponse(content={"detail": "Не удалось сгенерировать вопрос"}, status_code=500)
-    
+    question = AEON_QUESTIONS[session_state.current_question_index]
+    print(f"DEBUG: Using question {session_state.current_question_index}: {question['id']}")
+
     # Добавляем вопрос в список заданных и увеличиваем индекс
     session_state.asked_questions.add(question["id"])
     session_state.question_order.append(question["id"])
@@ -1190,3 +1179,4 @@ def export_log():
             writer.writerow([entry["time"], entry["action"], str(entry["details"])])
         yield output.getvalue()
     return StreamingResponse(generate(), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=log.csv"})
+
