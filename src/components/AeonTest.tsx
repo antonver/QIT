@@ -73,6 +73,22 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
     };
   }, [isTimerRunning, timeLeft, currentAnswer]);
 
+  // Generate summary using improved API
+  const handleGenerateSummary = useCallback(async () => {
+    try {
+      setError('');
+      setIsTimerRunning(false); // Stop timer
+      
+      // Use improved hrBotAPI
+      const summaryData = await hrBotAPI.getSummary(sessionToken);
+      setSummary(summaryData);
+      
+    } catch (err) {
+      console.error('Failed to generate summary:', err);
+      setError('Не удалось сгенерировать сводку. Попробуйте еще раз.');
+    }
+  }, [sessionToken]);
+
   // Get next question using improved API
   const fetchNextQuestion = useCallback(async () => {
     try {
@@ -174,22 +190,6 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
       setIsSavingAnswer(false);
     }
   }, [currentQuestion, sessionToken, fetchNextQuestion, questionNumber]);
-
-  // Generate summary using improved API
-  const handleGenerateSummary = useCallback(async () => {
-    try {
-      setError('');
-      setIsTimerRunning(false); // Stop timer
-      
-      // Use improved hrBotAPI
-      const summaryData = await hrBotAPI.getSummary(sessionToken);
-      setSummary(summaryData);
-      
-    } catch (err) {
-      console.error('Failed to generate summary:', err);
-      setError('Не удалось сгенерировать сводку. Попробуйте еще раз.');
-    }
-  }, [sessionToken]);
 
   // Generate glyph using improved API
   const handleGenerateGlyph = useCallback(async () => {
