@@ -583,6 +583,10 @@ def save_answer(token: str, answer: dict = Body(...)):
     session_state.aeon_answers[question_id] = answer_text
     session_state.answers.append(answer)
     
+    # Проверяем, если это был последний вопрос
+    if len(session_state.aeon_answers) >= 10:
+        session_state.completed = True
+    
     # Сохраняем сессию в PostgreSQL после сохранения ответа
     save_session_to_db(token, session_state)
     
@@ -598,7 +602,8 @@ def save_answer(token: str, answer: dict = Body(...)):
         "status": "saved",
         "answers_saved": len(session_state.aeon_answers),
         "total_questions": len(AEON_QUESTIONS),
-        "remaining_questions": len(AEON_QUESTIONS) - len(session_state.aeon_answers)
+        "remaining_questions": len(AEON_QUESTIONS) - len(session_state.aeon_answers),
+        "completed": session_state.completed
     }
 
 @router.get("/session/{token}")
@@ -773,18 +778,19 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
     update_session_activity(session_state)
     
     # Проверяем, не превысили ли лимит в 10 вопросов
-    if len(session_state.asked_questions) >= 10:
+    # Используем current_question_index для точного отслеживания
+    if session_state.current_question_index >= 10:
         log_event("max_questions_reached", {
             "token": token,
             "asked_questions": list(session_state.asked_questions),
-            "total_asked": len(session_state.asked_questions)
+            "total_asked": session_state.current_question_index
         })
         return JSONResponse(content={
             "questions": [],
             "total_questions": 10,
             "remaining_questions": 0,
             "completed": True,
-            "questions_asked": len(session_state.asked_questions)
+            "questions_asked": session_state.current_question_index
         }, status_code=200)
     
     # Подробное логирование для отладки
@@ -793,15 +799,15 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
         "asked_questions": list(session_state.asked_questions),
         "question_order": session_state.question_order,
         "total_aeon_questions": len(AEON_QUESTIONS),
-        "questions_asked": len(session_state.asked_questions),
+        "current_question_index": session_state.current_question_index,
         "request_data": data
     })
     
     # Берем следующий вопрос по порядку из AEON_QUESTIONS
-    current_index = len(session_state.asked_questions)
-    if current_index < len(AEON_QUESTIONS):
-        question = AEON_QUESTIONS[current_index]
-        print(f"DEBUG: Using question {current_index}: {question['id']}")
+    # Используем current_question_index вместо len(asked_questions)
+    if session_state.current_question_index < len(AEON_QUESTIONS):
+        question = AEON_QUESTIONS[session_state.current_question_index]
+        print(f"DEBUG: Using question {session_state.current_question_index}: {question['id']}")
     else:
         # Если почему-то индекс больше количества вопросов (не должно случиться),
         # генерируем AI-вопрос
@@ -810,6 +816,7 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
         if ai_question:
             session_state.asked_questions.add(ai_question["id"])
             session_state.question_order.append(ai_question["id"])
+            session_state.current_question_index += 1
             
             # Сохраняем сессию в PostgreSQL
             save_session_to_db(token, session_state)
@@ -821,18 +828,19 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
                     "type": ai_question["type"]
                 }],
                 "total_questions": 10,
-                "remaining_questions": 10 - len(session_state.asked_questions),
+                "remaining_questions": 10 - session_state.current_question_index,
                 "ai_generated": True
             }
         else:
             return JSONResponse(content={"detail": "Не удалось сгенерировать вопрос"}, status_code=500)
     
-    # Добавляем вопрос в список заданных
+    # Добавляем вопрос в список заданных и увеличиваем индекс
     session_state.asked_questions.add(question["id"])
     session_state.question_order.append(question["id"])
+    session_state.current_question_index += 1
     
     print(f"DEBUG: Added question {question['id']} to asked_questions")
-    print(f"DEBUG: Updated session state: asked_questions={list(session_state.asked_questions)}")
+    print(f"DEBUG: Updated session state: asked_questions={list(session_state.asked_questions)}, current_index={session_state.current_question_index}")
     
     # Сохраняем сессию в PostgreSQL после получения вопроса
     save_session_to_db(token, session_state)
@@ -847,7 +855,7 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
             "type": question["type"]
         }],
         "total_questions": 10,
-        "remaining_questions": 10 - len(session_state.asked_questions)
+        "remaining_questions": 10 - session_state.current_question_index
     }
 
 @router.post("/aeon/glyph/{token}")

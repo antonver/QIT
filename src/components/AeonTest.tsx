@@ -80,18 +80,18 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
       setError('');
       
       // Check if we've reached 10 questions
-      if (questionNumber >= 10) {
+      if (Object.keys(answers).length >= 10) {
         console.log('✅ Reached 10 questions, generating summary...');
         await handleGenerateSummary();
         return;
       }
       
-      console.log(`🔄 Fetching question ${questionNumber + 1}/10...`);
+      console.log(`🔄 Fetching question ${Object.keys(answers).length + 1}/10...`);
       
       // Use improved hrBotAPI instead of the old API
       const questions = await hrBotAPI.getNextQuestion(sessionToken, {
         current_answers: answers,
-        question_number: questionNumber
+        question_number: Object.keys(answers).length
       });
       
       if (questions && questions.length > 0) {
@@ -101,7 +101,7 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
         setTimeLeft(90); // Reset timer
         setIsTimerRunning(true); // Start timer
         
-        console.log(`✅ Question ${questionNumber + 1}/10 loaded:`, nextQuestion.text.substring(0, 50) + '...');
+        console.log(`✅ Question ${Object.keys(answers).length + 1}/10 loaded:`, nextQuestion.text.substring(0, 50) + '...');
         
         // Focus on the text field
         setTimeout(() => {
@@ -111,11 +111,8 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
         }, 100);
       } else {
         // Check if we've completed 10 questions
-        if (questionNumber >= 10) {
+        if (Object.keys(answers).length >= 10) {
           console.log('🎉 Test completed with 10 questions, generating summary...');
-          await handleGenerateSummary();
-        } else if (Object.keys(answers).length >= 5) {
-          console.log('📊 Have enough answers, generating summary...');
           await handleGenerateSummary();
         } else {
           console.log('⚠️ No question received from API, retrying...');
@@ -123,13 +120,13 @@ const AeonTest: React.FC<AeonTestProps> = ({ sessionToken, onComplete }) => {
         }
       }
       
-    } catch (err) {
-      console.error('Failed to fetch question:', err);
-      setError('Не удалось загрузить вопрос. Попробуйте еще раз.');
+    } catch (error) {
+      console.error('❌ Error fetching question:', error);
+      setError('Произошла ошибка при получении вопроса. Попробуйте еще раз.');
     } finally {
       setIsLoadingQuestion(false);
     }
-  }, [sessionToken, answers, questionNumber]);
+  }, [sessionToken, answers, handleGenerateSummary]);
 
   // Save answer using improved API
   const saveCurrentAnswer = useCallback(async (answer: string) => {
