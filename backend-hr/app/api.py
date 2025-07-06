@@ -1,22 +1,22 @@
 from fastapi import APIRouter, HTTPException, status, Body, Request
-from app.models import Test, Question, Answer, SessionLocal, Session, create_tables
+from app.models import Test, Question, Answer  # Pydantic models
+from app.db_models import Session as DBSession, get_db, create_tables  # SQLAlchemy models
 from app.schemas import SubmitAnswersRequest, SubmitAnswersResponse, GetResultResponse
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, List, Any, Union
 import uuid
 import os
-import httpx
 from fastapi.responses import JSONResponse, HTMLResponse, StreamingResponse
 from datetime import datetime, timedelta, timezone
 from fastapi.templating import Jinja2Templates
-import csv
-from io import StringIO
 from dataclasses import dataclass, field
-import random
-from sqlalchemy.orm import sessionmaker, Session
+import json
+from sqlalchemy.orm import Session as SQLAlchemySession
+from starlette.middleware.cors import CORSMiddleware
 
 router = APIRouter()
-admin_router = APIRouter()
-templates = Jinja2Templates(directory=os.path.join(os.path.dirname(__file__), "../templates"))
+admin_router = APIRouter(prefix="/admin")
+
+templates = Jinja2Templates(directory="templates")
 
 # Моковые данные теста на двух языках
 mock_test_ru = Test(
@@ -177,16 +177,6 @@ def check_database_connection():
 def init_database():
     """Инициализирует базу данных"""
     try:
-        from app.models import create_tables
-        
-        print("DEBUG: Starting database initialization...")
-        
-        # Проверяем подключение к БД
-        if not check_database_connection():
-            print("WARNING: Using in-memory storage only")
-            return False
-            
-        # Создаем таблицы
         create_tables()
         print("DEBUG: Database tables created successfully")
         return True
@@ -504,40 +494,24 @@ def create_session():
     try:
         token = str(uuid.uuid4())
         session_state = SessionState()
-        
-        print(f"DEBUG: Creating new session with token: {token}")
-        print(f"DEBUG: Database initialized: {db_initialized}")
-        
-        # Сохраняем сессию в БД (если доступно) и в памяти
         save_session_to_db(token, session_state)
         _save_session_in_memory(token, session_state)
-        
-        # Проверяем, что сессия действительно сохранена
-        saved_session = load_session_from_db(token)
-        if saved_session:
-            print(f"DEBUG: Session {token} successfully saved and loaded")
-            print(f"DEBUG: Total sessions in memory: {len(sessions)}")
-        else:
-            print(f"ERROR: Failed to save/load session {token}")
-            print(f"DEBUG: Available sessions in memory: {list(sessions.keys())}")
-        
-        log_event("create_session", {
-            "token": token,
-            "session_created": True
-        })
-        
-        print(f"DEBUG: Created session {token}, total sessions: {len(sessions)}")
-        
         return {"token": token}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error creating session: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error creating session: {str(e)}"
+        )
 
 @router.post("/session/{token}/answer")
 async def save_answer(token: str, answer: dict = Body(...)):
     try:
         session_state = load_session_from_db(token)
         if not session_state:
-            raise HTTPException(status_code=404, detail="Сессия не найдена")
+            raise HTTPException(
+                status_code=404,
+                detail="Session not found"
+            )
         if is_token_expired(session_state):
             raise HTTPException(status_code=403, detail="Срок действия токена истёк")
         if session_state.completed:
@@ -580,25 +554,26 @@ async def save_answer(token: str, answer: dict = Body(...)):
             "completed": session_state.completed
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error saving answer: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error saving answer: {str(e)}"
+        )
 
 @router.get("/session/{token}")
 def get_session(token: str):
-    """Получение состояния сессии"""
     session_state = load_session_from_db(token)
     if not session_state:
-        raise HTTPException(status_code=404, detail="Сессия не найдена")
+        raise HTTPException(
+            status_code=404,
+            detail="Session not found"
+        )
     if is_token_expired(session_state):
         raise HTTPException(status_code=403, detail="Срок действия токена истёк")
     
     return {
         "token": token,
-        "created_at": session_state.created_at,
-        "completed": session_state.completed,
-        "questions_answered": len(session_state.aeon_answers),
-        "total_questions": len(AEON_QUESTIONS),
-        "asked_questions": len(session_state.asked_questions),
-        "current_performance": calculate_performance_score(session_state)
+        "created_at": session_state.created_at.isoformat(),
+        "last_activity": session_state.last_activity.isoformat()
     }
 
 @router.post("/session/{token}/complete")
@@ -1155,4 +1130,33 @@ def export_log():
             writer.writerow([entry["time"], entry["action"], str(entry["details"])])
         yield output.getvalue()
     return StreamingResponse(generate(), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=log.csv"})
+
+@router.options("/{path:path}")
+async def options_handler(request: Request, path: str):
+    origin = request.headers.get("Origin")
+    if not origin:
+        return JSONResponse(status_code=200)
+
+    # Получаем запрошенный метод из заголовка
+    requested_method = request.headers.get(
+        "Access-Control-Request-Method",
+        "POST"  # По умолчанию разрешаем POST
+    )
+
+    # Получаем запрошенные заголовки
+    requested_headers = request.headers.get(
+        "Access-Control-Request-Headers",
+        "content-type,authorization"  # Стандартные заголовки по умолчанию
+    )
+
+    return JSONResponse(
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Methods": requested_method,
+            "Access-Control-Allow-Headers": requested_headers,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Max-Age": "600",
+        }
+    )
 
