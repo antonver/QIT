@@ -9,7 +9,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Импортируем наши модели
-from app.db_models import Base, Session
+from app.db_models import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

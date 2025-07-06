@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import router, admin_router
-from app.db_models import create_tables
+from app.db_models import create_tables, Base, engine
 from fastapi.responses import JSONResponse
 import logging
 
@@ -14,7 +14,13 @@ app = FastAPI()
 # Инициализируем базу данных при старте
 @app.on_event("startup")
 async def startup_event():
-    create_tables()
+    logger.info("Creating database tables...")
+    try:
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database tables created successfully")
+    except Exception as e:
+        logger.error(f"Error creating database tables: {e}")
+        raise
 
 # Настройка CORS для разрешения запросов с фронтенда
 origins = [
