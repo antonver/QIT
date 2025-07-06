@@ -810,13 +810,13 @@ async def aeon_next_question_with_token(token: str, data: dict = Body(...)):
         })
         return JSONResponse(content={"detail": "Недостаточно вопросов в базе"}, status_code=500)
 
-    # Проверяем, не вышли ли за границы массива (защита от ошибок)
+    # Защита от выхода за границы массива
     if session_state.current_question_index >= len(AEON_QUESTIONS):
         log_event("error_index_out_of_range", {
             "current_index": session_state.current_question_index,
             "total_questions": len(AEON_QUESTIONS)
         })
-        # Сброс индекса до последнего доступного вопроса, если вышли за границы
+        # Сброс индекса до последнего доступного вопроса
         session_state.current_question_index = len(AEON_QUESTIONS) - 1
 
     # Берем следующий вопрос по порядку из AEON_QUESTIONS
