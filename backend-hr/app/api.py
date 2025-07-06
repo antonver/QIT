@@ -1131,32 +1131,3 @@ def export_log():
         yield output.getvalue()
     return StreamingResponse(generate(), media_type="text/csv", headers={"Content-Disposition": "attachment; filename=log.csv"})
 
-@router.options("/{path:path}")
-async def options_handler(request: Request, path: str):
-    origin = request.headers.get("Origin")
-    if not origin:
-        return JSONResponse(status_code=200)
-
-    # Получаем запрошенный метод из заголовка
-    requested_method = request.headers.get(
-        "Access-Control-Request-Method",
-        "POST"  # По умолчанию разрешаем POST
-    )
-
-    # Получаем запрошенные заголовки
-    requested_headers = request.headers.get(
-        "Access-Control-Request-Headers",
-        "content-type,authorization"  # Стандартные заголовки по умолчанию
-    )
-
-    return JSONResponse(
-        status_code=200,
-        headers={
-            "Access-Control-Allow-Origin": origin,
-            "Access-Control-Allow-Methods": requested_method,
-            "Access-Control-Allow-Headers": requested_headers,
-            "Access-Control-Allow-Credentials": "true",
-            "Access-Control-Max-Age": "600",
-        }
-    )
-
