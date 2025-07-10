@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status, Body, Request
 from app.models import Test, Question, Answer  # Pydantic models
-from app.db_models import Session as DBSession, get_db, create_tables  # SQLAlchemy models
+from app.db_models import Session as DBSession, User, get_db, create_tables  # SQLAlchemy models
 from app.schemas import SubmitAnswersRequest, SubmitAnswersResponse, GetResultResponse
 from typing import Optional, Dict, List, Any, Union
 import uuid
@@ -61,17 +61,55 @@ async def get_current_user(request: Request):
             # Парсим JSON данные пользователя
             user_info = json.loads(user_data)
             user_id = user_info.get("id")
+            username = user_info.get("username")
+            first_name = user_info.get("first_name")
+            last_name = user_info.get("last_name")
+            language_code = user_info.get("language_code")
+            is_premium = user_info.get("is_premium", False)
             
-            # Временно делаем всех пользователей админами для тестирования
-            is_admin = True
+            # Проверяем, есть ли уже пользователи в системе
+            db = next(get_db())
+            existing_users = db.query(User).count()
+            
+            # Если это первый пользователь, делаем его админом
+            is_admin = existing_users == 0
+            
+            # Создаем или обновляем пользователя в базе данных
+            user = db.query(User).filter(User.telegram_id == user_id).first()
+            
+            if user:
+                # Обновляем существующего пользователя
+                user.username = username
+                user.first_name = first_name
+                user.last_name = last_name
+                user.language_code = language_code
+                user.is_premium = is_premium
+                # Если это первый пользователь, делаем его админом
+                if existing_users == 0:
+                    user.is_admin = True
+            else:
+                # Создаем нового пользователя
+                user = User(
+                    telegram_id=user_id,
+                    username=username,
+                    first_name=first_name,
+                    last_name=last_name,
+                    language_code=language_code,
+                    is_premium=is_premium,
+                    is_admin=is_admin
+                )
+                db.add(user)
+            
+            db.commit()
+            db.close()
             
             return {
                 "id": user_id,
-                "username": user_info.get("username"),
-                "first_name": user_info.get("first_name"),
-                "last_name": user_info.get("last_name"),
-                "language_code": user_info.get("language_code"),
-                "is_premium": user_info.get("is_premium", False),
+                "username": username,
+                "first_name": first_name,
+                "last_name": last_name,
+                "language_code": language_code,
+                "is_premium": is_premium,
                 "is_admin": is_admin,
                 "is_active": True,
                 "created_at": datetime.now(timezone.utc).isoformat(),
@@ -125,7 +163,7 @@ async def check_invitations(request: Request):
                     "last_name": user_info.get("last_name"),
                     "language_code": user_info.get("language_code"),
                     "is_premium": user_info.get("is_premium", False),
-                    "is_admin": True,  # Временно делаем всех админами для тестирования
+                    "is_admin": False,  # Обычные пользователи не админы
                     "is_active": True,
                     "created_at": datetime.now(timezone.utc).isoformat(),
                     "subordinates": [],

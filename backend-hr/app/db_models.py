@@ -36,6 +36,24 @@ def get_db():
     finally:
         db.close()
 
+# Определяем модель пользователя
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    telegram_id = Column(Integer, unique=True, index=True, nullable=False)
+    username = Column(String, unique=True, index=True, nullable=True)
+    first_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=True)
+    language_code = Column(String, default="en")
+    is_premium = Column(Boolean, default=False)
+    is_admin = Column(Boolean, default=False)
+    profile_photo_url = Column(String, nullable=True)
+    bio = Column(String, nullable=True)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 # Определяем модель сессии
 class Session(Base):
     __tablename__ = "sessions"
