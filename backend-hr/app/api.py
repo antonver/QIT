@@ -75,7 +75,15 @@ async def check_invitations(request: Request):
     if not telegram_data:
         return {
             "invitations": [],
-            "has_invitations": False
+            "has_invitations": False,
+            "subordinates": [],
+            "user": {
+                "id": 1,
+                "username": "test_user",
+                "first_name": "Test",
+                "last_name": "User",
+                "is_authenticated": False
+            }
         }
     
     try:
@@ -93,14 +101,24 @@ async def check_invitations(request: Request):
             return {
                 "invitations": [],
                 "has_invitations": False,
-                "user_id": user_id
+                "subordinates": [],
+                "user_id": user_id,
+                "user": user_info
             }
     except Exception as e:
         print(f"Error checking invitations: {e}")
     
     return {
         "invitations": [],
-        "has_invitations": False
+        "has_invitations": False,
+        "subordinates": [],
+        "user": {
+            "id": 1,
+            "username": "unknown_user",
+            "first_name": "Unknown",
+            "last_name": "User",
+            "is_authenticated": False
+        }
     }
 
 # Моковые данные теста на двух языках
@@ -1202,7 +1220,15 @@ async def check_invitations_legacy(request: Request):
     if not telegram_data:
         return {
             "invitations": [],
-            "has_invitations": False
+            "has_invitations": False,
+            "subordinates": [],
+            "user": {
+                "id": 1,
+                "username": "test_user",
+                "first_name": "Test",
+                "last_name": "User",
+                "is_authenticated": False
+            }
         }
     
     try:
@@ -1220,14 +1246,24 @@ async def check_invitations_legacy(request: Request):
             return {
                 "invitations": [],
                 "has_invitations": False,
-                "user_id": user_id
+                "subordinates": [],
+                "user_id": user_id,
+                "user": user_info
             }
     except Exception as e:
         print(f"Error checking invitations: {e}")
     
     return {
         "invitations": [],
-        "has_invitations": False
+        "has_invitations": False,
+        "subordinates": [],
+        "user": {
+            "id": 1,
+            "username": "unknown_user",
+            "first_name": "Unknown",
+            "last_name": "User",
+            "is_authenticated": False
+        }
     }
 
 # ===== ADMIN ENDPOINTS =====
