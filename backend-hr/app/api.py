@@ -52,6 +52,10 @@ async def get_current_user(request: Request):
         import urllib.parse
         parsed_data = urllib.parse.parse_qs(telegram_data)
         user_data = parsed_data.get("user", [None])[0]
+        hash_value = parsed_data.get("hash", [None])[0]
+        
+        # Проверяем, является ли это fallback данными
+        is_fallback = hash_value == "fallback"
         
         if user_data:
             # Парсим JSON данные пользователя
@@ -61,7 +65,15 @@ async def get_current_user(request: Request):
                 "username": user_info.get("username"),
                 "first_name": user_info.get("first_name"),
                 "last_name": user_info.get("last_name"),
-                "is_authenticated": True
+                "language_code": user_info.get("language_code"),
+                "is_premium": user_info.get("is_premium", False),
+                "is_admin": False,
+                "is_active": True,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "subordinates": [],
+                "managers": [],
+                "is_authenticated": True,
+                "is_fallback": is_fallback
             }
     except Exception as e:
         print(f"Error parsing Telegram data: {e}")
@@ -83,6 +95,10 @@ async def check_invitations(request: Request):
         import urllib.parse
         parsed_data = urllib.parse.parse_qs(telegram_data)
         user_data = parsed_data.get("user", [None])[0]
+        hash_value = parsed_data.get("hash", [None])[0]
+        
+        # Проверяем, является ли это fallback данными
+        is_fallback = hash_value == "fallback"
         
         if user_data:
             user_info = json.loads(user_data)
@@ -108,7 +124,8 @@ async def check_invitations(request: Request):
                     "is_active": True,
                     "created_at": datetime.now(timezone.utc).isoformat(),
                     "subordinates": [],
-                    "managers": []
+                    "managers": [],
+                    "is_fallback": is_fallback
                 }
             }
     except Exception as e:
@@ -1177,6 +1194,10 @@ async def get_current_user_legacy(request: Request):
         import urllib.parse
         parsed_data = urllib.parse.parse_qs(telegram_data)
         user_data = parsed_data.get("user", [None])[0]
+        hash_value = parsed_data.get("hash", [None])[0]
+        
+        # Проверяем, является ли это fallback данными
+        is_fallback = hash_value == "fallback"
         
         if user_data:
             # Парсим JSON данные пользователя
@@ -1186,7 +1207,15 @@ async def get_current_user_legacy(request: Request):
                 "username": user_info.get("username"),
                 "first_name": user_info.get("first_name"),
                 "last_name": user_info.get("last_name"),
-                "is_authenticated": True
+                "language_code": user_info.get("language_code"),
+                "is_premium": user_info.get("is_premium", False),
+                "is_admin": False,
+                "is_active": True,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "subordinates": [],
+                "managers": [],
+                "is_authenticated": True,
+                "is_fallback": is_fallback
             }
     except Exception as e:
         print(f"Error parsing Telegram data: {e}")
@@ -1208,6 +1237,10 @@ async def check_invitations_legacy(request: Request):
         import urllib.parse
         parsed_data = urllib.parse.parse_qs(telegram_data)
         user_data = parsed_data.get("user", [None])[0]
+        hash_value = parsed_data.get("hash", [None])[0]
+        
+        # Проверяем, является ли это fallback данными
+        is_fallback = hash_value == "fallback"
         
         if user_data:
             user_info = json.loads(user_data)
@@ -1233,7 +1266,8 @@ async def check_invitations_legacy(request: Request):
                     "is_active": True,
                     "created_at": datetime.now(timezone.utc).isoformat(),
                     "subordinates": [],
-                    "managers": []
+                    "managers": [],
+                    "is_fallback": is_fallback
                 }
             }
     except Exception as e:

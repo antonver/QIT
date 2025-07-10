@@ -114,11 +114,15 @@ export const getTelegramInitData = (): string => {
       console.log('✅ Найдены данные пользователя в initDataUnsafe');
       console.log('👤 Пользователь:', initDataUnsafe.user);
       
-      // Возвращаем пустую строку, так как initData отсутствует
-      // Это означает, что приложение запущено в режиме разработки
+      // Создаем fallback данные для авторизации
+      const user = initDataUnsafe.user;
+      const fallbackData = `user=${encodeURIComponent(JSON.stringify(user))}&auth_date=${Date.now()}&hash=fallback`;
+      
       console.warn('⚠️ initData отсутствует, но пользователь найден');
-      console.warn('⚠️ Приложение должно быть запущено из Telegram для полной функциональности');
-      return '';
+      console.warn('⚠️ Используем fallback данные для разработки');
+      console.log('📤 Fallback данные:', fallbackData);
+      
+      return fallbackData;
     }
   }
   
