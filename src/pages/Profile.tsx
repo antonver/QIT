@@ -12,7 +12,6 @@ import {
   ListItemText,
   ListItemIcon,
   Paper,
-  Grid,
   useTheme,
 } from '@mui/material';
 import {
@@ -62,9 +61,9 @@ const Profile: React.FC = () => {
         Профиль пользователя
       </Typography>
 
-      <Grid container spacing={3}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
         {/* Основная информация */}
-        <Grid item xs={12} md={6}>
+        <Box sx={{ flex: 1 }}>
           <Card elevation={3} sx={{ height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
@@ -142,10 +141,10 @@ const Profile: React.FC = () => {
               </List>
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
 
         {/* Статус и роли */}
-        <Grid item xs={12} md={6}>
+        <Box sx={{ flex: 1 }}>
           <Card elevation={3} sx={{ height: '100%' }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
@@ -206,22 +205,22 @@ const Profile: React.FC = () => {
               )}
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
+      </Box>
 
-        {/* Информация о Telegram WebApp */}
-        {isTelegramWebApp() && (
-          <Grid item xs={12}>
-            <Paper elevation={2} sx={{ p: 2, bgcolor: 'primary.light', color: 'white' }}>
-              <Typography variant="h6" gutterBottom>
-                Telegram WebApp
-              </Typography>
-              <Typography variant="body2">
-                Приложение запущено в Telegram WebApp
-              </Typography>
-            </Paper>
-          </Grid>
-        )}
-      </Grid>
+      {/* Информация о Telegram WebApp */}
+      {isTelegramWebApp() && (
+        <Box sx={{ mt: 3 }}>
+          <Paper elevation={2} sx={{ p: 2, bgcolor: 'primary.light', color: 'white' }}>
+            <Typography variant="h6" gutterBottom>
+              Telegram WebApp
+            </Typography>
+            <Typography variant="body2">
+              Приложение запущено в Telegram WebApp
+            </Typography>
+          </Paper>
+        </Box>
+      )}
     </Box>
   );
 };
