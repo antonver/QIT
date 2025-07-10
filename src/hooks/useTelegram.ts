@@ -54,9 +54,12 @@ export const useTelegram = () => {
           return;
         }
 
+        console.log('🚀 === TELEGRAM USER DATA DEBUG ===');
         console.log('✅ Получены данные пользователя из Telegram:', telegramUserData);
         console.log('🔍 Photo URL из Telegram:', telegramUserData?.photo_url);
         console.log('🔍 Все поля пользователя:', Object.keys(telegramUserData || {}));
+        console.log('🔍 Полные данные пользователя:', JSON.stringify(telegramUserData, null, 2));
+        console.log('🚀 === END TELEGRAM DEBUG ===');
         setTelegramUser(telegramUserData);
 
         // Загружаем или создаем пользователя на бэкенде

@@ -27,16 +27,21 @@ import type { RootState } from '../store';
 import { useTelegram } from '../hooks/useTelegram';
 
 const Profile: React.FC = () => {
+  console.log('🚀 === PROFILE COMPONENT MOUNTED ===');
   const theme = useTheme();
   const { currentUser, isUserLoading, userError } = useSelector((state: RootState) => state.aeonChat);
   const { telegramUser } = useTelegram();
 
   // Логирование для отладки
+  console.log('🚀 === PROFILE COMPONENT DEBUG ===');
   console.log('🔍 Profile component - currentUser:', currentUser);
   console.log('🔍 Profile component - currentUser.subordinates:', currentUser?.subordinates);
   console.log('🔍 Profile component - currentUser.managers:', currentUser?.managers);
   console.log('🔍 Profile component - telegramUser:', telegramUser);
   console.log('🔍 Profile component - telegramUser?.photo_url:', telegramUser?.photo_url);
+  console.log('🔍 Profile component - isUserLoading:', isUserLoading);
+  console.log('🔍 Profile component - userError:', userError);
+  console.log('🚀 === END PROFILE DEBUG ===');
 
   // Дополнительная проверка и нормализация данных
   const safeCurrentUser = currentUser ? {
