@@ -50,7 +50,7 @@ const NAVIGATION = [
         segment: 'admin',
         title: 'Admin',
         icon: <PsychologyIcon sx={{ color: '#FF6B6B' }} />,
-        adminOnly: true,
+        adminOnly: false,
     },
     {
         segment: 'aeon',
