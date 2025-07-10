@@ -39,6 +39,7 @@ import {
   People as PeopleIcon,
   AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
+import { Checkbox, FormControlLabel } from '@mui/material';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../store';
 import { makeUserAdminByUsername } from '../services/api';
@@ -46,7 +47,7 @@ import { makeUserAdminByUsername } from '../services/api';
 interface Position {
   id: number;
   title: string;
-  description?: string;
+  qualities?: Quality[];
   is_active: boolean;
   created_at: string;
 }
@@ -111,7 +112,7 @@ const AdminPanel: React.FC = () => {
   const [positionDialog, setPositionDialog] = useState(false);
   const [qualityDialog, setQualityDialog] = useState(false);
   const [adminDialog, setAdminDialog] = useState(false);
-  const [newPosition, setNewPosition] = useState({ title: '', description: '' });
+  const [newPosition, setNewPosition] = useState({ title: '', selectedQualities: [] as number[] });
   const [newQuality, setNewQuality] = useState({ name: '', description: '' });
   const [newAdminUsername, setNewAdminUsername] = useState('');
   const [adminMessage, setAdminMessage] = useState<{type: 'success' | 'error', message: string} | null>(null);
@@ -136,7 +137,7 @@ const AdminPanel: React.FC = () => {
       // Здесь будет API вызов для создания позиции
       console.log('Creating position:', newPosition);
       setPositionDialog(false);
-      setNewPosition({ title: '', description: '' });
+      setNewPosition({ title: '', selectedQualities: [] });
     } catch (error) {
       console.error('Error creating position:', error);
     }
@@ -214,17 +215,32 @@ const AdminPanel: React.FC = () => {
               <Card>
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <Box>
-                      <Typography variant="h6">{position.title}</Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                        {position.description}
-                      </Typography>
-                      <Chip
-                        label={position.is_active ? 'Активна' : 'Неактивна'}
-                        color={position.is_active ? 'success' : 'default'}
-                        size="small"
-                      />
-                    </Box>
+                                      <Box>
+                    <Typography variant="h6">{position.title}</Typography>
+                    {position.qualities && position.qualities.length > 0 && (
+                      <Box sx={{ mb: 1 }}>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                          Качества:
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {position.qualities.map((quality) => (
+                            <Chip
+                              key={quality.id}
+                              label={quality.name}
+                              size="small"
+                              variant="outlined"
+                              sx={{ fontSize: '0.7rem' }}
+                            />
+                          ))}
+                        </Box>
+                      </Box>
+                    )}
+                    <Chip
+                      label={position.is_active ? 'Активна' : 'Неактивна'}
+                      color={position.is_active ? 'success' : 'default'}
+                      size="small"
+                    />
+                  </Box>
                     <Box>
                       <IconButton size="small">
                         <EditIcon />
@@ -389,16 +405,54 @@ const AdminPanel: React.FC = () => {
             onChange={(e) => setNewPosition({ ...newPosition, title: e.target.value })}
             sx={{ mb: 2 }}
           />
-          <TextField
-            margin="dense"
-            label="Описание"
-            fullWidth
-            variant="outlined"
-            multiline
-            rows={4}
-            value={newPosition.description}
-            onChange={(e) => setNewPosition({ ...newPosition, description: e.target.value })}
-          />
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            Выберите качества для оценки:
+          </Typography>
+          <Box sx={{ maxHeight: 200, overflow: 'auto', border: '1px solid #ddd', borderRadius: 1, p: 1 }}>
+            {qualities.length === 0 ? (
+              <Typography variant="body2" color="text.secondary" sx={{ p: 2, textAlign: 'center' }}>
+                Сначала создайте качества в разделе "Качества"
+              </Typography>
+            ) : (
+              qualities.map((quality) => (
+              <FormControlLabel
+                key={quality.id}
+                control={
+                  <Checkbox
+                    checked={newPosition.selectedQualities.includes(quality.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setNewPosition({
+                          ...newPosition,
+                          selectedQualities: [...newPosition.selectedQualities, quality.id]
+                        });
+                      } else {
+                        setNewPosition({
+                          ...newPosition,
+                          selectedQualities: newPosition.selectedQualities.filter(id => id !== quality.id)
+                        });
+                      }
+                    }}
+                    size="small"
+                  />
+                }
+                label={
+                  <Box>
+                    <Typography variant="body2">
+                      {quality.name}
+                    </Typography>
+                    {quality.description && (
+                      <Typography variant="caption" color="text.secondary">
+                        {quality.description}
+                      </Typography>
+                    )}
+                  </Box>
+                }
+                sx={{ width: '100%', margin: 0, mb: 1 }}
+              />
+            ))
+            )}
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setPositionDialog(false)}>Отмена</Button>
