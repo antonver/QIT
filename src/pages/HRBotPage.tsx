@@ -375,7 +375,7 @@ ${sessionResults.answerTimes.map((time, index) =>
       clearTimer();
       // Очищаем сессию при размонтировании компонента
       if (sessionToken) {
-        hrBotAPI.cleanupSession(sessionToken).catch(err => 
+        hrBotAPI.cleanupSession(sessionToken).catch((err: any) => 
           console.warn('Failed to cleanup session on unmount:', err)
         );
       }

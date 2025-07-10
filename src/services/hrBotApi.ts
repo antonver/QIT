@@ -242,10 +242,21 @@ class HRBotAPI {
     
     return response;
   }
-}
 
-// Настройки API
-const USE_MOCK = false; // Используем только реальный API
+  // Очистить сессию - DELETE /session/{token}
+  async cleanupSession(token: string): Promise<void> {
+    try {
+      await this.request(`/session/${token}`, {
+        method: 'DELETE',
+      });
+    } catch (error) {
+      console.warn('Failed to cleanup session on server:', error);
+    } finally {
+      // Очищаем локальное состояние сессии
+      sessionStates.delete(token);
+    }
+  }
+}
 
 // Используем только реальный API
 export const hrBotAPI = new HRBotAPI();
