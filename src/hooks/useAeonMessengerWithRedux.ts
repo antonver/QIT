@@ -125,27 +125,39 @@ export const useAeonMessengerWithRedux = () => {
   // Загружаем информацию о пользователе
   const loadCurrentUser = useCallback(async () => {
     try {
-      const userData = await getCurrentUser();
-      const normalizedUser = normalizeUser(userData);
+      console.log('🔍 Загружаем данные пользователя...');
+      
+      // Проверяем, что мы в Telegram WebApp
+      if (!isTelegramWebApp()) {
+        console.warn('❌ Приложение должно быть открыто из Telegram WebApp');
+        setError('Приложение должно быть открыто из Telegram для корректной работы');
+        setIsAuthError(true);
+        return;
+      }
+
+      // Получаем данные пользователя из Telegram WebApp
+      const telegramUser = getTelegramUser();
+      if (!telegramUser) {
+        console.error('❌ Не удалось получить данные пользователя из Telegram WebApp');
+        setError('Не удалось получить данные пользователя из Telegram');
+        setIsAuthError(true);
+        return;
+      }
+
+      console.log('✅ Получены данные пользователя из Telegram:', telegramUser);
+
+      // Загружаем или создаем пользователя на бэкенде
+      const currentUser = await getCurrentUser();
+      
+      // Нормализуем данные пользователя
+      const normalizedUser = normalizeUser(currentUser);
       setCurrentUser(normalizedUser);
+      
+      console.log('✅ Пользователь успешно загружен:', normalizedUser);
       setError(null);
       setIsAuthError(false);
-      
-      // Проверяем и активируем приглашения при входе
-      try {
-        const updatedUser = await checkAndAcceptInvitations();
-        const normalizedUpdatedUser = normalizeUser(updatedUser);
-        setCurrentUser(normalizedUpdatedUser);
-      } catch (err: any) {
-        // 404 ошибка означает что endpoint не существует - это нормально
-        if (err.response?.status === 404) {
-          console.log('Check invitations endpoint not available (404) - skipping');
-        } else {
-          console.log('No pending invitations or error checking invitations:', err);
-        }
-      }
     } catch (err: any) {
-      console.error('Error loading current user:', err);
+      console.error('❌ Ошибка загрузки пользователя:', err);
       
       // Проверяем, является ли это ошибкой авторизации
       if (err.response?.status === 401 || err.isAuthError) {
@@ -153,43 +165,6 @@ export const useAeonMessengerWithRedux = () => {
         setError('Приложение должно быть открыто из Telegram для корректной работы');
       } else {
         setError('Ошибка загрузки данных пользователя');
-      }
-      
-      // Используем мок данные для разработки
-      if (!isTelegramWebApp()) {
-        const telegramUser = getTelegramUser();
-        if (telegramUser) {
-          setCurrentUser({
-            id: telegramUser.id,
-            telegram_id: telegramUser.id,
-            username: telegramUser.username,
-            first_name: telegramUser.first_name,
-            last_name: telegramUser.last_name,
-            profile_photo_url: telegramUser.photo_url,
-            is_premium: false,
-            is_admin: false,
-            is_active: true,
-            created_at: new Date().toISOString(),
-            subordinates: [],
-            managers: [],
-          });
-        } else {
-          setCurrentUser({
-            id: 123456789,
-            telegram_id: 123456789,
-            username: 'testuser',
-            first_name: 'Test',
-            last_name: 'User',
-            profile_photo_url: undefined,
-            is_premium: false,
-            is_admin: false,
-            is_active: true,
-            created_at: new Date().toISOString(),
-            subordinates: [],
-            managers: [],
-          });
-        }
-        setIsAuthError(false);
       }
     }
   }, [checkTelegramWebApp]);
@@ -357,49 +332,6 @@ export const useAeonMessengerWithRedux = () => {
     } catch (err) {
       console.error('Error sending message:', err);
       setError('Ошибка отправки сообщения');
-      
-      // Добавляем сообщение локально для разработки
-      if (currentUser) {
-        const mockMessage: AeonMessage = {
-          id: Date.now(),
-          text: text.trim(),
-          message_type: 'text',
-          chat_id: chatId,
-          sender_id: currentUser.id,
-          sender: {
-            id: currentUser.id,
-            telegram_id: currentUser.telegram_id,
-            username: currentUser.username,
-            first_name: currentUser.first_name,
-            last_name: currentUser.last_name,
-            profile_photo_url: currentUser.profile_photo_url,
-          },
-          is_edited: false,
-          is_deleted: false,
-          read_by: [],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        };
-        
-        dispatch(addMessage({ chatId, message: mockMessage }));
-        
-        // Обновляем список чатов
-        setChats(prev => {
-          const updatedChats = prev.map(chat => 
-            chat.id === chatId 
-              ? { ...chat, last_message: text.trim(), last_message_time: new Date().toISOString() }
-              : chat
-          );
-          
-          return updatedChats.sort((a, b) => {
-            if (!a.last_message_time && !b.last_message_time) return 0;
-            if (!a.last_message_time) return 1;
-            if (!b.last_message_time) return -1;
-            
-            return new Date(b.last_message_time).getTime() - new Date(a.last_message_time).getTime();
-          });
-        });
-      }
     }
   }, [currentUser, dispatch]);
 

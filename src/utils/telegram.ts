@@ -39,8 +39,11 @@ export const initTelegramWebApp = (): boolean => {
 
 export const getTelegramUser = () => {
   if (typeof window !== 'undefined' && window.Telegram?.WebApp?.initDataUnsafe?.user) {
-    return window.Telegram.WebApp.initDataUnsafe.user;
+    const user = window.Telegram.WebApp.initDataUnsafe.user;
+    console.log('✅ Получены данные пользователя из Telegram WebApp:', user);
+    return user;
   }
+  console.warn('❌ Данные пользователя недоступны - приложение не запущено из Telegram');
   return null;
 };
 
@@ -108,32 +111,31 @@ export const getTelegramInitData = (): string => {
     console.log('Telegram initDataUnsafe:', initDataUnsafe);
     
     if (initDataUnsafe?.user) {
-      // Создаем базовые данные авторизации
-      const authDate = Math.floor(Date.now() / 1000);
-      const userData = JSON.stringify(initDataUnsafe.user);
-      const userParam = `user=${encodeURIComponent(userData)}`;
-      const authParam = `auth_date=${authDate}`;
+      console.log('✅ Найдены данные пользователя в initDataUnsafe');
+      console.log('👤 Пользователь:', initDataUnsafe.user);
       
-      // Генерируем простой hash на основе данных
-      const dataToHash = `${userParam}&${authParam}`;
-      const hash = btoa(dataToHash).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
-      
-      const mockInitData = `${userParam}&${authParam}&hash=${hash}`;
-      console.log('✅ Создаем данные авторизации из initDataUnsafe');
-      console.log('Generated auth data length:', mockInitData.length);
-      return mockInitData;
+      // Возвращаем пустую строку, так как initData отсутствует
+      // Это означает, что приложение запущено в режиме разработки
+      console.warn('⚠️ initData отсутствует, но пользователь найден');
+      console.warn('⚠️ Приложение должно быть запущено из Telegram для полной функциональности');
+      return '';
     }
   }
   
-  // В режиме разработки возвращаем пустую строку
-  // чтобы API знал, что это тестовый режим
+  // Приложение не запущено из Telegram WebApp
   console.warn('❌ Приложение запущено не из Telegram WebApp');
   console.warn('❌ Данные авторизации недоступны');
   return '';
 };
 
 export const isTelegramWebApp = (): boolean => {
-  return typeof window !== 'undefined' && Boolean(window.Telegram?.WebApp);
+  const isTelegram = typeof window !== 'undefined' && Boolean(window.Telegram?.WebApp);
+  if (isTelegram) {
+    console.log('✅ Приложение запущено в Telegram WebApp');
+  } else {
+    console.warn('❌ Приложение не запущено в Telegram WebApp');
+  }
+  return isTelegram;
 };
 
 export const showTelegramAlert = (message: string, callback?: () => void) => {

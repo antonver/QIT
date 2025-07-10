@@ -13,6 +13,8 @@ export const useTelegram = () => {
   useEffect(() => {
     const initTelegram = async () => {
       try {
+        console.log('🔍 Инициализация Telegram WebApp...');
+        
         // Проверяем, что мы в Telegram WebApp
         if (window.Telegram?.WebApp) {
           const webApp = window.Telegram.WebApp;
@@ -21,9 +23,12 @@ export const useTelegram = () => {
           webApp.ready();
           webApp.expand();
           
+          console.log('✅ Telegram WebApp инициализирован');
+          
           // Получаем данные пользователя
           const user = webApp.initDataUnsafe.user;
           if (user) {
+            console.log('✅ Получены данные пользователя из Telegram:', user);
             setTelegramUser(user);
             
             // Загружаем или создаем пользователя на бэкенде
@@ -37,18 +42,25 @@ export const useTelegram = () => {
                 managers: Array.isArray(currentUser.managers) ? currentUser.managers : [],
               };
               dispatch(setCurrentUser(normalizedUser));
+              console.log('✅ Пользователь успешно загружен:', normalizedUser);
             } catch (error) {
-              console.error('Ошибка при загрузке пользователя:', error);
+              console.error('❌ Ошибка при загрузке пользователя:', error);
               dispatch(setUserError('Ошибка при загрузке данных пользователя'));
             } finally {
               dispatch(setUserLoading(false));
             }
+          } else {
+            console.warn('❌ Данные пользователя не найдены в Telegram WebApp');
+            dispatch(setUserError('Не удалось получить данные пользователя из Telegram'));
           }
+        } else {
+          console.warn('❌ Приложение не запущено в Telegram WebApp');
+          dispatch(setUserError('Приложение должно быть открыто из Telegram для корректной работы'));
         }
         
         setIsInitialized(true);
       } catch (error) {
-        console.error('Ошибка при инициализации Telegram:', error);
+        console.error('❌ Ошибка при инициализации Telegram:', error);
         dispatch(setUserError('Ошибка при инициализации Telegram'));
         setIsInitialized(true);
       }
@@ -62,7 +74,13 @@ export const useTelegram = () => {
   };
 
   const isTelegramWebApp = (): boolean => {
-    return !!window.Telegram?.WebApp;
+    const isTelegram = !!window.Telegram?.WebApp;
+    if (isTelegram) {
+      console.log('✅ Приложение запущено в Telegram WebApp');
+    } else {
+      console.warn('❌ Приложение не запущено в Telegram WebApp');
+    }
+    return isTelegram;
   };
 
   const getInitData = (): string => {
