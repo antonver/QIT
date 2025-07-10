@@ -93,12 +93,20 @@ async def check_invitations(request: Request):
             "invitations": [],
             "has_invitations": False,
             "subordinates": [],
+            "managers": [],
             "user": {
                 "id": 1,
+                "telegram_id": 123456789,
                 "username": "test_user",
                 "first_name": "Test",
                 "last_name": "User",
-                "is_authenticated": False
+                "is_authenticated": False,
+                "is_admin": False,
+                "is_premium": False,
+                "is_active": True,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "subordinates": [],
+                "managers": []
             }
         }
     
@@ -118,8 +126,22 @@ async def check_invitations(request: Request):
                 "invitations": [],
                 "has_invitations": False,
                 "subordinates": [],
+                "managers": [],
                 "user_id": user_id,
-                "user": user_info
+                "user": {
+                    "id": user_id,
+                    "telegram_id": user_id,
+                    "username": user_info.get("username"),
+                    "first_name": user_info.get("first_name"),
+                    "last_name": user_info.get("last_name"),
+                    "language_code": user_info.get("language_code"),
+                    "is_premium": user_info.get("is_premium", False),
+                    "is_admin": False,  # Можно добавить логику проверки админа
+                    "is_active": True,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "subordinates": [],
+                    "managers": []
+                }
             }
     except Exception as e:
         print(f"Error checking invitations: {e}")
@@ -128,12 +150,20 @@ async def check_invitations(request: Request):
         "invitations": [],
         "has_invitations": False,
         "subordinates": [],
+        "managers": [],
         "user": {
             "id": 1,
+            "telegram_id": 123456789,
             "username": "unknown_user",
             "first_name": "Unknown",
             "last_name": "User",
-            "is_authenticated": False
+            "is_authenticated": False,
+            "is_admin": False,
+            "is_premium": False,
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "subordinates": [],
+            "managers": []
         }
     }
 
@@ -1238,12 +1268,20 @@ async def check_invitations_legacy(request: Request):
             "invitations": [],
             "has_invitations": False,
             "subordinates": [],
+            "managers": [],
             "user": {
                 "id": 1,
+                "telegram_id": 123456789,
                 "username": "test_user",
                 "first_name": "Test",
                 "last_name": "User",
-                "is_authenticated": False
+                "is_authenticated": False,
+                "is_admin": False,
+                "is_premium": False,
+                "is_active": True,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "subordinates": [],
+                "managers": []
             }
         }
     
@@ -1263,8 +1301,22 @@ async def check_invitations_legacy(request: Request):
                 "invitations": [],
                 "has_invitations": False,
                 "subordinates": [],
+                "managers": [],
                 "user_id": user_id,
-                "user": user_info
+                "user": {
+                    "id": user_id,
+                    "telegram_id": user_id,
+                    "username": user_info.get("username"),
+                    "first_name": user_info.get("first_name"),
+                    "last_name": user_info.get("last_name"),
+                    "language_code": user_info.get("language_code"),
+                    "is_premium": user_info.get("is_premium", False),
+                    "is_admin": False,  # Можно добавить логику проверки админа
+                    "is_active": True,
+                    "created_at": datetime.now(timezone.utc).isoformat(),
+                    "subordinates": [],
+                    "managers": []
+                }
             }
     except Exception as e:
         print(f"Error checking invitations: {e}")
@@ -1273,12 +1325,20 @@ async def check_invitations_legacy(request: Request):
         "invitations": [],
         "has_invitations": False,
         "subordinates": [],
+        "managers": [],
         "user": {
             "id": 1,
+            "telegram_id": 123456789,
             "username": "unknown_user",
             "first_name": "Unknown",
             "last_name": "User",
-            "is_authenticated": False
+            "is_authenticated": False,
+            "is_admin": False,
+            "is_premium": False,
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "subordinates": [],
+            "managers": []
         }
     }
 
