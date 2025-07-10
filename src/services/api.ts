@@ -199,37 +199,37 @@ export const getStats = async (): Promise<Stats> => {
 
 // Admin API
 export const getAdminStats = async (): Promise<AdminStats> => {
-  const response = await api.get<AdminStats>('/admin/stats');
+  const response = await api.get<AdminStats>('/api/v1/admin/stats');
   return response.data;
 };
 
 export const getAdminSessions = async (): Promise<Candidate[]> => {
-  const response = await api.get<Candidate[]>('/admin');
+  const response = await api.get<Candidate[]>('/api/v1/admin/sessions');
   return response.data;
 };
 
 export const getAdminSessionDetail = async (token: string): Promise<any> => {
-  const response = await api.get(`/admin/session/${token}`);
+  const response = await api.get(`/api/v1/admin/session/${token}`);
   return response.data;
 };
 
 export const deleteAdminSession = async (token: string): Promise<any> => {
-  const response = await api.post(`/admin/session/${token}/delete`);
+  const response = await api.post(`/api/v1/admin/session/${token}/delete`);
   return response.data;
 };
 
 export const getAdminLog = async (): Promise<any> => {
-  const response = await api.get('/admin/log');
+  const response = await api.get('/api/v1/admin/log');
   return response.data;
 };
 
 export const exportSessions = async (): Promise<any> => {
-  const response = await api.get('/admin/export/sessions');
+  const response = await api.get('/api/v1/admin/export/sessions');
   return response.data;
 };
 
 export const exportLog = async (): Promise<any> => {
-  const response = await api.get('/admin/export/log');
+  const response = await api.get('/api/v1/admin/export/log');
   return response.data;
 };
 
@@ -340,67 +340,67 @@ export const exportDesignTokens = () => {
 };
 
 export const getCurrentUser = async (): Promise<AeonCurrentUser> => {
-    const response = await api.get<AeonCurrentUser>('/users/me');
+    const response = await api.get<AeonCurrentUser>('/api/v1/users/me');
     return response.data;
 };
 
 export const updateCurrentUser = async (userData: UserUpdate): Promise<User> => {
-    const response = await api.put('/users/me', userData);
+    const response = await api.put('/api/v1/users/me', userData);
     return response.data;
 };
 
 export const getUsers = async (page: number = 1, perPage: number = 50): Promise<UserList> => {
-    const response = await api.get('/users', {
+    const response = await api.get('/api/v1/users', {
         params: { page, per_page: perPage }
     });
     return response.data;
 };
 
 export const getSubordinates = async (): Promise<User[]> => {
-    const response = await api.get('/users/subordinates');
+    const response = await api.get('/api/v1/users/subordinates');
     return response.data;
 };
 
 export const addSubordinate = async (subordinateId: number): Promise<User> => {
     const data: SubordinateBase = { subordinate_id: subordinateId };
-    const response = await api.post('/users/subordinates', data);
+    const response = await api.post('/api/v1/users/subordinates', data);
     return response.data;
 };
 
 export const removeSubordinate = async (subordinateId: number): Promise<User> => {
-    const response = await api.delete(`/users/subordinates/${subordinateId}`);
+    const response = await api.delete(`/api/v1/users/subordinates/${subordinateId}`);
     return response.data;
 };
 
 // Admin management API
 export const makeUserAdminByUsername = async (username: string): Promise<{message: string}> => {
-    const response = await api.post('/admin/users/make-admin-by-username', { username });
+    const response = await api.post('/api/v1/admin/users/make-admin-by-username', { username });
     return response.data;
 };
 
 // HR System API
 export const createQuality = async (quality: { name: string }): Promise<{ id: number; name: string }> => {
-    const response = await api.post('/admin/qualities', quality);
+    const response = await api.post('/api/v1/admin/qualities', quality);
     return response.data;
 };
 
 export const createPosition = async (position: { title: string; quality_ids: number[] }): Promise<{ id: number; title: string; qualities: any[]; is_active: boolean; created_at: string }> => {
-    const response = await api.post('/admin/positions', position);
+    const response = await api.post('/api/v1/admin/positions', position);
     return response.data;
 };
 
 export const getQualities = async (): Promise<{ id: number; name: string }[]> => {
-    const response = await api.get('/admin/qualities');
+    const response = await api.get('/api/v1/admin/qualities');
     return response.data;
 };
 
 export const getPositions = async (): Promise<{ id: number; title: string; qualities: any[]; is_active: boolean; created_at: string }[]> => {
-    const response = await api.get('/admin/positions');
+    const response = await api.get('/api/v1/admin/positions');
     return response.data;
 };
 
 export const removeUserAdminByUsername = async (username: string): Promise<{message: string}> => {
-    const response = await api.post('/admin/users/remove-admin-by-username', { username });
+    const response = await api.post('/api/v1/admin/users/remove-admin-by-username', { username });
     return response.data;
 };
 
