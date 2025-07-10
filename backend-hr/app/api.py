@@ -60,14 +60,19 @@ async def get_current_user(request: Request):
         if user_data:
             # Парсим JSON данные пользователя
             user_info = json.loads(user_data)
+            user_id = user_info.get("id")
+            
+            # Временно делаем всех пользователей админами для тестирования
+            is_admin = True
+            
             return {
-                "id": user_info.get("id"),
+                "id": user_id,
                 "username": user_info.get("username"),
                 "first_name": user_info.get("first_name"),
                 "last_name": user_info.get("last_name"),
                 "language_code": user_info.get("language_code"),
                 "is_premium": user_info.get("is_premium", False),
-                "is_admin": False,
+                "is_admin": is_admin,
                 "is_active": True,
                 "created_at": datetime.now(timezone.utc).isoformat(),
                 "subordinates": [],
@@ -120,7 +125,7 @@ async def check_invitations(request: Request):
                     "last_name": user_info.get("last_name"),
                     "language_code": user_info.get("language_code"),
                     "is_premium": user_info.get("is_premium", False),
-                    "is_admin": False,  # Можно добавить логику проверки админа
+                    "is_admin": True,  # Временно делаем всех админами для тестирования
                     "is_active": True,
                     "created_at": datetime.now(timezone.utc).isoformat(),
                     "subordinates": [],
@@ -1262,7 +1267,7 @@ async def check_invitations_legacy(request: Request):
                     "last_name": user_info.get("last_name"),
                     "language_code": user_info.get("language_code"),
                     "is_premium": user_info.get("is_premium", False),
-                    "is_admin": False,  # Можно добавить логику проверки админа
+                    "is_admin": True,  # Можно добавить логику проверки админа
                     "is_active": True,
                     "created_at": datetime.now(timezone.utc).isoformat(),
                     "subordinates": [],
