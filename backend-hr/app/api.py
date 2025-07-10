@@ -19,6 +19,22 @@ users_router = APIRouter(prefix="/api/v1/users")
 
 templates = Jinja2Templates(directory="templates")
 
+# ===== DEBUG ENDPOINTS =====
+
+@router.get("/debug/endpoints")
+async def debug_endpoints():
+    """Отладочный эндпоинт для проверки доступности API"""
+    return {
+        "status": "ok",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "endpoints": {
+            "users_me": "/api/v1/users/me",
+            "users_check_invitations": "/api/v1/users/check-invitations",
+            "users_me_legacy": "/users/me",
+            "users_check_invitations_legacy": "/users/check-invitations"
+        }
+    }
+
 # ===== USER ENDPOINTS =====
 
 @users_router.get("/me")

@@ -62,6 +62,11 @@ async def cors_middleware(request: Request, call_next):
         response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Max-Age"] = "600"
         
+        # Добавляем заголовки для предотвращения кэширования
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        
         logger.info(f"Response headers: {response.headers}")
         return response
     
@@ -72,6 +77,11 @@ async def cors_middleware(request: Request, call_next):
     if origin:
         response.headers["Access-Control-Allow-Origin"] = origin
         response.headers["Access-Control-Allow-Credentials"] = "true"
+    
+    # Добавляем заголовки для предотвращения кэширования
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
     
     logger.info(f"Response status code: {response.status_code}")
     logger.info(f"Response headers: {response.headers}")
