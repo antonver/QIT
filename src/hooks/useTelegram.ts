@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { setCurrentUser, setUserLoading, setUserError } from '../store/aeonChatSlice';
 import { getCurrentUser } from '../services/aeonMessengerApi';
-import { initTelegramWebApp, isTelegramWebApp, getTelegramUser as getTelegramUserUtil } from '../utils/telegram';
+import { initTelegramWebApp, getTelegramUser as getTelegramUserUtil } from '../utils/telegram';
 import type { TelegramWebAppUser } from '../types/telegram';
 import type { AeonCurrentUser } from '../types/api';
 
@@ -38,7 +38,7 @@ export const useTelegram = () => {
         }
 
         // Проверяем, что мы в Telegram WebApp
-        if (!isTelegramWebApp()) {
+        if (!window.Telegram?.WebApp) {
           console.warn('❌ Приложение должно быть открыто из Telegram WebApp');
           dispatch(setUserError('Приложение должно быть открыто из Telegram для корректной работы'));
           setIsInitialized(true);

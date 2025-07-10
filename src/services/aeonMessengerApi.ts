@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getTelegramInitData, getTelegramUser } from '../utils/telegram';
+import { getTelegramInitData } from '../utils/telegram';
 import type {
   AeonChat,
   AeonChatList,
