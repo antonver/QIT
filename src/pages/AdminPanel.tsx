@@ -42,7 +42,7 @@ import {
 import { Checkbox, FormControlLabel } from '@mui/material';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../store';
-import { makeUserAdminByUsername, createQuality, createPosition, getQualities, getPositions } from '../services/api';
+import { makeUserAdminByUsername, createQuality, createPosition, getQualities, getPositions } from '../services/aeonMessengerApi';
 
 interface Position {
   id: number;

@@ -80,8 +80,9 @@ aeonApi.interceptors.request.use(
       console.log('✅ Auth header attached');
     } else {
       console.warn('❌ No auth data available - running in development mode');
-      console.warn('❌ This request will likely fail with 401 error');
-      // Не добавляем заголовок авторизации если данных нет
+      console.warn('❌ Adding fallback auth header for development');
+      // Добавляем fallback заголовок для режима разработки
+      config.headers['x-telegram-init-data'] = 'test_data';
     }
     console.log('===============================');
     return config;
@@ -355,6 +356,32 @@ export const checkAndAcceptInvitations = async (): Promise<User> => {
     // для правильной обработки в компонентах
     throw error;
   }
+};
+
+// Admin API functions
+export const createQuality = async (quality: { name: string }): Promise<{ id: number; name: string }> => {
+  const response = await aeonApi.post('/api/v1/admin/qualities', quality);
+  return response.data;
+};
+
+export const getQualities = async (): Promise<{ id: number; name: string }[]> => {
+  const response = await aeonApi.get('/api/v1/admin/qualities');
+  return response.data;
+};
+
+export const createPosition = async (position: { title: string; quality_ids: number[] }): Promise<{ id: number; title: string; qualities: any[]; is_active: boolean; created_at: string }> => {
+  const response = await aeonApi.post('/api/v1/admin/positions', position);
+  return response.data;
+};
+
+export const getPositions = async (): Promise<{ id: number; title: string; qualities: any[]; is_active: boolean; created_at: string }[]> => {
+  const response = await aeonApi.get('/api/v1/admin/positions');
+  return response.data;
+};
+
+export const makeUserAdminByUsername = async (username: string): Promise<{message: string}> => {
+  const response = await aeonApi.post('/api/v1/admin/users/make-admin-by-username', { username });
+  return response.data;
 };
 
 export default aeonApi; 
