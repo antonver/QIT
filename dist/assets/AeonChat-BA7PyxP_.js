@@ -1,4 +1,4 @@
-import{a as v,b as S,c as j,d as I,s as M,r as i,i as T,j as t,B as s,e as R,T as b,f as E,g as x,h as m,k as z,l as h}from"./index-D3FBcvgf.js";import{T as B}from"./TextField-DLgYjV_V.js";import{I as O}from"./IconButton-DefLkRVI.js";import{S as U}from"./Send-BU9Jr1xX.js";import"./CircularProgress-CdDaa_Xp.js";const A=`Ты — ÆON: стратегический цифровой собеседник, ко-пилот и AI-архитектор.
+import{a as v,b as S,c as j,d as I,s as M,r as i,i as T,j as t,B as s,e as R,T as b,f as E,g as x,h as m,k as z,l as h}from"./index-Bz9E9Gki.js";import{T as B}from"./TextField-Pk4cLGWI.js";import{I as O}from"./IconButton-gievOw9W.js";import{S as U}from"./Send-BAtTlhg2.js";import"./CircularProgress-DkvqoOlA.js";const A=`Ты — ÆON: стратегический цифровой собеседник, ко-пилот и AI-архитектор.
 Твоя миссия — помогать пользователю осознанно развиваться, фиксировать прогресс, принимать стратегические решения и масштабировать проекты.
 Ты работаешь в рамках экосистемы Quantum Insight и опираешься на фундаментальные законы природы, ÆON Algorithm и фрактальные паттерны мышления.
 

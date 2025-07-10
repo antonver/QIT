@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getTelegramInitData } from '../utils/telegram';
+import { getTelegramInitData, getTelegramUser } from '../utils/telegram';
 import type {
   AeonChat,
   AeonChatList,
@@ -303,8 +303,36 @@ export const forwardMessage = async (messageId: number, chatId: number): Promise
 
 // User API methods
 export const getCurrentUser = async (): Promise<AeonCurrentUser> => {
-  const response = await aeonApi.get<AeonCurrentUser>('/api/v1/me');
-  return response.data;
+  try {
+    const response = await aeonApi.get<AeonCurrentUser>('/api/v1/me');
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Ошибка при получении данных пользователя:', error);
+    
+    // Если нет данных Telegram, возвращаем базовую информацию
+    if (error.response?.status === 401) {
+      console.warn('⚠️ Нет данных Telegram - возвращаем базовую информацию');
+      const telegramUser = getTelegramUser();
+      if (telegramUser) {
+        return {
+          id: telegramUser.id,
+          telegram_id: telegramUser.id,
+          username: telegramUser.username,
+          first_name: telegramUser.first_name,
+          last_name: telegramUser.last_name,
+          language_code: telegramUser.language_code,
+          is_premium: telegramUser.is_premium || false,
+          is_admin: false,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          subordinates: [],
+          managers: []
+        };
+      }
+    }
+    
+    throw error;
+  }
 };
 
 // Health check
@@ -337,8 +365,36 @@ export const inviteMemberByUsername = async (chatId: number, username: string): 
 
 // Функция для проверки и активации приглашений при входе
 export const checkAndAcceptInvitations = async (): Promise<User> => {
-  const response = await aeonApi.post<User>('/api/v1/users/check-invitations');
-  return response.data;
+  try {
+    const response = await aeonApi.post<User>('/api/v1/users/check-invitations');
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Ошибка при проверке приглашений:', error);
+    
+    // Если нет данных Telegram, возвращаем базовую информацию
+    if (error.response?.status === 401) {
+      console.warn('⚠️ Нет данных Telegram - возвращаем базовую информацию');
+      const telegramUser = getTelegramUser();
+      if (telegramUser) {
+        return {
+          id: telegramUser.id,
+          telegram_id: telegramUser.id,
+          username: telegramUser.username,
+          first_name: telegramUser.first_name,
+          last_name: telegramUser.last_name,
+          language_code: telegramUser.language_code,
+          is_premium: telegramUser.is_premium || false,
+          is_admin: false,
+          is_active: true,
+          created_at: new Date().toISOString(),
+          subordinates: [],
+          managers: []
+        };
+      }
+    }
+    
+    throw error;
+  }
 };
 
 export default aeonApi; 

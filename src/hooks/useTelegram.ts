@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { setCurrentUser, setUserLoading, setUserError } from '../store/aeonChatSlice';
-import { getCurrentUser } from '../services/api';
+import { getCurrentUser } from '../services/aeonMessengerApi';
 import type { TelegramWebAppUser } from '../types/telegram';
 import type { AeonCurrentUser } from '../types/api';
 
