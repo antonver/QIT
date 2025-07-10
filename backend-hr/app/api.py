@@ -15,8 +15,93 @@ from starlette.middleware.cors import CORSMiddleware
 
 router = APIRouter()
 admin_router = APIRouter(prefix="/admin")
+users_router = APIRouter(prefix="/api/v1/users")
 
 templates = Jinja2Templates(directory="templates")
+
+# ===== USER ENDPOINTS =====
+
+@users_router.get("/me")
+async def get_current_user(request: Request):
+    """Получить информацию о текущем пользователе"""
+    # Извлекаем данные пользователя из заголовка x-telegram-init-data
+    telegram_data = request.headers.get("x-telegram-init-data")
+    
+    if not telegram_data:
+        # Возвращаем базовую информацию для тестирования
+        return {
+            "id": 1,
+            "username": "test_user",
+            "first_name": "Test",
+            "last_name": "User",
+            "is_authenticated": False
+        }
+    
+    try:
+        # Парсим данные Telegram (упрощенная версия)
+        # В реальном приложении здесь должна быть валидация подписи
+        import urllib.parse
+        parsed_data = urllib.parse.parse_qs(telegram_data)
+        user_data = parsed_data.get("user", [None])[0]
+        
+        if user_data:
+            # Парсим JSON данные пользователя
+            user_info = json.loads(user_data)
+            return {
+                "id": user_info.get("id"),
+                "username": user_info.get("username"),
+                "first_name": user_info.get("first_name"),
+                "last_name": user_info.get("last_name"),
+                "is_authenticated": True
+            }
+    except Exception as e:
+        print(f"Error parsing Telegram data: {e}")
+    
+    # Fallback для ошибок парсинга
+    return {
+        "id": 1,
+        "username": "unknown_user",
+        "first_name": "Unknown",
+        "last_name": "User",
+        "is_authenticated": False
+    }
+
+@users_router.post("/check-invitations")
+async def check_invitations(request: Request):
+    """Проверить приглашения пользователя"""
+    # Извлекаем данные пользователя из заголовка
+    telegram_data = request.headers.get("x-telegram-init-data")
+    
+    if not telegram_data:
+        return {
+            "invitations": [],
+            "has_invitations": False
+        }
+    
+    try:
+        # Парсим данные Telegram
+        import urllib.parse
+        parsed_data = urllib.parse.parse_qs(telegram_data)
+        user_data = parsed_data.get("user", [None])[0]
+        
+        if user_data:
+            user_info = json.loads(user_data)
+            user_id = user_info.get("id")
+            
+            # Здесь можно добавить логику проверки приглашений в базе данных
+            # Пока возвращаем пустой список
+            return {
+                "invitations": [],
+                "has_invitations": False,
+                "user_id": user_id
+            }
+    except Exception as e:
+        print(f"Error checking invitations: {e}")
+    
+    return {
+        "invitations": [],
+        "has_invitations": False
+    }
 
 # Моковые данные теста на двух языках
 mock_test_ru = Test(

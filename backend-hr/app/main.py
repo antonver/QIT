@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import router, admin_router
+from app.api import router, admin_router, users_router
 from app.db_models import create_tables, Base, engine
 from fastapi.responses import JSONResponse
 import logging
@@ -80,3 +80,4 @@ async def cors_middleware(request: Request, call_next):
 # Добавляем роутеры
 app.include_router(router)
 app.include_router(admin_router)
+app.include_router(users_router)
