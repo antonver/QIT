@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux';
 import { setCurrentUser, setUserLoading, setUserError } from '../store/aeonChatSlice';
 import { getCurrentUser } from '../services/api';
 import type { TelegramWebAppUser } from '../types/telegram';
+import type { AeonCurrentUser } from '../types/api';
 
 export const useTelegram = () => {
   const dispatch = useDispatch();
@@ -29,7 +30,13 @@ export const useTelegram = () => {
             dispatch(setUserLoading(true));
             try {
               const currentUser = await getCurrentUser();
-              dispatch(setCurrentUser(currentUser));
+              // Нормализуем данные пользователя
+              const normalizedUser: AeonCurrentUser = {
+                ...currentUser,
+                subordinates: Array.isArray(currentUser.subordinates) ? currentUser.subordinates : [],
+                managers: Array.isArray(currentUser.managers) ? currentUser.managers : [],
+              };
+              dispatch(setCurrentUser(normalizedUser));
             } catch (error) {
               console.error('Ошибка при загрузке пользователя:', error);
               dispatch(setUserError('Ошибка при загрузке данных пользователя'));

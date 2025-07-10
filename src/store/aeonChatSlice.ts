@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { User } from '../types/api';
+import type { AeonCurrentUser } from '../types/api';
 
 export interface AeonChatMessage {
   id: number;
@@ -13,7 +13,7 @@ interface AeonChatState {
   isLoading: boolean;
   error: string | null;
   sessionStartTime: number;
-  currentUser: User | null;
+  currentUser: AeonCurrentUser | null;
   isUserLoading: boolean;
   userError: string | null;
 }
@@ -94,7 +94,7 @@ const aeonChatSlice = createSlice({
       state.error = null;
     },
 
-    setCurrentUser: (state, action: PayloadAction<User>) => {
+    setCurrentUser: (state, action: PayloadAction<AeonCurrentUser>) => {
       state.currentUser = action.payload;
       state.userError = null;
     },

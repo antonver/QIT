@@ -35,6 +35,18 @@ import type {
   AeonCurrentUser,
 } from '../types/api';
 
+// Функция для нормализации данных пользователя
+const normalizeUser = (user: any): AeonCurrentUser => {
+  console.log('🔍 Normalizing user data:', user);
+  const normalized = {
+    ...user,
+    subordinates: Array.isArray(user.subordinates) ? user.subordinates : [],
+    managers: Array.isArray(user.managers) ? user.managers : [],
+  };
+  console.log('✅ Normalized user data:', normalized);
+  return normalized;
+};
+
 export const useAeonMessengerWithRedux = () => {
   const dispatch = useAppDispatch();
   
@@ -114,14 +126,16 @@ export const useAeonMessengerWithRedux = () => {
   const loadCurrentUser = useCallback(async () => {
     try {
       const userData = await getCurrentUser();
-      setCurrentUser(userData);
+      const normalizedUser = normalizeUser(userData);
+      setCurrentUser(normalizedUser);
       setError(null);
       setIsAuthError(false);
       
       // Проверяем и активируем приглашения при входе
       try {
         const updatedUser = await checkAndAcceptInvitations();
-        setCurrentUser(updatedUser);
+        const normalizedUpdatedUser = normalizeUser(updatedUser);
+        setCurrentUser(normalizedUpdatedUser);
       } catch (err: any) {
         // 404 ошибка означает что endpoint не существует - это нормально
         if (err.response?.status === 404) {
@@ -152,6 +166,12 @@ export const useAeonMessengerWithRedux = () => {
             first_name: telegramUser.first_name,
             last_name: telegramUser.last_name,
             profile_photo_url: telegramUser.photo_url,
+            is_premium: false,
+            is_admin: false,
+            is_active: true,
+            created_at: new Date().toISOString(),
+            subordinates: [],
+            managers: [],
           });
         } else {
           setCurrentUser({
@@ -161,6 +181,12 @@ export const useAeonMessengerWithRedux = () => {
             first_name: 'Test',
             last_name: 'User',
             profile_photo_url: undefined,
+            is_premium: false,
+            is_admin: false,
+            is_active: true,
+            created_at: new Date().toISOString(),
+            subordinates: [],
+            managers: [],
           });
         }
         setIsAuthError(false);
@@ -533,7 +559,8 @@ export const useAeonMessengerWithRedux = () => {
     const invitationsInterval = setInterval(async () => {
       try {
         const updatedUser = await checkAndAcceptInvitations();
-        setCurrentUser(updatedUser);
+        const normalizedUpdatedUser = normalizeUser(updatedUser);
+        setCurrentUser(normalizedUpdatedUser);
         refreshChats();
       } catch (err: any) {
         // 404 ошибка означает что endpoint не существует - это нормально

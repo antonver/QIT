@@ -13,6 +13,7 @@ import type {
   AeonSummary,
   AeonTask,
   User,
+  AeonCurrentUser,
   UserUpdate,
   UserList,
   SubordinateBase
@@ -338,8 +339,8 @@ export const exportDesignTokens = () => {
   URL.revokeObjectURL(url);
 };
 
-export const getCurrentUser = async (): Promise<User> => {
-    const response = await api.get('/users/me');
+export const getCurrentUser = async (): Promise<AeonCurrentUser> => {
+    const response = await api.get<AeonCurrentUser>('/users/me');
     return response.data;
 };
 

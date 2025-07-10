@@ -19,6 +19,18 @@ import type {
   AeonCurrentUser,
 } from '../types/api';
 
+// Функция для нормализации данных пользователя
+const normalizeUser = (user: any): AeonCurrentUser => {
+  console.log('🔍 Normalizing user data:', user);
+  const normalized = {
+    ...user,
+    subordinates: Array.isArray(user.subordinates) ? user.subordinates : [],
+    managers: Array.isArray(user.managers) ? user.managers : [],
+  };
+  console.log('✅ Normalized user data:', normalized);
+  return normalized;
+};
+
 export const useAeonMessenger = () => {
   const [chats, setChats] = useState<AeonChatList[]>([]);
   const [currentChat, setCurrentChat] = useState<AeonChatList | null>(null);
@@ -43,14 +55,16 @@ export const useAeonMessenger = () => {
   const loadCurrentUser = useCallback(async () => {
     try {
       const userData = await getCurrentUser();
-      setCurrentUser(userData);
+      const normalizedUser = normalizeUser(userData);
+      setCurrentUser(normalizedUser);
       setError(null);
       setIsAuthError(false);
       
       // Проверяем и активируем приглашения при входе
       try {
         const updatedUser = await checkAndAcceptInvitations();
-        setCurrentUser(updatedUser);
+        const normalizedUpdatedUser = normalizeUser(updatedUser);
+        setCurrentUser(normalizedUpdatedUser);
       } catch (err) {
         console.log('No pending invitations or error checking invitations:', err);
       }
@@ -76,6 +90,12 @@ export const useAeonMessenger = () => {
             first_name: telegramUser.first_name,
             last_name: telegramUser.last_name,
             profile_photo_url: telegramUser.photo_url,
+            is_premium: false,
+            is_admin: false,
+            is_active: true,
+            created_at: new Date().toISOString(),
+            subordinates: [],
+            managers: [],
           });
         } else {
           setCurrentUser({
@@ -85,6 +105,12 @@ export const useAeonMessenger = () => {
             first_name: 'Test',
             last_name: 'User',
             profile_photo_url: undefined,
+            is_premium: false,
+            is_admin: false,
+            is_active: true,
+            created_at: new Date().toISOString(),
+            subordinates: [],
+            managers: [],
           });
         }
         setIsAuthError(false);
@@ -463,7 +489,8 @@ export const useAeonMessenger = () => {
     const invitationsInterval = setInterval(async () => {
       try {
         const updatedUser = await checkAndAcceptInvitations();
-        setCurrentUser(updatedUser);
+        const normalizedUpdatedUser = normalizeUser(updatedUser);
+        setCurrentUser(normalizedUpdatedUser);
         // Если были приняты приглашения, обновляем список чатов
         refreshChats();
       } catch (err) {

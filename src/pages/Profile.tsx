@@ -31,6 +31,18 @@ const Profile: React.FC = () => {
   const { currentUser, isUserLoading, userError } = useSelector((state: RootState) => state.aeonChat);
   const { telegramUser, isTelegramWebApp } = useTelegram();
 
+  // Логирование для отладки
+  console.log('🔍 Profile component - currentUser:', currentUser);
+  console.log('🔍 Profile component - currentUser.subordinates:', currentUser?.subordinates);
+  console.log('🔍 Profile component - currentUser.managers:', currentUser?.managers);
+
+  // Дополнительная проверка и нормализация данных
+  const safeCurrentUser = currentUser ? {
+    ...currentUser,
+    subordinates: Array.isArray(currentUser.subordinates) ? currentUser.subordinates : [],
+    managers: Array.isArray(currentUser.managers) ? currentUser.managers : [],
+  } : null;
+
   if (isUserLoading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -47,7 +59,7 @@ const Profile: React.FC = () => {
     );
   }
 
-  if (!currentUser) {
+  if (!safeCurrentUser) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <Typography>Пользователь не найден</Typography>
@@ -68,7 +80,7 @@ const Profile: React.FC = () => {
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                 <Avatar
-                  src={currentUser.profile_photo_url || telegramUser?.photo_url}
+                  src={safeCurrentUser.profile_photo_url || telegramUser?.photo_url}
                   sx={{ 
                     width: 80, 
                     height: 80, 
@@ -76,15 +88,15 @@ const Profile: React.FC = () => {
                     bgcolor: theme.palette.primary.main 
                   }}
                 >
-                  {currentUser.first_name.charAt(0)}
+                  {safeCurrentUser.first_name.charAt(0)}
                 </Avatar>
                 <Box>
                   <Typography variant="h5" gutterBottom>
-                    {currentUser.first_name} {currentUser.last_name || ''}
+                    {safeCurrentUser.first_name} {safeCurrentUser.last_name || ''}
                   </Typography>
-                  {currentUser.username && (
+                  {safeCurrentUser.username && (
                     <Typography variant="body2" color="text.secondary">
-                      @{currentUser.username}
+                      @{safeCurrentUser.username}
                     </Typography>
                   )}
                 </Box>
@@ -99,23 +111,23 @@ const Profile: React.FC = () => {
                   </ListItemIcon>
                   <ListItemText
                     primary="Telegram ID"
-                    secondary={currentUser.telegram_id}
+                    secondary={safeCurrentUser.telegram_id}
                   />
                 </ListItem>
 
-                {currentUser.language_code && (
+                {safeCurrentUser.language_code && (
                   <ListItem>
                     <ListItemIcon>
                       <LanguageIcon color="primary" />
                     </ListItemIcon>
                     <ListItemText
                       primary="Язык"
-                      secondary={currentUser.language_code?.toUpperCase()}
+                      secondary={safeCurrentUser.language_code?.toUpperCase()}
                     />
                   </ListItem>
                 )}
 
-                {currentUser.is_premium && (
+                {safeCurrentUser.is_premium && (
                   <ListItem>
                     <ListItemIcon>
                       <StarIcon color="primary" />
@@ -127,14 +139,14 @@ const Profile: React.FC = () => {
                   </ListItem>
                 )}
 
-                {currentUser.bio && (
+                {safeCurrentUser.bio && (
                   <ListItem>
                     <ListItemIcon>
                       <PersonIcon color="primary" />
                     </ListItemIcon>
                     <ListItemText
                       primary="О себе"
-                      secondary={currentUser.bio}
+                      secondary={safeCurrentUser.bio}
                     />
                   </ListItem>
                 )}
@@ -153,14 +165,14 @@ const Profile: React.FC = () => {
 
               <Box sx={{ mb: 3 }}>
                 <Chip
-                  icon={currentUser.is_admin ? <AdminIcon /> : <PersonIcon />}
-                  label={currentUser.is_admin ? 'Администратор' : 'Пользователь'}
-                  color={currentUser.is_admin ? 'primary' : 'default'}
+                  icon={safeCurrentUser.is_admin ? <AdminIcon /> : <PersonIcon />}
+                  label={safeCurrentUser.is_admin ? 'Администратор' : 'Пользователь'}
+                  color={safeCurrentUser.is_admin ? 'primary' : 'default'}
                   sx={{ mb: 1 }}
                 />
                 <Chip
                   icon={<GroupIcon />}
-                  label={`${currentUser.subordinates?.length || 0} подчиненных`}
+                  label={`${safeCurrentUser.subordinates ? safeCurrentUser.subordinates.length : 0} подчиненных`}
                   variant="outlined"
                   sx={{ ml: 1 }}
                 />
@@ -168,13 +180,13 @@ const Profile: React.FC = () => {
 
               <Divider sx={{ mb: 2 }} />
 
-              {currentUser.is_admin && currentUser.subordinates?.length > 0 && (
+              {safeCurrentUser.is_admin && safeCurrentUser.subordinates && safeCurrentUser.subordinates.length > 0 && (
                 <Box>
                   <Typography variant="subtitle1" gutterBottom>
                     Подчиненные:
                   </Typography>
                   <List dense>
-                    {currentUser.subordinates?.map((subordinate) => (
+                    {safeCurrentUser.subordinates.map((subordinate) => (
                       <ListItem key={subordinate.id}>
                         <ListItemText
                           primary={`${subordinate.first_name} ${subordinate.last_name || ''}`}
@@ -186,13 +198,13 @@ const Profile: React.FC = () => {
                 </Box>
               )}
 
-              {currentUser.managers?.length > 0 && (
+              {safeCurrentUser.managers && safeCurrentUser.managers.length > 0 && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="subtitle1" gutterBottom>
                     Руководители:
                   </Typography>
                   <List dense>
-                    {currentUser.managers?.map((manager) => (
+                    {safeCurrentUser.managers.map((manager) => (
                       <ListItem key={manager.id}>
                         <ListItemText
                           primary={`${manager.first_name} ${manager.last_name || ''}`}

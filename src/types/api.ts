@@ -200,9 +200,16 @@ export interface AeonCurrentUser {
   username?: string;
   first_name: string;
   last_name?: string;
+  language_code?: string;
+  is_premium: boolean;
+  is_admin: boolean;
   profile_photo_url?: string;
-  subordinates?: User[];
-  managers?: User[];
+  bio?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at?: string;
+  subordinates: User[];
+  managers: User[];
 }
 
 export interface User {
