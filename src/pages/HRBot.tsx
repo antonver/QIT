@@ -21,8 +21,7 @@ import {
   Check as CheckIcon,
   Assignment as AssignmentIcon,
 } from '@mui/icons-material';
-import { useSelector } from 'react-redux';
-import type { RootState } from '../store';
+
 
 interface Position {
   id: number;
