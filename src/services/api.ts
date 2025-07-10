@@ -11,7 +11,11 @@ import type {
   GlyphData,
   AeonQuestion,
   AeonSummary,
-  AeonTask
+  AeonTask,
+  User,
+  UserUpdate,
+  UserList,
+  SubordinateBase
 } from '../types/api';
 
 // Create axios instance with base configuration
@@ -332,6 +336,39 @@ export const exportDesignTokens = () => {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+};
+
+export const getCurrentUser = async (): Promise<User> => {
+    const response = await api.get('/users/me');
+    return response.data;
+};
+
+export const updateCurrentUser = async (userData: UserUpdate): Promise<User> => {
+    const response = await api.put('/users/me', userData);
+    return response.data;
+};
+
+export const getUsers = async (page: number = 1, perPage: number = 50): Promise<UserList> => {
+    const response = await api.get('/users', {
+        params: { page, per_page: perPage }
+    });
+    return response.data;
+};
+
+export const getSubordinates = async (): Promise<User[]> => {
+    const response = await api.get('/users/subordinates');
+    return response.data;
+};
+
+export const addSubordinate = async (subordinateId: number): Promise<User> => {
+    const data: SubordinateBase = { subordinate_id: subordinateId };
+    const response = await api.post('/users/subordinates', data);
+    return response.data;
+};
+
+export const removeSubordinate = async (subordinateId: number): Promise<User> => {
+    const response = await api.delete(`/users/subordinates/${subordinateId}`);
+    return response.data;
 };
 
 export default api; 

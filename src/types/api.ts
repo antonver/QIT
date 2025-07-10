@@ -201,4 +201,44 @@ export interface AeonCurrentUser {
   first_name: string;
   last_name?: string;
   profile_photo_url?: string;
+}
+
+export interface User {
+  id: number;
+  telegram_id: number;
+  username?: string;
+  first_name: string;
+  last_name?: string;
+  language_code?: string;
+  is_premium: boolean;
+  is_admin: boolean;
+  profile_photo_url?: string;
+  bio?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at?: string;
+  subordinates: User[];
+  managers: User[];
+}
+
+export interface UserUpdate {
+  first_name?: string;
+  last_name?: string;
+  language_code?: string;
+  profile_photo_url?: string;
+  bio?: string;
+  is_admin?: boolean;
+}
+
+export interface UserList {
+  users: User[];
+  total: number;
+  page: number;
+  per_page: number;
+  has_next: boolean;
+  has_prev: boolean;
+}
+
+export interface SubordinateBase {
+  subordinate_id: number;
 } 

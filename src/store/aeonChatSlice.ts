@@ -1,4 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import type { User } from '../types/api';
 
 export interface AeonChatMessage {
   id: number;
@@ -12,6 +13,9 @@ interface AeonChatState {
   isLoading: boolean;
   error: string | null;
   sessionStartTime: number;
+  currentUser: User | null;
+  isUserLoading: boolean;
+  userError: string | null;
 }
 
 const initialState: AeonChatState = {
@@ -26,6 +30,9 @@ const initialState: AeonChatState = {
   isLoading: false,
   error: null,
   sessionStartTime: Date.now(),
+  currentUser: null,
+  isUserLoading: false,
+  userError: null,
 };
 
 const aeonChatSlice = createSlice({
@@ -86,6 +93,21 @@ const aeonChatSlice = createSlice({
       state.sessionStartTime = Date.now();
       state.error = null;
     },
+
+    setCurrentUser: (state, action: PayloadAction<User>) => {
+      state.currentUser = action.payload;
+      state.userError = null;
+    },
+    setUserLoading: (state, action: PayloadAction<boolean>) => {
+      state.isUserLoading = action.payload;
+    },
+    setUserError: (state, action: PayloadAction<string>) => {
+      state.userError = action.payload;
+      state.isUserLoading = false;
+    },
+    clearUserError: (state) => {
+      state.userError = null;
+    },
   },
 });
 
@@ -97,6 +119,10 @@ export const {
   setError,
   clearMessages,
   initSession,
+  setCurrentUser,
+  setUserLoading,
+  setUserError,
+  clearUserError,
 } = aeonChatSlice.actions;
 
 export default aeonChatSlice.reducer;

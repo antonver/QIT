@@ -1,5 +1,5 @@
 // Telegram WebApp API types
-interface TelegramWebAppUser {
+export interface TelegramWebAppUser {
   id: number;
   is_bot?: boolean;
   first_name: string;
@@ -12,7 +12,7 @@ interface TelegramWebAppUser {
   photo_url?: string;
 }
 
-interface TelegramWebAppChat {
+export interface TelegramWebAppChat {
   id: number;
   type: 'group' | 'supergroup' | 'channel';
   title: string;
@@ -20,7 +20,7 @@ interface TelegramWebAppChat {
   photo_url?: string;
 }
 
-interface TelegramWebAppInitDataUnsafe {
+export interface TelegramWebAppInitDataUnsafe {
   query_id?: string;
   user?: TelegramWebAppUser;
   receiver?: TelegramWebAppUser;
@@ -33,7 +33,7 @@ interface TelegramWebAppInitDataUnsafe {
   hash?: string;
 }
 
-interface TelegramWebApp {
+export interface TelegramWebApp {
   initData: string;
   initDataUnsafe: TelegramWebAppInitDataUnsafe;
   version: string;
@@ -164,13 +164,13 @@ interface TelegramWebApp {
   };
 }
 
-interface TelegramWebAppUtils {
+export interface TelegramWebAppUtils {
   openTelegramLink(url: string): void;
   openLink(url: string): void;
   shareUrl(url: string, text?: string): void;
 }
 
-interface Telegram {
+export interface Telegram {
   WebApp: TelegramWebApp;
   Utils: TelegramWebAppUtils;
 }

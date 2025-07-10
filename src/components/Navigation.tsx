@@ -22,6 +22,9 @@ import backgroundImage from '../assets/background.png';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import useOptimizedPerformance from '../hooks/useOptimizedPerformance';
+import { useSelector } from 'react-redux';
+import type { RootState } from '../store';
+import { useTelegram } from '../hooks/useTelegram';
 
 // Lazy load страниц для лучшей производительности
 const Home = lazy(() => import('../pages/Home'));
@@ -30,6 +33,7 @@ const HRBotPage = lazy(() => import('../pages/HRBotPage'));
 const TestPage = lazy(() => import('../pages/TestPage'));
 const AeonChat = lazy(() => import('../pages/AeonChat'));
 const AeonMessenger = lazy(() => import('../pages/AeonMessenger'));
+const Profile = lazy(() => import('../pages/Profile'));
 
 const NAVIGATION = [
     {
@@ -63,6 +67,8 @@ const DashboardLayoutBasic = memo(() => {
     const [logo, setLogo] = useState<React.ReactNode>('');
     const location = useLocation();
     const navigate = useNavigate();
+    const { currentUser } = useSelector((state: RootState) => state.aeonChat);
+    const { telegramUser } = useTelegram();
     
     // Хук для оптимизации производительности
     useOptimizedPerformance();
@@ -227,8 +233,10 @@ const DashboardLayoutBasic = memo(() => {
                                 '&:hover': {
                                     boxShadow: '0 6px 20px rgba(103, 58, 183, 0.4)',
                                 }
-                            }}>
-                                OP
+                            }}
+                            src={currentUser?.profile_photo_url || telegramUser?.photo_url}
+                            >
+                                {currentUser?.first_name?.charAt(0) || telegramUser?.first_name?.charAt(0) || 'U'}
                             </Avatar>
                         </ListItemButton>
                     </motion.div>
@@ -358,6 +366,7 @@ const DashboardLayoutBasic = memo(() => {
                             <Route path="/aeon" element={<AeonChat />} />
                             <Route path="/aeon-messenger" element={<AeonMessenger />} />
                             <Route path="/test" element={<TestPage />} />
+                            <Route path="/profile" element={<Profile />} />
                         </Routes>
                     </LazyPageLoader>
                 </Box>
