@@ -35,7 +35,8 @@ const TestPage = lazy(() => import('../pages/TestPage'));
 const AeonChat = lazy(() => import('../pages/AeonChat'));
 const AeonMessenger = lazy(() => import('../pages/AeonMessenger'));
 const Profile = lazy(() => import('../pages/Profile'));
-
+const CorsTest = lazy(() => import('../pages/CorsTest'));
+//lol
 const NAVIGATION = [
     {
         kind: 'header',
@@ -61,6 +62,11 @@ const NAVIGATION = [
         segment: 'aeon-messenger',
         title: 'ÆON Messenger',
         icon: <PsychologyIcon sx={{ color: '#4a9eff' }} />,
+    },
+    {
+        segment: 'cors-test',
+        title: 'CORS Test',
+        icon: <PsychologyIcon sx={{ color: '#FFD700' }} />,
     },
 ];
 
@@ -375,6 +381,7 @@ const DashboardLayoutBasic = memo(() => {
                             <Route path="/aeon-messenger" element={<AeonMessenger />} />
                             <Route path="/test" element={<TestPage />} />
                             <Route path="/profile" element={<Profile />} />
+                            <Route path="/cors-test" element={<CorsTest />} />
                         </Routes>
                     </LazyPageLoader>
                 </Box>

@@ -88,6 +88,13 @@ export const useAeonMessenger = () => {
     } catch (err: any) {
       console.error('❌ Ошибка загрузки пользователя:', err);
       
+      // Проверяем, является ли это ошибкой отсутствия Telegram WebApp
+      if (err.isTelegramWebAppError) {
+        setIsAuthError(true);
+        setError('Приложение должно быть открыто из Telegram для корректной работы');
+        return;
+      }
+      
       // Проверяем, является ли это ошибкой авторизации
       if (err.response?.status === 401 || err.isAuthError) {
         setIsAuthError(true);
@@ -118,6 +125,13 @@ export const useAeonMessenger = () => {
       setIsAuthError(false);
     } catch (err: any) {
       console.error('Error loading chats:', err);
+      
+      // Проверяем, является ли это ошибкой отсутствия Telegram WebApp
+      if (err.isTelegramWebAppError) {
+        setIsAuthError(true);
+        setError('Приложение должно быть открыто из Telegram для корректной работы');
+        return;
+      }
       
       if (err.response?.status === 401 || err.isAuthError) {
         setIsAuthError(true);
@@ -154,7 +168,7 @@ export const useAeonMessenger = () => {
     } catch (err: any) {
       console.error('Error refreshing chats:', err);
       // В автообновлении не показываем ошибки так агрессивно
-      if (err.response?.status === 401 || err.isAuthError) {
+      if (err.isTelegramWebAppError || err.response?.status === 401 || err.isAuthError) {
         setIsAuthError(true);
       }
     }
@@ -177,6 +191,13 @@ export const useAeonMessenger = () => {
       setIsAuthError(false);
     } catch (err: any) {
       console.error('Error loading messages:', err);
+      
+      // Проверяем, является ли это ошибкой отсутствия Telegram WebApp
+      if (err.isTelegramWebAppError) {
+        setIsAuthError(true);
+        setError('Приложение должно быть открыто из Telegram для корректной работы');
+        return;
+      }
       
       if (err.response?.status === 401 || err.isAuthError) {
         setIsAuthError(true);
@@ -225,7 +246,10 @@ export const useAeonMessenger = () => {
       }
     } catch (err: any) {
       console.error('Error checking new messages:', err);
-      // Не показываем ошибки для фоновых проверок
+      // Не показываем ошибки для фоновых проверок, но логируем Telegram WebApp ошибки
+      if (err.isTelegramWebAppError) {
+        console.warn('Telegram WebApp required for message checking');
+      }
     }
   }, [lastMessageId, refreshChats]);
 
@@ -261,8 +285,15 @@ export const useAeonMessenger = () => {
           return new Date(b.last_message_time).getTime() - new Date(a.last_message_time).getTime();
         });
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error sending message:', err);
+      
+      // Проверяем, является ли это ошибкой отсутствия Telegram WebApp
+      if (err.isTelegramWebAppError) {
+        setError('Приложение должно быть открыто из Telegram для отправки сообщений');
+        return;
+      }
+      
       setError('Ошибка отправки сообщения');
     }
   }, [currentUser]);
@@ -308,8 +339,15 @@ export const useAeonMessenger = () => {
       await loadMessages(newChat.id);
       
       return newChat;
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating chat:', err);
+      
+      // Проверяем, является ли это ошибкой отсутствия Telegram WebApp
+      if (err.isTelegramWebAppError) {
+        setError('Приложение должно быть открыто из Telegram для создания чатов');
+        throw err;
+      }
+      
       setError('Ошибка создания чата');
       throw err;
     }
@@ -349,8 +387,15 @@ export const useAeonMessenger = () => {
       const { getChat } = await import('../services/aeonMessengerApi');
       const chatInfo = await getChat(chatId);
       return chatInfo;
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error loading chat info:', err);
+      
+      // Проверяем, является ли это ошибкой отсутствия Telegram WebApp
+      if (err.isTelegramWebAppError) {
+        setError('Приложение должно быть открыто из Telegram для просмотра информации о чате');
+        throw err;
+      }
+      
       setError('Ошибка загрузки информации о чате');
       throw err;
     }
@@ -366,8 +411,15 @@ export const useAeonMessenger = () => {
       if (currentChat && currentChat.id === chatId) {
         setTimeout(() => refreshChats(), 1000);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error adding member to chat:', err);
+      
+      // Проверяем, является ли это ошибкой отсутствия Telegram WebApp
+      if (err.isTelegramWebAppError) {
+        setError('Приложение должно быть открыто из Telegram для управления участниками');
+        throw err;
+      }
+      
       setError('Ошибка добавления участника');
       throw err;
     }
@@ -383,8 +435,15 @@ export const useAeonMessenger = () => {
       if (currentChat && currentChat.id === chatId) {
         setTimeout(() => refreshChats(), 1000);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error removing member from chat:', err);
+      
+      // Проверяем, является ли это ошибкой отсутствия Telegram WebApp
+      if (err.isTelegramWebAppError) {
+        setError('Приложение должно быть открыто из Telegram для управления участниками');
+        throw err;
+      }
+      
       setError('Ошибка удаления участника');
       throw err;
     }
@@ -430,8 +489,12 @@ export const useAeonMessenger = () => {
         setCurrentUser(normalizedUpdatedUser);
         // Если были приняты приглашения, обновляем список чатов
         refreshChats();
-      } catch (err) {
+      } catch (err: any) {
         console.log('No new invitations or error:', err);
+        // Не показываем ошибки для фоновых проверок, но логируем Telegram WebApp ошибки
+        if (err.isTelegramWebAppError) {
+          console.warn('Telegram WebApp required for invitation checking');
+        }
       }
     }, 120000); // 2 минуты
     

@@ -21,6 +21,14 @@ const logApiConfig = () => {
   console.log('Base URL:', import.meta.env.VITE_API_URL || 'https://aeon-backend-2892-d50dfbe26b14.herokuapp.com');
   console.log('Environment:', import.meta.env.MODE);
   console.log('🆕 BACKEND URL: https://aeon-backend-2892-d50dfbe26b14.herokuapp.com');
+  console.log('🔍 CORS Origin Check:');
+  console.log('   - Current origin:', window.location.origin);
+  console.log('   - Expected origins:', [
+    'https://qit-antonvers-projects.vercel.app',
+    'https://qit-antonver.vercel.app',
+    'http://localhost:5173',
+    'http://localhost:3000'
+  ]);
   console.log('=========================================');
 };
 
@@ -76,6 +84,18 @@ aeonApi.interceptors.request.use(
     console.log('Init Data Length:', initData ? initData.length : 0);
     console.log('Init Data Preview:', initData ? initData.substring(0, 100) + '...' : 'No data');
     
+    // Проверяем, что мы в Telegram WebApp
+    const isTelegram = typeof window !== 'undefined' && Boolean(window.Telegram?.WebApp);
+    if (!isTelegram) {
+      console.warn('❌ Приложение не запущено в Telegram WebApp');
+      console.warn('❌ Запросы к API будут отклонены');
+      
+      // Создаем ошибку для предотвращения запроса
+      const error = new Error('Приложение должно быть открыто из Telegram WebApp');
+      error.name = 'TelegramWebAppRequired';
+      throw error;
+    }
+    
     if (initData) {
       config.headers['x-telegram-init-data'] = initData;
       console.log('✅ Auth header attached');
@@ -109,6 +129,52 @@ aeonApi.interceptors.response.use(
     console.error('Response Data:', error.response?.data);
     console.error('Request Headers:', error.config?.headers);
     console.error('======================');
+    
+    // Обработка ошибки отсутствия Telegram WebApp
+    if (error.name === 'TelegramWebAppRequired') {
+      console.error('❌ Telegram WebApp Required Error');
+      console.error('❌ Application must be opened from Telegram WebApp');
+      
+      const enhancedError = {
+        ...error,
+        message: 'Приложение должно быть открыто из Telegram WebApp',
+        isTelegramWebAppError: true,
+        response: {
+          status: 403,
+          data: {
+            error: 'Приложение должно быть открыто из Telegram WebApp'
+          }
+        }
+      };
+      
+      throw enhancedError;
+    }
+    
+    // Специальная обработка CORS ошибок
+    if (error.message && error.message.includes('CORS')) {
+      console.error('❌ CORS Error Detected');
+      console.error('❌ Possible reasons:');
+      console.error('   1. Backend CORS configuration issue');
+      console.error('   2. Origin not allowed by server');
+      console.error('   3. Missing CORS headers in response');
+      console.error('❌ Current origin:', window.location.origin);
+      console.error('❌ Backend URL:', error.config?.baseURL);
+      
+      const enhancedError = {
+        ...error,
+        message: 'CORS error - check backend configuration',
+        isCorsError: true,
+        response: {
+          ...error.response,
+          data: {
+            ...error.response?.data,
+            error: 'CORS ошибка - проверьте конфигурацию сервера'
+          }
+        }
+      };
+      
+      throw enhancedError;
+    }
     
     // Обработка ошибки 405 - Method Not Allowed
     if (error.response?.status === 405) {
