@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -42,7 +42,7 @@ import {
 import { Checkbox, FormControlLabel } from '@mui/material';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../store';
-import { makeUserAdminByUsername } from '../services/api';
+import { makeUserAdminByUsername, createQuality, createPosition, getQualities, getPositions } from '../services/api';
 
 interface Position {
   id: number;
@@ -55,7 +55,6 @@ interface Position {
 interface Quality {
   id: number;
   name: string;
-  description?: string;
 }
 
 interface Interview {
@@ -104,16 +103,17 @@ function TabPanel(props: TabPanelProps) {
 const AdminPanel: React.FC = () => {
   const { currentUser } = useSelector((state: RootState) => state.aeonChat);
   const [tabValue, setTabValue] = useState(0);
-  const [positions] = useState<Position[]>([]);
-  const [qualities] = useState<Quality[]>([]);
+  const [positions, setPositions] = useState<Position[]>([]);
+  const [qualities, setQualities] = useState<Quality[]>([]);
   const [interviews] = useState<Interview[]>([]);
+  const [loading, setLoading] = useState(false);
 
   // Диалоги
   const [positionDialog, setPositionDialog] = useState(false);
   const [qualityDialog, setQualityDialog] = useState(false);
   const [adminDialog, setAdminDialog] = useState(false);
   const [newPosition, setNewPosition] = useState({ title: '', selectedQualities: [] as number[] });
-  const [newQuality, setNewQuality] = useState({ name: '', description: '' });
+  const [newQuality, setNewQuality] = useState({ name: '' });
   const [newAdminUsername, setNewAdminUsername] = useState('');
   const [adminMessage, setAdminMessage] = useState<{type: 'success' | 'error', message: string} | null>(null);
 
@@ -134,25 +134,63 @@ const AdminPanel: React.FC = () => {
 
   const handleCreatePosition = async () => {
     try {
-      // Здесь будет API вызов для создания позиции
-      console.log('Creating position:', newPosition);
+      setLoading(true);
+      const createdPosition = await createPosition({
+        title: newPosition.title,
+        quality_ids: newPosition.selectedQualities
+      });
+      
+      // Обновляем список позиций
+      setPositions(prev => [...prev, createdPosition]);
       setPositionDialog(false);
       setNewPosition({ title: '', selectedQualities: [] });
     } catch (error) {
       console.error('Error creating position:', error);
+      alert('Ошибка при создании позиции');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleCreateQuality = async () => {
     try {
-      // Здесь будет API вызов для создания качества
-      console.log('Creating quality:', newQuality);
+      setLoading(true);
+      const createdQuality = await createQuality({
+        name: newQuality.name
+      });
+      
+      // Обновляем список качеств
+      setQualities(prev => [...prev, createdQuality]);
       setQualityDialog(false);
-      setNewQuality({ name: '', description: '' });
+      setNewQuality({ name: '' });
     } catch (error) {
       console.error('Error creating quality:', error);
+      alert('Ошибка при создании качества');
+    } finally {
+      setLoading(false);
     }
   };
+
+  // Загрузка данных при монтировании
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const [qualitiesData, positionsData] = await Promise.all([
+          getQualities(),
+          getPositions()
+        ]);
+        setQualities(qualitiesData);
+        setPositions(positionsData);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
 
   const handleMakeAdmin = async () => {
     try {
@@ -276,7 +314,6 @@ const AdminPanel: React.FC = () => {
               <ListItem>
                 <ListItemText
                   primary={quality.name}
-                  secondary={quality.description}
                 />
                 <ListItemSecondaryAction>
                   <IconButton size="small">
@@ -437,16 +474,9 @@ const AdminPanel: React.FC = () => {
                   />
                 }
                 label={
-                  <Box>
-                    <Typography variant="body2">
-                      {quality.name}
-                    </Typography>
-                    {quality.description && (
-                      <Typography variant="caption" color="text.secondary">
-                        {quality.description}
-                      </Typography>
-                    )}
-                  </Box>
+                  <Typography variant="body2">
+                    {quality.name}
+                  </Typography>
                 }
                 sx={{ width: '100%', margin: 0, mb: 1 }}
               />
@@ -455,9 +485,9 @@ const AdminPanel: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setPositionDialog(false)}>Отмена</Button>
-          <Button onClick={handleCreatePosition} variant="contained">
-            Создать
+          <Button onClick={() => setPositionDialog(false)} disabled={loading}>Отмена</Button>
+          <Button onClick={handleCreatePosition} variant="contained" disabled={!newPosition.title.trim() || loading}>
+            {loading ? 'Создание...' : 'Создать'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -474,23 +504,14 @@ const AdminPanel: React.FC = () => {
             variant="outlined"
             value={newQuality.name}
             onChange={(e) => setNewQuality({ ...newQuality, name: e.target.value })}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            margin="dense"
-            label="Описание"
-            fullWidth
-            variant="outlined"
-            multiline
-            rows={4}
-            value={newQuality.description}
-            onChange={(e) => setNewQuality({ ...newQuality, description: e.target.value })}
+            placeholder="Например: Коммуникабельность, Лидерство, Аналитическое мышление"
+            helperText="Введите название качества для оценки кандидатов"
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setQualityDialog(false)}>Отмена</Button>
-          <Button onClick={handleCreateQuality} variant="contained">
-            Создать
+          <Button onClick={() => setQualityDialog(false)} disabled={loading}>Отмена</Button>
+          <Button onClick={handleCreateQuality} variant="contained" disabled={!newQuality.name.trim() || loading}>
+            {loading ? 'Создание...' : 'Создать'}
           </Button>
         </DialogActions>
       </Dialog>

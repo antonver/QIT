@@ -378,6 +378,27 @@ export const makeUserAdminByUsername = async (username: string): Promise<{messag
     return response.data;
 };
 
+// HR System API
+export const createQuality = async (quality: { name: string }): Promise<{ id: number; name: string }> => {
+    const response = await api.post('/api/v1/qualities/', quality);
+    return response.data;
+};
+
+export const createPosition = async (position: { title: string; quality_ids: number[] }): Promise<{ id: number; title: string; qualities: any[]; is_active: boolean; created_at: string }> => {
+    const response = await api.post('/api/v1/positions/', position);
+    return response.data;
+};
+
+export const getQualities = async (): Promise<{ id: number; name: string }[]> => {
+    const response = await api.get('/api/v1/qualities/');
+    return response.data;
+};
+
+export const getPositions = async (): Promise<{ id: number; title: string; qualities: any[]; is_active: boolean; created_at: string }[]> => {
+    const response = await api.get('/api/v1/positions/');
+    return response.data;
+};
+
 export const removeUserAdminByUsername = async (username: string): Promise<{message: string}> => {
     const response = await api.post('/admin/users/remove-admin-by-username', { username });
     return response.data;
