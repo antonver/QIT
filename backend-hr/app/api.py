@@ -338,6 +338,13 @@ def init_database():
     try:
         create_tables()
         print("DEBUG: Database tables created successfully")
+        
+        # Проверяем, есть ли уже пользователи в системе
+        db = next(get_db())
+        existing_users = db.query(User).count()
+        print(f"📊 В базе данных {existing_users} пользователей")
+        db.close()
+        
         return True
     except Exception as e:
         print(f"ERROR: Failed to initialize database: {e}")
