@@ -21,7 +21,7 @@ import type {
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://aeon-hr-25586f51bf65.herokuapp.com',
+  baseURL: import.meta.env.VITE_API_URL || 'https://aeon-backend-2892-d50dfbe26b14.herokuapp.com',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
