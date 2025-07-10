@@ -35,6 +35,8 @@ const Profile: React.FC = () => {
   console.log('🔍 Profile component - currentUser:', currentUser);
   console.log('🔍 Profile component - currentUser.subordinates:', currentUser?.subordinates);
   console.log('🔍 Profile component - currentUser.managers:', currentUser?.managers);
+  console.log('🔍 Profile component - telegramUser:', telegramUser);
+  console.log('🔍 Profile component - telegramUser?.photo_url:', telegramUser?.photo_url);
 
   // Дополнительная проверка и нормализация данных
   const safeCurrentUser = currentUser ? {
@@ -118,6 +120,13 @@ const Profile: React.FC = () => {
                     height: 80, 
                     mr: 2,
                     bgcolor: theme.palette.primary.main 
+                  }}
+                  onError={(e) => {
+                    console.error('❌ Ошибка загрузки аватара:', e);
+                    console.log('🔍 Попытка загрузить:', telegramUser?.photo_url || safeCurrentUser.profile_photo_url);
+                  }}
+                  onLoad={() => {
+                    console.log('✅ Аватар успешно загружен:', telegramUser?.photo_url || safeCurrentUser.profile_photo_url);
                   }}
                 >
                   {safeCurrentUser.first_name.charAt(0)}

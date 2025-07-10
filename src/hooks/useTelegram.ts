@@ -55,6 +55,8 @@ export const useTelegram = () => {
         }
 
         console.log('✅ Получены данные пользователя из Telegram:', telegramUserData);
+        console.log('🔍 Photo URL из Telegram:', telegramUserData?.photo_url);
+        console.log('🔍 Все поля пользователя:', Object.keys(telegramUserData || {}));
         setTelegramUser(telegramUserData);
 
         // Загружаем или создаем пользователя на бэкенде
