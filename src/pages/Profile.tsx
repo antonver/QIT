@@ -110,7 +110,7 @@ const Profile: React.FC = () => {
                     </ListItemIcon>
                     <ListItemText
                       primary="Язык"
-                      secondary={currentUser.language_code.toUpperCase()}
+                      secondary={currentUser.language_code?.toUpperCase()}
                     />
                   </ListItem>
                 )}
@@ -160,7 +160,7 @@ const Profile: React.FC = () => {
                 />
                 <Chip
                   icon={<GroupIcon />}
-                  label={`${currentUser.subordinates.length} подчиненных`}
+                  label={`${currentUser.subordinates?.length || 0} подчиненных`}
                   variant="outlined"
                   sx={{ ml: 1 }}
                 />
@@ -168,13 +168,13 @@ const Profile: React.FC = () => {
 
               <Divider sx={{ mb: 2 }} />
 
-              {currentUser.is_admin && currentUser.subordinates.length > 0 && (
+              {currentUser.is_admin && currentUser.subordinates?.length > 0 && (
                 <Box>
                   <Typography variant="subtitle1" gutterBottom>
                     Подчиненные:
                   </Typography>
                   <List dense>
-                    {currentUser.subordinates.map((subordinate) => (
+                    {currentUser.subordinates?.map((subordinate) => (
                       <ListItem key={subordinate.id}>
                         <ListItemText
                           primary={`${subordinate.first_name} ${subordinate.last_name || ''}`}
@@ -186,13 +186,13 @@ const Profile: React.FC = () => {
                 </Box>
               )}
 
-              {currentUser.managers.length > 0 && (
+              {currentUser.managers?.length > 0 && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="subtitle1" gutterBottom>
                     Руководители:
                   </Typography>
                   <List dense>
-                    {currentUser.managers.map((manager) => (
+                    {currentUser.managers?.map((manager) => (
                       <ListItem key={manager.id}>
                         <ListItemText
                           primary={`${manager.first_name} ${manager.last_name || ''}`}

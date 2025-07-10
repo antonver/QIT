@@ -120,7 +120,8 @@ export const useAeonMessengerWithRedux = () => {
       
       // Проверяем и активируем приглашения при входе
       try {
-        await checkAndAcceptInvitations();
+        const updatedUser = await checkAndAcceptInvitations();
+        setCurrentUser(updatedUser);
       } catch (err: any) {
         // 404 ошибка означает что endpoint не существует - это нормально
         if (err.response?.status === 404) {
@@ -531,7 +532,8 @@ export const useAeonMessengerWithRedux = () => {
     
     const invitationsInterval = setInterval(async () => {
       try {
-        await checkAndAcceptInvitations();
+        const updatedUser = await checkAndAcceptInvitations();
+        setCurrentUser(updatedUser);
         refreshChats();
       } catch (err: any) {
         // 404 ошибка означает что endpoint не существует - это нормально

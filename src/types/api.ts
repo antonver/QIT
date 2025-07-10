@@ -201,6 +201,8 @@ export interface AeonCurrentUser {
   first_name: string;
   last_name?: string;
   profile_photo_url?: string;
+  subordinates?: User[];
+  managers?: User[];
 }
 
 export interface User {

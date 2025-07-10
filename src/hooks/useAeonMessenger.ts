@@ -49,7 +49,8 @@ export const useAeonMessenger = () => {
       
       // Проверяем и активируем приглашения при входе
       try {
-        await checkAndAcceptInvitations();
+        const updatedUser = await checkAndAcceptInvitations();
+        setCurrentUser(updatedUser);
       } catch (err) {
         console.log('No pending invitations or error checking invitations:', err);
       }
@@ -461,7 +462,8 @@ export const useAeonMessenger = () => {
     
     const invitationsInterval = setInterval(async () => {
       try {
-        await checkAndAcceptInvitations();
+        const updatedUser = await checkAndAcceptInvitations();
+        setCurrentUser(updatedUser);
         // Если были приняты приглашения, обновляем список чатов
         refreshChats();
       } catch (err) {

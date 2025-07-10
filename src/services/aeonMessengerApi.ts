@@ -11,6 +11,7 @@ import type {
   AeonMessageUpdate,
   AeonCurrentUser,
 } from '../types/api';
+import type { User } from '../types/api';
 
 // Debug function to log API configuration
 const logApiConfig = () => {
@@ -335,8 +336,9 @@ export const inviteMemberByUsername = async (chatId: number, username: string): 
 };
 
 // Функция для проверки и активации приглашений при входе
-export const checkAndAcceptInvitations = async (): Promise<void> => {
-  await aeonApi.post('/api/v1/users/check-invitations');
+export const checkAndAcceptInvitations = async (): Promise<User> => {
+  const response = await aeonApi.post<User>('/api/v1/users/check-invitations');
+  return response.data;
 };
 
 export default aeonApi; 
