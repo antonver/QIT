@@ -11,7 +11,6 @@ import {
   ListItem,
   ListItemText,
   ListItemIcon,
-  Paper,
   useTheme,
   Alert,
 } from '@mui/material';
@@ -30,7 +29,7 @@ import { useTelegram } from '../hooks/useTelegram';
 const Profile: React.FC = () => {
   const theme = useTheme();
   const { currentUser, isUserLoading, userError } = useSelector((state: RootState) => state.aeonChat);
-  const { telegramUser, isTelegramWebApp } = useTelegram();
+  const { telegramUser } = useTelegram();
 
   // Логирование для отладки
   console.log('🔍 Profile component - currentUser:', currentUser);
@@ -113,7 +112,7 @@ const Profile: React.FC = () => {
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                 <Avatar
-                  src={safeCurrentUser.profile_photo_url || telegramUser?.photo_url}
+                  src={telegramUser?.photo_url || safeCurrentUser.profile_photo_url}
                   sx={{ 
                     width: 80, 
                     height: 80, 
@@ -253,19 +252,7 @@ const Profile: React.FC = () => {
         </Box>
       </Box>
 
-      {/* Информация о Telegram WebApp */}
-      {isTelegramWebApp() && (
-        <Box sx={{ mt: 3 }}>
-          <Paper elevation={2} sx={{ p: 2, bgcolor: 'primary.light', color: 'white' }}>
-            <Typography variant="h6" gutterBottom>
-              Telegram WebApp
-            </Typography>
-            <Typography variant="body2">
-              Приложение запущено в Telegram WebApp
-            </Typography>
-          </Paper>
-        </Box>
-      )}
+
     </Box>
   );
 };
