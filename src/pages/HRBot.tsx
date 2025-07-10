@@ -15,10 +15,6 @@ import {
   Alert,
   CircularProgress,
   Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
 } from '@mui/material';
 import {
   PlayArrow as PlayIcon,
@@ -52,8 +48,7 @@ interface Interview {
 }
 
 const HrBot: React.FC = () => {
-  const { currentUser } = useSelector((state: RootState) => state.aeonChat);
-  const [positions, setPositions] = useState<Position[]>([]);
+  const [positions] = useState<Position[]>([]);
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
   const [currentInterview, setCurrentInterview] = useState<Interview | null>(null);
   const [loading, setLoading] = useState(false);
