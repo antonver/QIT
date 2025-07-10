@@ -309,28 +309,8 @@ export const getCurrentUser = async (): Promise<AeonCurrentUser> => {
   } catch (error: any) {
     console.error('❌ Ошибка при получении данных пользователя:', error);
     
-    // Если нет данных Telegram, возвращаем базовую информацию
-    if (error.response?.status === 401) {
-      console.warn('⚠️ Нет данных Telegram - возвращаем базовую информацию');
-      const telegramUser = getTelegramUser();
-      if (telegramUser) {
-        return {
-          id: telegramUser.id,
-          telegram_id: telegramUser.id,
-          username: telegramUser.username,
-          first_name: telegramUser.first_name,
-          last_name: telegramUser.last_name,
-          language_code: telegramUser.language_code,
-          is_premium: telegramUser.is_premium || false,
-          is_admin: false,
-          is_active: true,
-          created_at: new Date().toISOString(),
-          subordinates: [],
-          managers: []
-        };
-      }
-    }
-    
+    // Не возвращаем fallback данные - пусть ошибка пробрасывается дальше
+    // для правильной обработки в компонентах
     throw error;
   }
 };
@@ -371,28 +351,8 @@ export const checkAndAcceptInvitations = async (): Promise<User> => {
   } catch (error: any) {
     console.error('❌ Ошибка при проверке приглашений:', error);
     
-    // Если нет данных Telegram, возвращаем базовую информацию
-    if (error.response?.status === 401) {
-      console.warn('⚠️ Нет данных Telegram - возвращаем базовую информацию');
-      const telegramUser = getTelegramUser();
-      if (telegramUser) {
-        return {
-          id: telegramUser.id,
-          telegram_id: telegramUser.id,
-          username: telegramUser.username,
-          first_name: telegramUser.first_name,
-          last_name: telegramUser.last_name,
-          language_code: telegramUser.language_code,
-          is_premium: telegramUser.is_premium || false,
-          is_admin: false,
-          is_active: true,
-          created_at: new Date().toISOString(),
-          subordinates: [],
-          managers: []
-        };
-      }
-    }
-    
+    // Не возвращаем fallback данные - пусть ошибка пробрасывается дальше
+    // для правильной обработки в компонентах
     throw error;
   }
 };

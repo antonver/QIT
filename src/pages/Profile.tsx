@@ -13,6 +13,7 @@ import {
   ListItemIcon,
   Paper,
   useTheme,
+  Alert,
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -53,8 +54,40 @@ const Profile: React.FC = () => {
 
   if (userError) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <Typography color="error">{userError}</Typography>
+      <Box sx={{
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        bgcolor: 'rgba(35, 43, 59, 0.95)',
+        p: 3,
+      }}>
+        <Alert severity="error" sx={{ mb: 3, maxWidth: '600px' }}>
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            🚫 Ошибка авторизации
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 2, fontWeight: 'bold' }}>
+            Проблема с авторизацией на сервере
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Сервер отклоняет авторизацию. Возможные причины:
+          </Typography>
+          <Typography variant="body2" component="ul" sx={{ pl: 2, mb: 2 }}>
+            <li>На сервере не настроен токен Telegram бота</li>
+            <li>Неправильный или истёкший токен бота</li>
+            <li>Проблема с подписью данных авторизации</li>
+            <li>Приложение запущено не из Telegram</li>
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            <strong>Что делать:</strong>
+          </Typography>
+          <Typography variant="body2" component="ul" sx={{ pl: 2, mb: 2 }}>
+            <li>Убедитесь, что приложение открыто из Telegram</li>
+            <li>Если вы администратор - проверьте настройки сервера</li>
+            <li>Если проблема повторяется - обратитесь в поддержку</li>
+          </Typography>
+        </Alert>
       </Box>
     );
   }
