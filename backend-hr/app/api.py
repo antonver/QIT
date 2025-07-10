@@ -44,14 +44,7 @@ async def get_current_user(request: Request):
     telegram_data = request.headers.get("x-telegram-init-data")
     
     if not telegram_data:
-        # Возвращаем базовую информацию для тестирования
-        return {
-            "id": 1,
-            "username": "test_user",
-            "first_name": "Test",
-            "last_name": "User",
-            "is_authenticated": False
-        }
+        raise HTTPException(status_code=401, detail="Telegram data not provided")
     
     try:
         # Парсим данные Telegram (упрощенная версия)
@@ -72,15 +65,9 @@ async def get_current_user(request: Request):
             }
     except Exception as e:
         print(f"Error parsing Telegram data: {e}")
+        raise HTTPException(status_code=400, detail="Invalid Telegram data")
     
-    # Fallback для ошибок парсинга
-    return {
-        "id": 1,
-        "username": "unknown_user",
-        "first_name": "Unknown",
-        "last_name": "User",
-        "is_authenticated": False
-    }
+    raise HTTPException(status_code=400, detail="Invalid Telegram data")
 
 @users_router.post("/check-invitations")
 async def check_invitations(request: Request):
@@ -89,26 +76,7 @@ async def check_invitations(request: Request):
     telegram_data = request.headers.get("x-telegram-init-data")
     
     if not telegram_data:
-        return {
-            "invitations": [],
-            "has_invitations": False,
-            "subordinates": [],
-            "managers": [],
-            "user": {
-                "id": 1,
-                "telegram_id": 123456789,
-                "username": "test_user",
-                "first_name": "Test",
-                "last_name": "User",
-                "is_authenticated": False,
-                "is_admin": False,
-                "is_premium": False,
-                "is_active": True,
-                "created_at": datetime.now(timezone.utc).isoformat(),
-                "subordinates": [],
-                "managers": []
-            }
-        }
+        raise HTTPException(status_code=401, detail="Telegram data not provided")
     
     try:
         # Парсим данные Telegram
@@ -145,27 +113,9 @@ async def check_invitations(request: Request):
             }
     except Exception as e:
         print(f"Error checking invitations: {e}")
+        raise HTTPException(status_code=400, detail="Invalid Telegram data")
     
-    return {
-        "invitations": [],
-        "has_invitations": False,
-        "subordinates": [],
-        "managers": [],
-        "user": {
-            "id": 1,
-            "telegram_id": 123456789,
-            "username": "unknown_user",
-            "first_name": "Unknown",
-            "last_name": "User",
-            "is_authenticated": False,
-            "is_admin": False,
-            "is_premium": False,
-            "is_active": True,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "subordinates": [],
-            "managers": []
-        }
-    }
+    raise HTTPException(status_code=400, detail="Invalid Telegram data")
 
 # Моковые данные теста на двух языках
 mock_test_ru = Test(
@@ -1219,14 +1169,7 @@ async def get_current_user_legacy(request: Request):
     telegram_data = request.headers.get("x-telegram-init-data")
     
     if not telegram_data:
-        # Возвращаем базовую информацию для тестирования
-        return {
-            "id": 1,
-            "username": "test_user",
-            "first_name": "Test",
-            "last_name": "User",
-            "is_authenticated": False
-        }
+        raise HTTPException(status_code=401, detail="Telegram data not provided")
     
     try:
         # Парсим данные Telegram (упрощенная версия)
@@ -1247,15 +1190,9 @@ async def get_current_user_legacy(request: Request):
             }
     except Exception as e:
         print(f"Error parsing Telegram data: {e}")
+        raise HTTPException(status_code=400, detail="Invalid Telegram data")
     
-    # Fallback для ошибок парсинга
-    return {
-        "id": 1,
-        "username": "unknown_user",
-        "first_name": "Unknown",
-        "last_name": "User",
-        "is_authenticated": False
-    }
+    raise HTTPException(status_code=400, detail="Invalid Telegram data")
 
 @router.post("/users/check-invitations")
 async def check_invitations_legacy(request: Request):
@@ -1264,26 +1201,7 @@ async def check_invitations_legacy(request: Request):
     telegram_data = request.headers.get("x-telegram-init-data")
     
     if not telegram_data:
-        return {
-            "invitations": [],
-            "has_invitations": False,
-            "subordinates": [],
-            "managers": [],
-            "user": {
-                "id": 1,
-                "telegram_id": 123456789,
-                "username": "test_user",
-                "first_name": "Test",
-                "last_name": "User",
-                "is_authenticated": False,
-                "is_admin": False,
-                "is_premium": False,
-                "is_active": True,
-                "created_at": datetime.now(timezone.utc).isoformat(),
-                "subordinates": [],
-                "managers": []
-            }
-        }
+        raise HTTPException(status_code=401, detail="Telegram data not provided")
     
     try:
         # Парсим данные Telegram
@@ -1320,27 +1238,9 @@ async def check_invitations_legacy(request: Request):
             }
     except Exception as e:
         print(f"Error checking invitations: {e}")
+        raise HTTPException(status_code=400, detail="Invalid Telegram data")
     
-    return {
-        "invitations": [],
-        "has_invitations": False,
-        "subordinates": [],
-        "managers": [],
-        "user": {
-            "id": 1,
-            "telegram_id": 123456789,
-            "username": "unknown_user",
-            "first_name": "Unknown",
-            "last_name": "User",
-            "is_authenticated": False,
-            "is_admin": False,
-            "is_premium": False,
-            "is_active": True,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "subordinates": [],
-            "managers": []
-        }
-    }
+    raise HTTPException(status_code=400, detail="Invalid Telegram data")
 
 # ===== ADMIN ENDPOINTS =====
 
