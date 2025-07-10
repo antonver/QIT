@@ -28,7 +28,8 @@ import { useTelegram } from '../hooks/useTelegram';
 
 // Lazy load страниц для лучшей производительности
 const Home = lazy(() => import('../pages/Home'));
-const HRBot = lazy(() => import('../pages/HRBot'));
+const HRBot = lazy(() => import('../pages/HrBot'));
+const AdminPanel = lazy(() => import('../pages/AdminPanel'));
 const HRBotPage = lazy(() => import('../pages/HRBotPage'));
 const TestPage = lazy(() => import('../pages/TestPage'));
 const AeonChat = lazy(() => import('../pages/AeonChat'));
@@ -41,14 +42,20 @@ const NAVIGATION = [
         title: '',
     },
     {
-        segment: 'hrbot-test',
+        segment: 'hrbot',
         title: 'HR Bot',
         icon: <SmartToyIcon sx={{ color: '#40C4FF' }} />,
     },
     {
+        segment: 'admin',
+        title: 'Admin',
+        icon: <PsychologyIcon sx={{ color: '#FF6B6B' }} />,
+        adminOnly: true,
+    },
+    {
         segment: 'aeon',
         title: 'ÆON',
-        icon: <PsychologyIcon sx={{ color: '#FF6B6B' }} />,
+        icon: <PsychologyIcon sx={{ color: '#4a9eff' }} />,
     },
     {
         segment: 'aeon-messenger',
@@ -113,7 +120,7 @@ const DashboardLayoutBasic = memo(() => {
         }}>
             {/* Основное меню */}
             <List sx={{ p: 0 }}>
-                {NAVIGATION.filter(item => item.segment).map((item) => (
+                {NAVIGATION.filter(item => item.segment && (!item.adminOnly || currentUser?.is_admin)).map((item) => (
                     <ListItem 
                         disablePadding 
                         sx={{ 
@@ -361,8 +368,9 @@ const DashboardLayoutBasic = memo(() => {
                     <LazyPageLoader>
                         <Routes>
                             <Route path="/" element={<Home />} />
-                            <Route path="/hrbot-test" element={<HRBotPage />} />
                             <Route path="/hrbot" element={<HRBot />} />
+                            <Route path="/admin" element={<AdminPanel />} />
+                            <Route path="/hrbot-test" element={<HRBotPage />} />
                             <Route path="/aeon" element={<AeonChat />} />
                             <Route path="/aeon-messenger" element={<AeonMessenger />} />
                             <Route path="/test" element={<TestPage />} />
