@@ -372,4 +372,15 @@ export const removeSubordinate = async (subordinateId: number): Promise<User> =>
     return response.data;
 };
 
+// Admin management API
+export const makeUserAdminByUsername = async (username: string): Promise<{message: string}> => {
+    const response = await api.post('/admin/users/make-admin-by-username', { username });
+    return response.data;
+};
+
+export const removeUserAdminByUsername = async (username: string): Promise<{message: string}> => {
+    const response = await api.post('/admin/users/remove-admin-by-username', { username });
+    return response.data;
+};
+
 export default api; 

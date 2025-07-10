@@ -37,9 +37,11 @@ import {
   Work as WorkIcon,
   Assessment as AssessmentIcon,
   People as PeopleIcon,
+  AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../store';
+import { makeUserAdminByUsername, removeUserAdminByUsername } from '../services/api';
 
 interface Position {
   id: number;
@@ -108,8 +110,11 @@ const AdminPanel: React.FC = () => {
   // Диалоги
   const [positionDialog, setPositionDialog] = useState(false);
   const [qualityDialog, setQualityDialog] = useState(false);
+  const [adminDialog, setAdminDialog] = useState(false);
   const [newPosition, setNewPosition] = useState({ title: '', description: '' });
   const [newQuality, setNewQuality] = useState({ name: '', description: '' });
+  const [newAdminUsername, setNewAdminUsername] = useState('');
+  const [adminMessage, setAdminMessage] = useState<{type: 'success' | 'error', message: string} | null>(null);
 
   // Проверяем права администратора
   if (!currentUser?.is_admin) {
@@ -148,6 +153,32 @@ const AdminPanel: React.FC = () => {
     }
   };
 
+  const handleMakeAdmin = async () => {
+    try {
+      if (!newAdminUsername.trim()) return;
+      
+      const username = newAdminUsername.trim().replace(/^@/, '');
+      await makeUserAdminByUsername(username);
+      
+      setAdminMessage({
+        type: 'success',
+        message: `Пользователь @${username} успешно назначен администратором!`
+      });
+      
+      setNewAdminUsername('');
+      setTimeout(() => {
+        setAdminDialog(false);
+        setAdminMessage(null);
+      }, 2000);
+    } catch (error) {
+      console.error('Error making user admin:', error);
+      setAdminMessage({
+        type: 'error',
+        message: 'Ошибка при назначении администратора. Проверьте username и попробуйте снова.'
+      });
+    }
+  };
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4 }}>
       <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
@@ -160,6 +191,7 @@ const AdminPanel: React.FC = () => {
           <Tab label="Качества" icon={<AssessmentIcon />} />
           <Tab label="Интервью" icon={<PersonIcon />} />
           <Tab label="Пользователи" icon={<PeopleIcon />} />
+          <Tab label="Админы" icon={<AdminIcon />} />
         </Tabs>
       </Box>
 
@@ -300,6 +332,49 @@ const AdminPanel: React.FC = () => {
         </Typography>
       </TabPanel>
 
+      {/* Админы */}
+      <TabPanel value={tabValue} index={4}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+          <Typography variant="h6">Управление администраторами</Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setAdminDialog(true)}
+          >
+            Назначить админа
+          </Button>
+        </Box>
+
+        {adminMessage && (
+          <Alert 
+            severity={adminMessage.type} 
+            sx={{ mb: 2 }}
+            onClose={() => setAdminMessage(null)}
+          >
+            {adminMessage.message}
+          </Alert>
+        )}
+
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Введите Telegram username пользователя (без @) для назначения администратором
+        </Typography>
+
+        <Paper sx={{ p: 2 }}>
+          <Typography variant="subtitle1" gutterBottom>
+            Пример использования:
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            • Введите "AntonioDaVinchi" для пользователя @AntonioDaVinchi
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+            • Или "antonver" для пользователя @antonver
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            • Пользователь получит права администратора при следующем входе в приложение
+          </Typography>
+        </Paper>
+      </TabPanel>
+
       {/* Диалог создания позиции */}
       <Dialog open={positionDialog} onClose={() => setPositionDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Создать новую позицию</DialogTitle>
@@ -362,6 +437,38 @@ const AdminPanel: React.FC = () => {
           <Button onClick={() => setQualityDialog(false)}>Отмена</Button>
           <Button onClick={handleCreateQuality} variant="contained">
             Создать
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Диалог назначения админа */}
+      <Dialog open={adminDialog} onClose={() => setAdminDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Назначить администратора</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Telegram username"
+            placeholder="AntonioDaVinchi"
+            fullWidth
+            variant="outlined"
+            value={newAdminUsername}
+            onChange={(e) => setNewAdminUsername(e.target.value)}
+            helperText="Введите username без символа @"
+            sx={{ mb: 2 }}
+          />
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Пользователь получит права администратора при следующем входе в приложение
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAdminDialog(false)}>Отмена</Button>
+          <Button 
+            onClick={handleMakeAdmin} 
+            variant="contained"
+            disabled={!newAdminUsername.trim()}
+          >
+            Назначить
           </Button>
         </DialogActions>
       </Dialog>
