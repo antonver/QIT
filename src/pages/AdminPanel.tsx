@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -21,7 +21,6 @@ import {
   Chip,
   Divider,
   Alert,
-  CircularProgress,
   Tabs,
   Tab,
   Table,
@@ -103,11 +102,9 @@ function TabPanel(props: TabPanelProps) {
 const AdminPanel: React.FC = () => {
   const { currentUser } = useSelector((state: RootState) => state.aeonChat);
   const [tabValue, setTabValue] = useState(0);
-  const [positions, setPositions] = useState<Position[]>([]);
-  const [qualities, setQualities] = useState<Quality[]>([]);
-  const [interviews, setInterviews] = useState<Interview[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [positions] = useState<Position[]>([]);
+  const [qualities] = useState<Quality[]>([]);
+  const [interviews] = useState<Interview[]>([]);
 
   // Диалоги
   const [positionDialog, setPositionDialog] = useState(false);
@@ -126,7 +123,7 @@ const AdminPanel: React.FC = () => {
     );
   }
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
@@ -180,9 +177,9 @@ const AdminPanel: React.FC = () => {
           </Button>
         </Box>
 
-        <Grid container spacing={2}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
           {positions.map((position) => (
-            <Grid item xs={12} md={6} key={position.id}>
+            <Box key={position.id} sx={{ width: { xs: '100%', md: 'calc(50% - 8px)' } }}>
               <Card>
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -208,9 +205,9 @@ const AdminPanel: React.FC = () => {
                   </Box>
                 </CardContent>
               </Card>
-            </Grid>
+            </Box>
           ))}
-        </Grid>
+        </Box>
       </TabPanel>
 
       {/* Качества */}

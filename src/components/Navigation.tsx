@@ -28,7 +28,7 @@ import { useTelegram } from '../hooks/useTelegram';
 
 // Lazy load страниц для лучшей производительности
 const Home = lazy(() => import('../pages/Home'));
-const HRBot = lazy(() => import('../pages/HrBot'));
+const HRBot = lazy(() => import('../pages/HRBot'));
 const AdminPanel = lazy(() => import('../pages/AdminPanel'));
 const HRBotPage = lazy(() => import('../pages/HRBotPage'));
 const TestPage = lazy(() => import('../pages/TestPage'));
