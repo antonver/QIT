@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Typography, Button, Alert, CircularProgress } from '@mui/material';
-import { getCurrentUser, healthCheck } from '../services/aeonMessengerApi';
+import { healthCheck } from '../services/aeonMessengerApi';
 
 const CorsTest: React.FC = () => {
   const [loading, setLoading] = useState(false);
