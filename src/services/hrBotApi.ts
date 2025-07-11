@@ -1,5 +1,5 @@
 // API сервис для HRBot
-const API_BASE_URL = 'https://aeon-hr-fixed-backend-540e49434c71.herokuapp.com';
+const API_BASE_URL = 'https://aeon-backend-2892-d50dfbe26b14.herokuapp.com';
 
 export interface SessionResponse {
   token: string;
