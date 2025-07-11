@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 interface AeonBadgeProps {
   score: number;
 }
-
+//lol
 const AeonBadge: React.FC<AeonBadgeProps> = ({ score }) => {
   // Determine badge properties based on score
   const getBadgeConfig = (score: number) => {
