@@ -931,7 +931,7 @@ const AdminPanel: React.FC = () => {
               )}
               <Divider sx={{ my: 2 }} />
               <Typography variant="subtitle2" gutterBottom>
-                Ответы (отладка: {JSON.stringify(selectedInterview.answers)}):
+                Ответы:
               </Typography>
               {selectedInterview.questions?.map((q, idx) => {
                 const answer = selectedInterview.answers?.[String(idx)];
@@ -954,7 +954,7 @@ const AdminPanel: React.FC = () => {
                           {answer}
                         </Box>
                       ) : (
-                        <i>Нет ответа (индекс: {idx})</i>
+                        <i>Нет ответа</i>
                       )}
                     </Typography>
                   </Box>
