@@ -196,9 +196,11 @@ const AdminPanel: React.FC = () => {
   };
 
   const handleOpenEditPosition = (position: Position) => {
-    console.log('Opening edit position:', position);
-    console.log('Position qualities:', position.qualities);
-    setEditingPosition(position);
+    // Сопоставляем объекты качеств из общего списка по id
+    const fullQualities = (position.qualities || []).map(q =>
+      qualities.find(qual => qual.id === q.id) || q
+    );
+    setEditingPosition({ ...position, qualities: fullQualities });
     setPositionEditDialog(true);
   };
 
@@ -275,6 +277,12 @@ const AdminPanel: React.FC = () => {
         ]);
         console.log('Loaded qualities:', qualitiesData);
         console.log('Loaded positions:', positionsData);
+        console.log('Positions with qualities details:', positionsData.map(p => ({
+          id: p.id,
+          title: p.title,
+          qualities: p.qualities,
+          qualitiesCount: p.qualities?.length || 0
+        })));
         setQualities(qualitiesData);
         setPositions(positionsData);
       } catch (error) {
@@ -343,7 +351,13 @@ const AdminPanel: React.FC = () => {
         </Box>
 
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-          {positions.map((position) => (
+          {positions.map((position) => {
+            console.log(`Rendering position ${position.id} (${position.title}):`, {
+              qualities: position.qualities,
+              qualitiesLength: position.qualities?.length || 0,
+              hasQualities: Boolean(position.qualities && position.qualities.length > 0)
+            });
+            return (
             <Box key={position.id} sx={{ width: { xs: '100%', md: 'calc(50% - 8px)' } }}>
               <Card>
                 <CardContent>
@@ -395,7 +409,7 @@ const AdminPanel: React.FC = () => {
                 </CardContent>
               </Card>
             </Box>
-          ))}
+          )})}
         </Box>
       </TabPanel>
 
