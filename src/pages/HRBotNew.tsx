@@ -23,16 +23,6 @@ import {
 import {
   Work as WorkIcon,
   QuestionAnswer as QuestionIcon,
-  Assessment as AssessmentIcon,
-  EmojiEvents as TrophyIcon,
-  Psychology as PsychologyIcon,
-  TrendingUp as TrendingUpIcon,
-  Lightbulb as LightbulbIcon,
-  Group as GroupIcon,
-  Speed as SpeedIcon,
-  Security as SecurityIcon,
-  School as SchoolIcon,
-  Star as StarIcon,
   ArrowBack as ArrowBackIcon,
   Refresh as RefreshIcon,
   Timer as TimerIcon

@@ -9,10 +9,6 @@ import {
   Stepper,
   Step,
   StepLabel,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   TextField,
   Chip,
   Alert,
@@ -21,20 +17,9 @@ import {
   Avatar,
   Divider
 } from '@mui/material';
-import Grid from '@mui/material/Grid';
 import {
   Work as WorkIcon,
-  QuestionAnswer as QuestionIcon,
-  Assessment as AssessmentIcon,
-  EmojiEvents as TrophyIcon,
-  Psychology as PsychologyIcon,
-  TrendingUp as TrendingUpIcon,
-  Lightbulb as LightbulbIcon,
-  Group as GroupIcon,
-  Speed as SpeedIcon,
-  Security as SecurityIcon,
-  School as SchoolIcon,
-  Star as StarIcon
+  QuestionAnswer as QuestionIcon
 } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../store';
