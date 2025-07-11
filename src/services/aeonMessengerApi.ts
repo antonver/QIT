@@ -475,7 +475,7 @@ export const makeUserAdminByUsername = async (username: string): Promise<{messag
 export const getHrPositions = async (): Promise<{ id: number; title: string; qualities: any[]; is_active: boolean; created_at: string }[]> => {
   console.log('Вызываем getHrPositions...');
   try {
-    const response = await aeonApi.get('/api/v1/hr/positions');
+    const response = await aeonApi.get('/api/v1/hr/positions/public');
     console.log('Ответ от сервера:', response.data);
     return response.data;
   } catch (error) {
