@@ -931,7 +931,7 @@ const AdminPanel: React.FC = () => {
               )}
               <Divider sx={{ my: 2 }} />
               <Typography variant="subtitle2" gutterBottom>
-                Ответы:
+                Ответы (отладка: {JSON.stringify(selectedInterview.answers)}):
               </Typography>
               {selectedInterview.questions?.map((q, idx) => {
                 const answer = selectedInterview.answers?.[String(idx)];
@@ -954,7 +954,7 @@ const AdminPanel: React.FC = () => {
                           {answer}
                         </Box>
                       ) : (
-                        <i>Нет ответа</i>
+                        <i>Нет ответа (индекс: {idx})</i>
                       )}
                     </Typography>
                   </Box>
@@ -965,13 +965,13 @@ const AdminPanel: React.FC = () => {
                 Анализ результатов:
               </Typography>
               <Box sx={{ p: 2, bgcolor: '#f8f9fa', borderRadius: 1 }}>
-                <Typography variant="body2" gutterBottom>
+                <Typography variant="body2" color="text.primary" gutterBottom>
                   <strong>Общий результат:</strong> {selectedInterview.score !== undefined ? `${selectedInterview.score}/${selectedInterview.max_score} (${Math.round((selectedInterview.score / selectedInterview.max_score) * 100)}%)` : 'Не оценено'}
                 </Typography>
-                <Typography variant="body2" gutterBottom>
+                <Typography variant="body2" color="text.primary" gutterBottom>
                   <strong>Статус:</strong> {selectedInterview.status === 'completed' ? 'Интервью завершено' : 'Интервью в процессе'}
                 </Typography>
-                <Typography variant="body2" gutterBottom>
+                <Typography variant="body2" color="text.primary" gutterBottom>
                   <strong>Количество ответов:</strong> {Object.keys(selectedInterview.answers || {}).length} из {selectedInterview.questions?.length || 0}
                 </Typography>
                 {selectedInterview.score !== undefined && (
