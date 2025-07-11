@@ -262,90 +262,150 @@ const HrBot: React.FC = () => {
 
       {/* Шаг 1: Выбор позиции */}
       {activeStep === 0 && (
-        <Box>
-          <Typography variant="h5" gutterBottom align="center" sx={{ mb: 3 }}>
-            Выберите позицию для интервью
-          </Typography>
-          
-          {loading ? (
-            <Box display="flex" justifyContent="center" sx={{ mt: 4 }}>
-              <CircularProgress />
-            </Box>
-          ) : positions.length === 0 ? (
-            <Box textAlign="center" sx={{ py: 4 }}>
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                Нет доступных позиций
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Обратитесь к администратору для добавления позиций
-              </Typography>
-            </Box>
-          ) : (
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 3 }}>
-              {positions.map((position) => (
-                <Card 
-                  key={position.id}
-                  elevation={3}
-                  sx={{ 
-                    height: '100%',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: 6
-                    }
-                  }}
-                  onClick={() => handlePositionSelect(position)}
-                >
-                  <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                    <Avatar 
-                      sx={{ 
-                        width: 60, 
-                        height: 60, 
-                        mx: 'auto', 
-                        mb: 2,
-                        bgcolor: 'primary.main'
+        <Box sx={{
+          minHeight: '100vh',
+          bgcolor: '#181820',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          px: 2
+        }}>
+          <Box sx={{
+            width: '100%',
+            maxWidth: 420,
+            bgcolor: 'rgba(35, 43, 59, 0.95)',
+            borderRadius: 4,
+            p: { xs: 3, sm: 5 },
+            boxShadow: 'none',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            border: '2px solid #7C3AED',
+            mb: 4
+          }}>
+            <Typography variant="h4" align="center" sx={{
+              color: 'white',
+              fontWeight: 700,
+              mb: 3,
+              letterSpacing: 0.5
+            }}>
+              Выберите вакансию
+            </Typography>
+            {loading ? (
+              <Box display="flex" justifyContent="center" sx={{ mt: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : positions.length === 0 ? (
+              <Box textAlign="center" sx={{ py: 4 }}>
+                <Typography variant="h6" color="#B0B0C3" gutterBottom>
+                  Нет доступных позиций
+                </Typography>
+                <Typography variant="body2" color="#B0B0C3">
+                  Обратитесь к администратору для добавления позиций
+                </Typography>
+              </Box>
+            ) : (
+              <>
+                <Box sx={{ width: '100%', mb: 4 }}>
+                  <Box sx={{ mb: 1 }}>
+                    <Typography variant="body1" sx={{ color: 'white', fontWeight: 500, mb: 1 }}>
+                      Должность
+                    </Typography>
+                  </Box>
+                  <Box sx={{
+                    position: 'relative',
+                    borderRadius: 2,
+                    border: '2px solid #7C3AED',
+                    bgcolor: '#232B3B',
+                    mb: 2,
+                    overflow: 'hidden',
+                  }}>
+                    <select
+                      value={selectedPosition ? selectedPosition.id : ''}
+                      onChange={e => {
+                        const pos = positions.find(p => p.id === Number(e.target.value));
+                        setSelectedPosition(pos || null);
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '18px 16px',
+                        border: 'none',
+                        background: 'transparent',
+                        color: 'white',
+                        fontSize: '1.15rem',
+                        fontWeight: 600,
+                        outline: 'none',
+                        appearance: 'none',
+                        borderRadius: '12px',
+                        cursor: 'pointer',
+                        boxShadow: 'none',
                       }}
                     >
-                      <WorkIcon />
-                    </Avatar>
-                    
-                    <Typography variant="h6" gutterBottom>
-                      {position.title}
-                    </Typography>
-                    
-                    {position.qualities && position.qualities.length > 0 && (
-                      <Box sx={{ mt: 2 }}>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
-                          Ключевые качества:
-                        </Typography>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, justifyContent: 'center' }}>
-                          {position.qualities.map((quality) => (
-                            <Chip
-                              key={quality.id}
-                              label={quality.name}
-                              size="small"
-                              variant="outlined"
-                              sx={{ fontSize: '0.7rem' }}
-                            />
-                          ))}
-                        </Box>
-                      </Box>
-                    )}
-                    
-                    <Button
-                      variant="contained"
-                      fullWidth
-                      startIcon={<QuestionIcon />}
-                      sx={{ mt: 2 }}
-                    >
-                      Начать интервью
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </Box>
-          )}
+                      <option value="" disabled>Выберите...</option>
+                      {positions.map(position => (
+                        <option key={position.id} value={position.id} style={{ color: '#232B3B', background: 'white', fontWeight: 500 }}>
+                          {position.title}
+                        </option>
+                      ))}
+                    </select>
+                    {/* Кастомная стрелка */}
+                    <Box sx={{
+                      position: 'absolute',
+                      right: 18,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      pointerEvents: 'none',
+                      color: '#7C3AED',
+                      fontSize: 24
+                    }}>
+                      ▼
+                    </Box>
+                  </Box>
+                  {selectedPosition && selectedPosition.qualities && selectedPosition.qualities.length > 0 && (
+                    <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selectedPosition.qualities.map(quality => (
+                        <Chip
+                          key={quality.id}
+                          label={quality.name}
+                          size="small"
+                          variant="outlined"
+                          sx={{ fontSize: '0.8rem', bgcolor: '#232B3B', color: 'white', borderColor: '#7C3AED', fontWeight: 500 }}
+                        />
+                      ))}
+                    </Box>
+                  )}
+                </Box>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  disabled={!selectedPosition}
+                  startIcon={<QuestionIcon />}
+                  sx={{
+                    mt: 2,
+                    background: 'linear-gradient(90deg, #7C3AED 0%, #8B5CF6 100%)',
+                    color: 'white',
+                    fontWeight: 700,
+                    fontSize: '1.15rem',
+                    borderRadius: '16px',
+                    py: 2,
+                    boxShadow: 'none',
+                    textTransform: 'none',
+                    letterSpacing: 0.5,
+                    transition: 'all 0.2s',
+                    '&:hover': {
+                      background: 'linear-gradient(90deg, #6D28D9 0%, #7C3AED 100%)',
+                      boxShadow: '0 6px 32px rgba(139, 92, 246, 0.22)',
+                      transform: 'translateY(-2px)'
+                    }
+                  }}
+                  onClick={() => selectedPosition && handlePositionSelect(selectedPosition)}
+                >
+                  Начать интервью
+                </Button>
+              </>
+            )}
+          </Box>
         </Box>
       )}
 

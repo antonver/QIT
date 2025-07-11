@@ -320,7 +320,7 @@ def _save_session_in_memory(token: str, session_state: SessionState):
 def check_database_connection():
     """Проверяет подключение к базе данных"""
     try:
-        from app.models import SessionLocal
+        from app.db_models import SessionLocal
         from sqlalchemy import text
         db = SessionLocal()
         result = db.execute(text("SELECT 1"))
@@ -358,7 +358,7 @@ def save_session_to_db(token: str, session_state: SessionState):
     _save_session_in_memory(token, session_state)
     
     try:
-        from app.models import SessionLocal, Session
+        from app.db_models import SessionLocal, Session
         import json
         
         print(f"DEBUG: Attempting to save session {token} to PostgreSQL...")
@@ -419,7 +419,7 @@ def load_session_from_db(token: str) -> SessionState:
         return session_state
         
     try:
-        from app.models import SessionLocal, Session
+        from app.db_models import SessionLocal, Session
         import json
         
         print(f"DEBUG: Attempting to load session {token} from PostgreSQL...")
