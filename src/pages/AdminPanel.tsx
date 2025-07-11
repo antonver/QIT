@@ -924,18 +924,66 @@ const AdminPanel: React.FC = () => {
               <Typography variant="body2" gutterBottom>
                 Балл: {selectedInterview.score}/{selectedInterview.max_score}
               </Typography>
+              {selectedInterview.score !== undefined && (
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Процент: {Math.round((selectedInterview.score / selectedInterview.max_score) * 100)}%
+                </Typography>
+              )}
               <Divider sx={{ my: 2 }} />
               <Typography variant="subtitle2" gutterBottom>
                 Ответы:
               </Typography>
-              {selectedInterview.questions?.map((q, idx) => (
-                <Box key={q.id} sx={{ mb: 2 }}>
-                  <Typography variant="body2" fontWeight="bold">{idx + 1}. {q.text}</Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Ответ: {selectedInterview.answers?.[String(idx)] || <i>Нет ответа</i>}
+              {selectedInterview.questions?.map((q, idx) => {
+                const answer = selectedInterview.answers?.[String(idx)];
+                return (
+                  <Box key={q.id} sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
+                    <Typography variant="body2" fontWeight="bold" gutterBottom>
+                      {idx + 1}. {q.text}
+                    </Typography>
+                    {q.category && (
+                      <Chip 
+                        label={q.category} 
+                        size="small" 
+                        variant="outlined" 
+                        sx={{ mb: 1 }}
+                      />
+                    )}
+                    <Typography variant="body2" color="text.secondary">
+                      {answer ? (
+                        <Box sx={{ mt: 1, p: 1, bgcolor: '#f5f5f5', borderRadius: 1 }}>
+                          {answer}
+                        </Box>
+                      ) : (
+                        <i>Нет ответа</i>
+                      )}
+                    </Typography>
+                  </Box>
+                );
+              })}
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="subtitle2" gutterBottom>
+                Анализ результатов:
+              </Typography>
+              <Box sx={{ p: 2, bgcolor: '#f8f9fa', borderRadius: 1 }}>
+                <Typography variant="body2" gutterBottom>
+                  <strong>Общий результат:</strong> {selectedInterview.score !== undefined ? `${selectedInterview.score}/${selectedInterview.max_score} (${Math.round((selectedInterview.score / selectedInterview.max_score) * 100)}%)` : 'Не оценено'}
+                </Typography>
+                <Typography variant="body2" gutterBottom>
+                  <strong>Статус:</strong> {selectedInterview.status === 'completed' ? 'Интервью завершено' : 'Интервью в процессе'}
+                </Typography>
+                <Typography variant="body2" gutterBottom>
+                  <strong>Количество ответов:</strong> {Object.keys(selectedInterview.answers || {}).length} из {selectedInterview.questions?.length || 0}
+                </Typography>
+                {selectedInterview.score !== undefined && (
+                  <Typography variant="body2" color={selectedInterview.score >= 70 ? 'success.main' : selectedInterview.score >= 50 ? 'warning.main' : 'error.main'}>
+                    <strong>Рекомендация:</strong> {
+                      selectedInterview.score >= 70 ? 'Кандидат подходит для позиции' :
+                      selectedInterview.score >= 50 ? 'Кандидат требует дополнительного рассмотрения' :
+                      'Кандидат не подходит для позиции'
+                    }
                   </Typography>
-                </Box>
-              ))}
+                )}
+              </Box>
             </Box>
           )}
         </DialogContent>
