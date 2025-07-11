@@ -9,19 +9,17 @@ import {
   Stepper,
   Step,
   StepLabel,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   TextField,
   Chip,
   Alert,
   CircularProgress,
   Paper,
   Avatar,
-  Divider
+  Divider,
+  LinearProgress,
+  IconButton,
+  Tooltip
 } from '@mui/material';
-import Grid from '@mui/material/Grid';
 import {
   Work as WorkIcon,
   QuestionAnswer as QuestionIcon,
@@ -34,7 +32,10 @@ import {
   Speed as SpeedIcon,
   Security as SecurityIcon,
   School as SchoolIcon,
-  Star as StarIcon
+  Star as StarIcon,
+  ArrowBack as ArrowBackIcon,
+  Refresh as RefreshIcon,
+  Timer as TimerIcon
 } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../store';
@@ -80,7 +81,7 @@ interface AnalysisResult {
   recommendations: string[];
 }
 
-const HrBot: React.FC = () => {
+const HRBotNew: React.FC = () => {
   const { currentUser } = useSelector((state: RootState) => state.aeonChat);
   const [positions, setPositions] = useState<Position[]>([]);
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
@@ -91,6 +92,26 @@ const HrBot: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [activeStep, setActiveStep] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(90); // 90 секунд на вопрос
+  const [timerActive, setTimerActive] = useState(false);
+
+  // Таймер для вопросов
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (timerActive && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            setTimerActive(false);
+            handleAnswerSubmit(); // Автоотправка ответа
+            return 90;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timerActive, timeLeft]);
 
   // Загрузка позиций при монтировании
   useEffect(() => {
@@ -98,7 +119,6 @@ const HrBot: React.FC = () => {
       try {
         setLoading(true);
         console.log('Загружаем позиции...');
-        console.log('Текущий пользователь:', currentUser);
         const positionsData = await getHrPositions();
         console.log('Полученные позиции:', positionsData);
         setPositions(positionsData.filter(p => p.is_active));
@@ -128,6 +148,8 @@ const HrBot: React.FC = () => {
       setActiveStep(1);
       setCurrentQuestionIndex(0);
       setAnswer('');
+      setTimeLeft(90);
+      setTimerActive(true);
     } catch (error) {
       console.error('Error creating interview:', error);
       setError('Ошибка при создании интервью');
@@ -141,6 +163,7 @@ const HrBot: React.FC = () => {
 
     try {
       setLoading(true);
+      setTimerActive(false);
       
       // Сохраняем ответ
       await submitAnswer(currentInterview.id, currentQuestionIndex, answer);
@@ -158,6 +181,8 @@ const HrBot: React.FC = () => {
       if (currentQuestionIndex < currentInterview.questions.length - 1) {
         setCurrentQuestionIndex(prev => prev + 1);
         setAnswer('');
+        setTimeLeft(90);
+        setTimerActive(true);
       } else {
         // Завершаем интервью
         const result = await completeInterview(currentInterview.id);
@@ -180,6 +205,20 @@ const HrBot: React.FC = () => {
     }
   };
 
+  const handleRefreshPositions = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const positionsData = await getHrPositions();
+      setPositions(positionsData.filter(p => p.is_active));
+    } catch (error) {
+      console.error('Error refreshing positions:', error);
+      setError('Ошибка при обновлении списка позиций');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getGlyphForPosition = (positionTitle: string): string => {
     const glyphMap: { [key: string]: string } = {
       'Frontend Developer': '🎨',
@@ -189,7 +228,11 @@ const HrBot: React.FC = () => {
       'Data Scientist': '📊',
       'Product Manager': '📋',
       'UI/UX Designer': '🎭',
-      'QA Engineer': '🔍'
+      'QA Engineer': '🔍',
+      'Mobile Developer': '📱',
+      'System Administrator': '🖥️',
+      'Network Engineer': '🌐',
+      'Security Engineer': '🔒'
     };
     return glyphMap[positionTitle] || '💼';
   };
@@ -241,6 +284,14 @@ const HrBot: React.FC = () => {
     setAnalysisResult(null);
     setActiveStep(0);
     setError(null);
+    setTimeLeft(90);
+    setTimerActive(false);
+  };
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const steps = ['Выбор позиции', 'Интервью', 'Результаты'];
@@ -256,7 +307,7 @@ const HrBot: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 4 }}>
       <Typography variant="h4" gutterBottom align="center" sx={{ mb: 4 }}>
         🤖 HR Bot - Умное интервью
       </Typography>
@@ -278,12 +329,19 @@ const HrBot: React.FC = () => {
       {/* Шаг 1: Выбор позиции */}
       {activeStep === 0 && (
         <Box>
-          <Typography variant="h5" gutterBottom align="center" sx={{ mb: 3 }}>
-            Выберите позицию для интервью
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h5" gutterBottom>
+              Выберите позицию для интервью
+            </Typography>
+            <Tooltip title="Обновить список позиций">
+              <IconButton onClick={handleRefreshPositions} disabled={loading}>
+                <RefreshIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
           
           {loading ? (
-            <Box display="flex" justifyContent="center" sx={{ mt: 4 }}>
+            <Box display="flex" justifyContent="center" sx={{ py: 4 }}>
               <CircularProgress />
             </Box>
           ) : positions.length === 0 ? (
@@ -367,19 +425,41 @@ const HrBot: React.FC = () => {
       {/* Шаг 2: Интервью */}
       {activeStep === 1 && currentInterview && selectedPosition && (
         <Box>
-          <Typography variant="h5" gutterBottom align="center" sx={{ mb: 3 }}>
-            Интервью: {selectedPosition.title}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+            <IconButton onClick={() => setActiveStep(0)} sx={{ mr: 2 }}>
+              <ArrowBackIcon />
+            </IconButton>
+            <Typography variant="h5" gutterBottom>
+              Интервью: {selectedPosition.title}
+            </Typography>
+          </Box>
           
           <Paper sx={{ p: 3, mb: 3 }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-              <Typography variant="body2" color="text.secondary">
-                Вопрос {currentQuestionIndex + 1} из {currentInterview.questions.length}
-              </Typography>
-              <Chip 
-                label={`${Math.round(((currentQuestionIndex + 1) / currentInterview.questions.length) * 100)}%`}
-                color="primary"
-                size="small"
+            {/* Прогресс и таймер */}
+            <Box sx={{ mb: 3 }}>
+              <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  Вопрос {currentQuestionIndex + 1} из {currentInterview.questions.length}
+                </Typography>
+                <Box display="flex" alignItems="center" gap={1}>
+                  <TimerIcon color="primary" />
+                  <Typography variant="body2" color={timeLeft < 30 ? 'error' : 'text.secondary'}>
+                    {formatTime(timeLeft)}
+                  </Typography>
+                </Box>
+              </Box>
+              
+              <LinearProgress 
+                variant="determinate" 
+                value={((currentQuestionIndex + 1) / currentInterview.questions.length) * 100}
+                sx={{ mb: 1 }}
+              />
+              
+              <LinearProgress 
+                variant="determinate" 
+                value={(timeLeft / 90) * 100}
+                color={timeLeft < 30 ? 'error' : 'primary'}
+                sx={{ height: 4 }}
               />
             </Box>
             
@@ -390,12 +470,12 @@ const HrBot: React.FC = () => {
             <TextField
               fullWidth
               multiline
-              rows={4}
+              rows={6}
               variant="outlined"
               placeholder="Введите ваш ответ..."
               value={answer}
               onChange={(e) => setAnswer(e.target.value)}
-              sx={{ mb: 2 }}
+              sx={{ mb: 3 }}
             />
             
             <Box display="flex" justifyContent="space-between">
@@ -403,6 +483,7 @@ const HrBot: React.FC = () => {
                 variant="outlined"
                 onClick={() => setActiveStep(0)}
                 disabled={loading}
+                startIcon={<ArrowBackIcon />}
               >
                 Назад
               </Button>
@@ -495,4 +576,4 @@ const HrBot: React.FC = () => {
   );
 };
 
-export default HrBot; 
+export default HRBotNew; 
