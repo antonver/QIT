@@ -515,6 +515,83 @@ export const makeUserAdminByUsername = async (username: string): Promise<{messag
   return response.data;
 };
 
+// Admin Interview Results API functions
+export const getAllInterviews = async (): Promise<{
+  id: number;
+  position_id: number;
+  user_id: number;
+  status: 'in_progress' | 'completed';
+  score?: number;
+  max_score: number;
+  answers: { [key: string]: string };
+  questions: Array<{
+    id: number;
+    text: string;
+    type: 'text' | 'scale' | 'choice';
+    category?: string;
+  }>;
+  started_at: string;
+  completed_at?: string;
+  user?: {
+    id: number;
+    telegram_id: number;
+    username?: string;
+    first_name: string;
+    last_name?: string;
+  };
+  position?: {
+    id: number;
+    title: string;
+  };
+}[]> => {
+  try {
+    const response = await aeonApi.get('/api/v1/admin/interviews');
+    console.log('✅ Получены все интервью:', response.data.length);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Ошибка при получении интервью:', error);
+    throw error;
+  }
+};
+
+export const getInterviewDetails = async (interviewId: number): Promise<{
+  id: number;
+  position_id: number;
+  user_id: number;
+  status: 'in_progress' | 'completed';
+  score?: number;
+  max_score: number;
+  answers: { [key: string]: string };
+  questions: Array<{
+    id: number;
+    text: string;
+    type: 'text' | 'scale' | 'choice';
+    category?: string;
+  }>;
+  started_at: string;
+  completed_at?: string;
+  user?: {
+    id: number;
+    telegram_id: number;
+    username?: string;
+    first_name: string;
+    last_name?: string;
+  };
+  position?: {
+    id: number;
+    title: string;
+  };
+}> => {
+  try {
+    const response = await aeonApi.get(`/api/v1/admin/interviews/${interviewId}`);
+    console.log('✅ Получены детали интервью:', interviewId);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Ошибка при получении деталей интервью:', error);
+    throw error;
+  }
+};
+
 // HR Interview API functions
 export const getHrPositions = async (): Promise<{ id: number; title: string; qualities: any[]; is_active: boolean; created_at: string }[]> => {
   console.log('Вызываем getHrPositions...');

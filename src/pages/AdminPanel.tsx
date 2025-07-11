@@ -43,7 +43,7 @@ import {
 import { Checkbox, FormControlLabel } from '@mui/material';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../store';
-import { makeUserAdminByUsername, createQuality, createPosition, getQualities, getPositions, updateQuality, deleteQuality, updatePosition, deletePosition } from '../services/aeonMessengerApi';
+import { makeUserAdminByUsername, createQuality, createPosition, getQualities, getPositions, updateQuality, deleteQuality, updatePosition, deletePosition, getAllInterviews } from '../services/aeonMessengerApi';
 
 interface Position {
   id: number;
@@ -67,13 +67,21 @@ interface Interview {
   max_score: number;
   started_at: string;
   completed_at?: string;
-  user: {
+  answers: { [key: string]: string };
+  questions: Array<{
     id: number;
+    text: string;
+    type: 'text' | 'scale' | 'choice';
+    category?: string;
+  }>;
+  user?: {
+    id: number;
+    telegram_id: number;
     first_name: string;
     last_name?: string;
     username?: string;
   };
-  position: {
+  position?: {
     id: number;
     title: string;
   };
@@ -106,7 +114,7 @@ const AdminPanel: React.FC = () => {
   const [tabValue, setTabValue] = useState(0);
   const [positions, setPositions] = useState<Position[]>([]);
   const [qualities, setQualities] = useState<Quality[]>([]);
-  const [interviews] = useState<Interview[]>([]);
+  const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(false);
 
   // Диалоги
@@ -305,12 +313,14 @@ const AdminPanel: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [qualitiesData, positionsData] = await Promise.all([
+      const [qualitiesData, positionsData, interviewsData] = await Promise.all([
         getQualities(),
-        getPositions()
+        getPositions(),
+        getAllInterviews()
       ]);
       console.log('Loaded qualities:', qualitiesData);
       console.log('Loaded positions:', positionsData);
+      console.log('Loaded interviews:', interviewsData);
       console.log('Positions with qualities details:', positionsData.map(p => ({
         id: p.id,
         title: p.title,
@@ -319,6 +329,7 @@ const AdminPanel: React.FC = () => {
       })));
       setQualities(qualitiesData);
       setPositions(positionsData);
+      setInterviews(interviewsData);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -515,47 +526,108 @@ const AdminPanel: React.FC = () => {
 
       {/* Интервью */}
       <TabPanel value={tabValue} index={2}>
-        <Typography variant="h6" sx={{ mb: 2 }}>
-          Результаты интервью
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+          <Typography variant="h6">Результаты интервью</Typography>
+          <Button
+            variant="outlined"
+            startIcon={<RefreshIcon />}
+            onClick={loadData}
+            disabled={loading}
+          >
+            Обновить
+          </Button>
+        </Box>
 
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Кандидат</TableCell>
-                <TableCell>Позиция</TableCell>
-                <TableCell>Статус</TableCell>
-                <TableCell>Балл</TableCell>
-                <TableCell>Дата</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {interviews.map((interview) => (
-                <TableRow key={interview.id}>
-                  <TableCell>
-                    {interview.user.first_name} {interview.user.last_name}
-                    {interview.user.username && ` (@${interview.user.username})`}
-                  </TableCell>
-                  <TableCell>{interview.position.title}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={interview.status === 'completed' ? 'Завершено' : 'В процессе'}
-                      color={interview.status === 'completed' ? 'success' : 'warning'}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {interview.score ? `${interview.score}/${interview.max_score}` : '-'}
-                  </TableCell>
-                  <TableCell>
-                    {new Date(interview.started_at).toLocaleDateString('ru-RU')}
-                  </TableCell>
+        {interviews.length === 0 ? (
+          <Alert severity="info">
+            Пока нет результатов интервью
+          </Alert>
+        ) : (
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Кандидат</TableCell>
+                  <TableCell>Позиция</TableCell>
+                  <TableCell>Статус</TableCell>
+                  <TableCell>Балл</TableCell>
+                  <TableCell>Ответов</TableCell>
+                  <TableCell>Дата начала</TableCell>
+                  <TableCell>Действия</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {interviews.map((interview) => (
+                  <TableRow key={interview.id}>
+                    <TableCell>
+                      <Box>
+                        <Typography variant="body2" fontWeight="medium">
+                          {interview.user?.first_name} {interview.user?.last_name}
+                        </Typography>
+                        {interview.user?.username && (
+                          <Typography variant="caption" color="text.secondary">
+                            @{interview.user.username}
+                          </Typography>
+                        )}
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2">
+                        {interview.position?.title || `ID: ${interview.position_id}`}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={interview.status === 'completed' ? 'Завершено' : 'В процессе'}
+                        color={interview.status === 'completed' ? 'success' : 'warning'}
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {interview.score !== undefined ? (
+                        <Box>
+                          <Typography variant="body2" fontWeight="medium">
+                            {interview.score}/{interview.max_score}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {Math.round((interview.score / interview.max_score) * 100)}%
+                          </Typography>
+                        </Box>
+                      ) : (
+                        '-'
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2">
+                        {Object.keys(interview.answers || {}).length} / {interview.questions?.length || 0}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2">
+                        {new Date(interview.started_at).toLocaleDateString('ru-RU')}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {new Date(interview.started_at).toLocaleTimeString('ru-RU')}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => {
+                          // TODO: Добавить диалог с деталями интервью
+                          console.log('Interview details:', interview);
+                        }}
+                      >
+                        Детали
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
       </TabPanel>
 
       {/* Пользователи */}
