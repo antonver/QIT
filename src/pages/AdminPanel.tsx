@@ -931,7 +931,7 @@ const AdminPanel: React.FC = () => {
               )}
               <Divider sx={{ my: 2 }} />
               <Typography variant="subtitle2" gutterBottom>
-                Ответы:
+                Ответы (отладка: {JSON.stringify(selectedInterview.answers)}):
               </Typography>
               {selectedInterview.questions?.map((q, idx) => {
                 const answer = selectedInterview.answers?.[String(idx)];
@@ -954,7 +954,7 @@ const AdminPanel: React.FC = () => {
                           {answer}
                         </Box>
                       ) : (
-                        <i>Нет ответа</i>
+                        <i>Нет ответа (индекс: {idx}, ключ: "{String(idx)}")</i>
                       )}
                     </Typography>
                   </Box>
@@ -964,7 +964,7 @@ const AdminPanel: React.FC = () => {
               <Typography variant="subtitle2" gutterBottom>
                 Анализ результатов:
               </Typography>
-              <Box sx={{ p: 2, bgcolor: '#f8f9fa', borderRadius: 1 }}>
+              <Box sx={{ p: 2, bgcolor: '#e3f2fd', borderRadius: 1, border: '1px solid #2196f3' }}>
                 <Typography variant="body2" color="text.primary" gutterBottom>
                   <strong>Общий результат:</strong> {selectedInterview.score !== undefined ? `${selectedInterview.score}/${selectedInterview.max_score} (${Math.round((selectedInterview.score / selectedInterview.max_score) * 100)}%)` : 'Не оценено'}
                 </Typography>
