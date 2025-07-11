@@ -136,7 +136,7 @@ const DashboardLayoutBasic = memo(() => {
                             position: 'relative' // Added for blue line positioning
                         }} 
                         key={item.segment}
-                    >
+                    >  
                         <motion.div
                             whileHover={{ 
                                 scale: 1.05,
