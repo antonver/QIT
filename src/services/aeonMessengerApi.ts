@@ -548,10 +548,7 @@ export const createInterview = async (interviewData: { position_id: number }): P
 };
 
 export const submitAnswer = async (interviewId: number, questionIndex: number, answer: string): Promise<{ message: string }> => {
-  const response = await aeonApi.put(`/api/v1/hr/interviews/${interviewId}/answer`, {
-    question_index: questionIndex,
-    answer: answer
-  });
+  const response = await aeonApi.put(`/api/v1/hr/interviews/${interviewId}/answer?question_index=${questionIndex}&answer=${encodeURIComponent(answer)}`);
   return response.data;
 };
 
