@@ -38,6 +38,7 @@ import {
   Assessment as AssessmentIcon,
   People as PeopleIcon,
   AdminPanelSettings as AdminIcon,
+  Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import { Checkbox, FormControlLabel } from '@mui/material';
 import { useSelector } from 'react-redux';
@@ -139,13 +140,19 @@ const AdminPanel: React.FC = () => {
   const handleCreatePosition = async () => {
     try {
       setLoading(true);
-      const createdPosition = await createPosition({
+      await createPosition({
         title: newPosition.title,
         quality_ids: newPosition.selectedQualities
       });
       
-      // Обновляем список позиций
-      setPositions(prev => [...prev, createdPosition]);
+      // Перезагружаем данные для получения полной информации
+      const [qualitiesData, positionsData] = await Promise.all([
+        getQualities(),
+        getPositions()
+      ]);
+      setQualities(qualitiesData);
+      setPositions(positionsData);
+      
       setPositionDialog(false);
       setNewPosition({ title: '', selectedQualities: [] });
     } catch (error) {
@@ -161,13 +168,19 @@ const AdminPanel: React.FC = () => {
     
     try {
       setLoading(true);
-      const updatedPosition = await updatePosition(editingPosition.id, {
+      await updatePosition(editingPosition.id, {
         title: editingPosition.title,
         quality_ids: editingPosition.qualities?.map(q => q.id) || []
       });
       
-      // Обновляем список позиций
-      setPositions(prev => prev.map(p => p.id === updatedPosition.id ? updatedPosition : p));
+      // Перезагружаем данные для получения полной информации
+      const [qualitiesData, positionsData] = await Promise.all([
+        getQualities(),
+        getPositions()
+      ]);
+      setQualities(qualitiesData);
+      setPositions(positionsData);
+      
       setPositionEditDialog(false);
       setEditingPosition(null);
     } catch (error) {
@@ -185,8 +198,13 @@ const AdminPanel: React.FC = () => {
       setLoading(true);
       await deletePosition(positionId);
       
-      // Обновляем список позиций
-      setPositions(prev => prev.filter(p => p.id !== positionId));
+      // Перезагружаем данные для получения актуальной информации
+      const [qualitiesData, positionsData] = await Promise.all([
+        getQualities(),
+        getPositions()
+      ]);
+      setQualities(qualitiesData);
+      setPositions(positionsData);
     } catch (error) {
       console.error('Error deleting position:', error);
       alert('Ошибка при удалении позиции');
@@ -207,12 +225,18 @@ const AdminPanel: React.FC = () => {
   const handleCreateQuality = async () => {
     try {
       setLoading(true);
-      const createdQuality = await createQuality({
+      await createQuality({
         name: newQuality.name
       });
       
-      // Обновляем список качеств
-      setQualities(prev => [...prev, createdQuality]);
+      // Перезагружаем данные для получения актуальной информации
+      const [qualitiesData, positionsData] = await Promise.all([
+        getQualities(),
+        getPositions()
+      ]);
+      setQualities(qualitiesData);
+      setPositions(positionsData);
+      
       setQualityDialog(false);
       setNewQuality({ name: '' });
     } catch (error) {
@@ -228,12 +252,18 @@ const AdminPanel: React.FC = () => {
     
     try {
       setLoading(true);
-      const updatedQuality = await updateQuality(editingQuality.id, {
+      await updateQuality(editingQuality.id, {
         name: editingQuality.name
       });
       
-      // Обновляем список качеств
-      setQualities(prev => prev.map(q => q.id === updatedQuality.id ? updatedQuality : q));
+      // Перезагружаем данные для получения актуальной информации
+      const [qualitiesData, positionsData] = await Promise.all([
+        getQualities(),
+        getPositions()
+      ]);
+      setQualities(qualitiesData);
+      setPositions(positionsData);
+      
       setQualityEditDialog(false);
       setEditingQuality(null);
     } catch (error) {
@@ -251,8 +281,13 @@ const AdminPanel: React.FC = () => {
       setLoading(true);
       await deleteQuality(qualityId);
       
-      // Обновляем список качеств
-      setQualities(prev => prev.filter(q => q.id !== qualityId));
+      // Перезагружаем данные для получения актуальной информации
+      const [qualitiesData, positionsData] = await Promise.all([
+        getQualities(),
+        getPositions()
+      ]);
+      setQualities(qualitiesData);
+      setPositions(positionsData);
     } catch (error) {
       console.error('Error deleting quality:', error);
       alert('Ошибка при удалении качества');
@@ -266,32 +301,33 @@ const AdminPanel: React.FC = () => {
     setQualityEditDialog(true);
   };
 
+  // Функция для загрузки данных
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [qualitiesData, positionsData] = await Promise.all([
+        getQualities(),
+        getPositions()
+      ]);
+      console.log('Loaded qualities:', qualitiesData);
+      console.log('Loaded positions:', positionsData);
+      console.log('Positions with qualities details:', positionsData.map(p => ({
+        id: p.id,
+        title: p.title,
+        qualities: p.qualities,
+        qualitiesCount: p.qualities?.length || 0
+      })));
+      setQualities(qualitiesData);
+      setPositions(positionsData);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Загрузка данных при монтировании
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setLoading(true);
-        const [qualitiesData, positionsData] = await Promise.all([
-          getQualities(),
-          getPositions()
-        ]);
-        console.log('Loaded qualities:', qualitiesData);
-        console.log('Loaded positions:', positionsData);
-        console.log('Positions with qualities details:', positionsData.map(p => ({
-          id: p.id,
-          title: p.title,
-          qualities: p.qualities,
-          qualitiesCount: p.qualities?.length || 0
-        })));
-        setQualities(qualitiesData);
-        setPositions(positionsData);
-      } catch (error) {
-        console.error('Error loading data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadData();
   }, []);
 
@@ -341,13 +377,23 @@ const AdminPanel: React.FC = () => {
       <TabPanel value={tabValue} index={0}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
           <Typography variant="h6">Позиции (вакансии)</Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setPositionDialog(true)}
-          >
-            Добавить позицию
-          </Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              onClick={loadData}
+              disabled={loading}
+            >
+              Обновить
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => setPositionDialog(true)}
+            >
+              Добавить позицию
+            </Button>
+          </Box>
         </Box>
 
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
@@ -417,13 +463,23 @@ const AdminPanel: React.FC = () => {
       <TabPanel value={tabValue} index={1}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
           <Typography variant="h6">Качества для оценки</Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setQualityDialog(true)}
-          >
-            Добавить качество
-          </Button>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="outlined"
+              startIcon={<RefreshIcon />}
+              onClick={loadData}
+              disabled={loading}
+            >
+              Обновить
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => setQualityDialog(true)}
+            >
+              Добавить качество
+            </Button>
+          </Box>
         </Box>
 
         <List>
