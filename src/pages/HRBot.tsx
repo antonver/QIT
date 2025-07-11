@@ -3,8 +3,6 @@ import {
   Container,
   Typography,
   Box,
-  Card,
-  CardContent,
   Button,
   Stepper,
   Step,
