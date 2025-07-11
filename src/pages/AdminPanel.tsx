@@ -196,6 +196,8 @@ const AdminPanel: React.FC = () => {
   };
 
   const handleOpenEditPosition = (position: Position) => {
+    console.log('Opening edit position:', position);
+    console.log('Position qualities:', position.qualities);
     setEditingPosition(position);
     setPositionEditDialog(true);
   };
@@ -271,6 +273,8 @@ const AdminPanel: React.FC = () => {
           getQualities(),
           getPositions()
         ]);
+        console.log('Loaded qualities:', qualitiesData);
+        console.log('Loaded positions:', positionsData);
         setQualities(qualitiesData);
         setPositions(positionsData);
       } catch (error) {
@@ -624,12 +628,15 @@ const AdminPanel: React.FC = () => {
                 Сначала создайте качества в разделе "Качества"
               </Typography>
             ) : (
-              qualities.map((quality) => (
+              qualities.map((quality) => {
+                const isChecked = editingPosition?.qualities?.some(q => q.id === quality.id) || false;
+                console.log(`Quality ${quality.name} (${quality.id}) checked:`, isChecked);
+                return (
               <FormControlLabel
                 key={quality.id}
                 control={
                   <Checkbox
-                    checked={editingPosition?.qualities?.some(q => q.id === quality.id) || false}
+                    checked={isChecked}
                     onChange={(e) => {
                       if (!editingPosition) return;
                       
@@ -655,7 +662,7 @@ const AdminPanel: React.FC = () => {
                 }
                 sx={{ width: '100%', margin: 0, mb: 1 }}
               />
-            ))
+            )})
             )}
           </Box>
         </DialogContent>
