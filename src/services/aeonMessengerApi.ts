@@ -471,4 +471,41 @@ export const makeUserAdminByUsername = async (username: string): Promise<{messag
   return response.data;
 };
 
+// HR Interview API functions
+export const createInterview = async (interviewData: { position_id: number }): Promise<{
+  id: number;
+  position_id: number;
+  questions: Array<{
+    id: number;
+    text: string;
+    type: 'text' | 'scale' | 'choice';
+    category?: string;
+    scale?: { min: number; max: number };
+  }>;
+  answers: { [key: string]: string };
+  status: 'in_progress' | 'completed';
+  score?: number;
+  max_score: number;
+}> => {
+  const response = await aeonApi.post('/api/v1/hr/interviews', interviewData);
+  return response.data;
+};
+
+export const submitAnswer = async (interviewId: number, questionIndex: number, answer: string): Promise<{ message: string }> => {
+  const response = await aeonApi.put(`/api/v1/hr/interviews/${interviewId}/answer`, {
+    question_index: questionIndex,
+    answer: answer
+  });
+  return response.data;
+};
+
+export const completeInterview = async (interviewId: number): Promise<{
+  score: number;
+  max_score: number;
+  percentage: number;
+}> => {
+  const response = await aeonApi.post(`/api/v1/hr/interviews/${interviewId}/complete`);
+  return response.data;
+};
+
 export default aeonApi; 
