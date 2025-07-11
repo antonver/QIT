@@ -125,7 +125,7 @@ const Home = () => {
                                     <Button 
                                         variant="contained"
                                         size="large"
-                                        onClick={() => navigate('/hrbot-test')}
+                                        onClick={() => navigate('/hrbot')}
                                         sx={{
                                             bgcolor: '#40C4FF',
                                             color: 'white',

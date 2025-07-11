@@ -62,12 +62,12 @@ const NAVIGATION = [
         segment: 'aeon-messenger',
         title: 'ÆON Messenger',
         icon: <PsychologyIcon sx={{ color: '#4a9eff' }} />,
-    },
-    {
-        segment: 'cors-test',
-        title: 'CORS Test',
-        icon: <PsychologyIcon sx={{ color: '#FFD700' }} />,
-    },
+    }
+    // {
+    //     segment: 'cors-test',
+    //     title: 'CORS Test',
+    //     icon: <PsychologyIcon sx={{ color: '#FFD700' }} />,
+    // },
 ];
 
 const SIDEBAR_WIDTH = 80; // Увеличенная ширина для больших иконок
