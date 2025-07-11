@@ -42,7 +42,7 @@ import {
 import { Checkbox, FormControlLabel } from '@mui/material';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../store';
-import { makeUserAdminByUsername, createQuality, createPosition, getQualities, getPositions } from '../services/aeonMessengerApi';
+import { makeUserAdminByUsername, createQuality, createPosition, getQualities, getPositions, updateQuality, deleteQuality, updatePosition, deletePosition } from '../services/aeonMessengerApi';
 
 interface Position {
   id: number;
@@ -110,10 +110,14 @@ const AdminPanel: React.FC = () => {
 
   // Диалоги
   const [positionDialog, setPositionDialog] = useState(false);
+  const [positionEditDialog, setPositionEditDialog] = useState(false);
   const [qualityDialog, setQualityDialog] = useState(false);
+  const [qualityEditDialog, setQualityEditDialog] = useState(false);
   const [adminDialog, setAdminDialog] = useState(false);
   const [newPosition, setNewPosition] = useState({ title: '', selectedQualities: [] as number[] });
+  const [editingPosition, setEditingPosition] = useState<Position | null>(null);
   const [newQuality, setNewQuality] = useState({ name: '' });
+  const [editingQuality, setEditingQuality] = useState<Quality | null>(null);
   const [newAdminUsername, setNewAdminUsername] = useState('');
   const [adminMessage, setAdminMessage] = useState<{type: 'success' | 'error', message: string} | null>(null);
 
@@ -152,6 +156,50 @@ const AdminPanel: React.FC = () => {
     }
   };
 
+  const handleEditPosition = async () => {
+    if (!editingPosition) return;
+    
+    try {
+      setLoading(true);
+      const updatedPosition = await updatePosition(editingPosition.id, {
+        title: editingPosition.title,
+        quality_ids: editingPosition.qualities?.map(q => q.id) || []
+      });
+      
+      // Обновляем список позиций
+      setPositions(prev => prev.map(p => p.id === updatedPosition.id ? updatedPosition : p));
+      setPositionEditDialog(false);
+      setEditingPosition(null);
+    } catch (error) {
+      console.error('Error updating position:', error);
+      alert('Ошибка при обновлении позиции');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeletePosition = async (positionId: number) => {
+    if (!window.confirm('Вы уверены, что хотите удалить эту позицию?')) return;
+    
+    try {
+      setLoading(true);
+      await deletePosition(positionId);
+      
+      // Обновляем список позиций
+      setPositions(prev => prev.filter(p => p.id !== positionId));
+    } catch (error) {
+      console.error('Error deleting position:', error);
+      alert('Ошибка при удалении позиции');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenEditPosition = (position: Position) => {
+    setEditingPosition(position);
+    setPositionEditDialog(true);
+  };
+
   const handleCreateQuality = async () => {
     try {
       setLoading(true);
@@ -169,6 +217,49 @@ const AdminPanel: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEditQuality = async () => {
+    if (!editingQuality) return;
+    
+    try {
+      setLoading(true);
+      const updatedQuality = await updateQuality(editingQuality.id, {
+        name: editingQuality.name
+      });
+      
+      // Обновляем список качеств
+      setQualities(prev => prev.map(q => q.id === updatedQuality.id ? updatedQuality : q));
+      setQualityEditDialog(false);
+      setEditingQuality(null);
+    } catch (error) {
+      console.error('Error updating quality:', error);
+      alert('Ошибка при обновлении качества');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteQuality = async (qualityId: number) => {
+    if (!window.confirm('Вы уверены, что хотите удалить это качество?')) return;
+    
+    try {
+      setLoading(true);
+      await deleteQuality(qualityId);
+      
+      // Обновляем список качеств
+      setQualities(prev => prev.filter(q => q.id !== qualityId));
+    } catch (error) {
+      console.error('Error deleting quality:', error);
+      alert('Ошибка при удалении качества');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenEditQuality = (quality: Quality) => {
+    setEditingQuality(quality);
+    setQualityEditDialog(true);
   };
 
   // Загрузка данных при монтировании
@@ -280,10 +371,19 @@ const AdminPanel: React.FC = () => {
                     />
                   </Box>
                     <Box>
-                      <IconButton size="small">
+                      <IconButton 
+                        size="small"
+                        onClick={() => handleOpenEditPosition(position)}
+                        disabled={loading}
+                      >
                         <EditIcon />
                       </IconButton>
-                      <IconButton size="small" color="error">
+                      <IconButton 
+                        size="small" 
+                        color="error"
+                        onClick={() => handleDeletePosition(position.id)}
+                        disabled={loading}
+                      >
                         <DeleteIcon />
                       </IconButton>
                     </Box>
@@ -316,10 +416,19 @@ const AdminPanel: React.FC = () => {
                   primary={quality.name}
                 />
                 <ListItemSecondaryAction>
-                  <IconButton size="small">
+                  <IconButton 
+                    size="small"
+                    onClick={() => handleOpenEditQuality(quality)}
+                    disabled={loading}
+                  >
                     <EditIcon />
                   </IconButton>
-                  <IconButton size="small" color="error">
+                  <IconButton 
+                    size="small" 
+                    color="error"
+                    onClick={() => handleDeleteQuality(quality.id)}
+                    disabled={loading}
+                  >
                     <DeleteIcon />
                   </IconButton>
                 </ListItemSecondaryAction>
@@ -492,6 +601,76 @@ const AdminPanel: React.FC = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Диалог редактирования позиции */}
+      <Dialog open={positionEditDialog} onClose={() => setPositionEditDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Редактировать позицию</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Название позиции"
+            fullWidth
+            variant="outlined"
+            value={editingPosition?.title || ''}
+            onChange={(e) => setEditingPosition(prev => prev ? { ...prev, title: e.target.value } : null)}
+            sx={{ mb: 2 }}
+          />
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            Выберите качества для оценки:
+          </Typography>
+          <Box sx={{ maxHeight: 200, overflow: 'auto', border: '1px solid #ddd', borderRadius: 1, p: 1 }}>
+            {qualities.length === 0 ? (
+              <Typography variant="body2" color="text.secondary" sx={{ p: 2, textAlign: 'center' }}>
+                Сначала создайте качества в разделе "Качества"
+              </Typography>
+            ) : (
+              qualities.map((quality) => (
+              <FormControlLabel
+                key={quality.id}
+                control={
+                  <Checkbox
+                    checked={editingPosition?.qualities?.some(q => q.id === quality.id) || false}
+                    onChange={(e) => {
+                      if (!editingPosition) return;
+                      
+                      if (e.target.checked) {
+                        setEditingPosition({
+                          ...editingPosition,
+                          qualities: [...(editingPosition.qualities || []), quality]
+                        });
+                      } else {
+                        setEditingPosition({
+                          ...editingPosition,
+                          qualities: (editingPosition.qualities || []).filter(q => q.id !== quality.id)
+                        });
+                      }
+                    }}
+                    size="small"
+                  />
+                }
+                label={
+                  <Typography variant="body2">
+                    {quality.name}
+                  </Typography>
+                }
+                sx={{ width: '100%', margin: 0, mb: 1 }}
+              />
+            ))
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPositionEditDialog(false)} disabled={loading}>Отмена</Button>
+          <Button 
+            onClick={handleEditPosition} 
+            variant="contained" 
+            disabled={!editingPosition?.title.trim() || loading}
+          >
+            {loading ? 'Сохранение...' : 'Сохранить'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Диалог создания качества */}
       <Dialog open={qualityDialog} onClose={() => setQualityDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Создать новое качество</DialogTitle>
@@ -512,6 +691,34 @@ const AdminPanel: React.FC = () => {
           <Button onClick={() => setQualityDialog(false)} disabled={loading}>Отмена</Button>
           <Button onClick={handleCreateQuality} variant="contained" disabled={!newQuality.name.trim() || loading}>
             {loading ? 'Создание...' : 'Создать'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Диалог редактирования качества */}
+      <Dialog open={qualityEditDialog} onClose={() => setQualityEditDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Редактировать качество</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Название качества"
+            fullWidth
+            variant="outlined"
+            value={editingQuality?.name || ''}
+            onChange={(e) => setEditingQuality(prev => prev ? { ...prev, name: e.target.value } : null)}
+            placeholder="Например: Коммуникабельность, Лидерство, Аналитическое мышление"
+            helperText="Введите новое название качества"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setQualityEditDialog(false)} disabled={loading}>Отмена</Button>
+          <Button 
+            onClick={handleEditQuality} 
+            variant="contained" 
+            disabled={!editingQuality?.name.trim() || loading}
+          >
+            {loading ? 'Сохранение...' : 'Сохранить'}
           </Button>
         </DialogActions>
       </Dialog>

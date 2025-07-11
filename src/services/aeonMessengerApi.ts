@@ -436,6 +436,16 @@ export const getQualities = async (): Promise<{ id: number; name: string }[]> =>
   return response.data;
 };
 
+export const updateQuality = async (qualityId: number, quality: { name: string }): Promise<{ id: number; name: string }> => {
+  const response = await aeonApi.put(`/api/v1/admin/qualities/${qualityId}`, quality);
+  return response.data;
+};
+
+export const deleteQuality = async (qualityId: number): Promise<{ message: string }> => {
+  const response = await aeonApi.delete(`/api/v1/admin/qualities/${qualityId}`);
+  return response.data;
+};
+
 export const createPosition = async (position: { title: string; quality_ids: number[] }): Promise<{ id: number; title: string; qualities: any[]; is_active: boolean; created_at: string }> => {
   const response = await aeonApi.post('/api/v1/admin/positions', position);
   return response.data;
@@ -443,6 +453,16 @@ export const createPosition = async (position: { title: string; quality_ids: num
 
 export const getPositions = async (): Promise<{ id: number; title: string; qualities: any[]; is_active: boolean; created_at: string }[]> => {
   const response = await aeonApi.get('/api/v1/admin/positions');
+  return response.data;
+};
+
+export const updatePosition = async (positionId: number, position: { title: string; quality_ids: number[] }): Promise<{ id: number; title: string; qualities: any[]; is_active: boolean; created_at: string }> => {
+  const response = await aeonApi.put(`/api/v1/admin/positions/${positionId}`, position);
+  return response.data;
+};
+
+export const deletePosition = async (positionId: number): Promise<{ message: string }> => {
+  const response = await aeonApi.delete(`/api/v1/admin/positions/${positionId}`);
   return response.data;
 };
 
