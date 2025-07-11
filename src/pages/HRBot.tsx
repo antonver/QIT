@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, Button, Container, Paper, TextField, CircularProgress } from '@mui/material';
+import { Box, Typography, Button, Paper, TextField } from '@mui/material';
 
 const WelcomeScreen: React.FC<{ onStart: () => void }> = ({ onStart }) => (
   <Box
@@ -55,8 +55,7 @@ const WelcomeScreen: React.FC<{ onStart: () => void }> = ({ onStart }) => (
 
 const HRBot: React.FC = () => {
   const [step, setStep] = useState<'welcome' | 'survey' | 'question' | 'finish'>('welcome');
-  const [loading, setLoading] = useState(false);
-  const [questionIdx, setQuestionIdx] = useState(0);
+  const [questionIdx] = useState(0);
   const [answer, setAnswer] = useState('');
   const questions = [
     'What would you do if you couldn\'t complete a task on time and your team lead didn\'t get in touch?',

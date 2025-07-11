@@ -18,14 +18,9 @@ import {
   Chip,
   Card,
   CardContent,
-  IconButton,
   Tooltip
 } from '@mui/material';
-import {
-  Sort,
-  Download,
-  Refresh
-} from '@mui/icons-material';
+import { Sort } from '@mui/icons-material';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { getStats } from '../services/api';
 
