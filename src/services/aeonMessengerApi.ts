@@ -472,6 +472,11 @@ export const makeUserAdminByUsername = async (username: string): Promise<{messag
 };
 
 // HR Interview API functions
+export const getHrPositions = async (): Promise<{ id: number; title: string; qualities: any[]; is_active: boolean; created_at: string }[]> => {
+  const response = await aeonApi.get('/api/v1/hr/positions');
+  return response.data;
+};
+
 export const createInterview = async (interviewData: { position_id: number }): Promise<{
   id: number;
   position_id: number;
