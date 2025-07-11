@@ -528,6 +528,41 @@ export const getHrPositions = async (): Promise<{ id: number; title: string; qua
   }
 };
 
+export const getCurrentInterview = async (): Promise<{
+  id: number;
+  position_id: number;
+  questions: Array<{
+    id: number;
+    text: string;
+    type: 'text' | 'scale' | 'choice';
+    category?: string;
+    scale?: { min: number; max: number };
+  }>;
+  answers: { [key: string]: string };
+  status: 'in_progress' | 'completed';
+  score?: number;
+  max_score: number;
+} | null> => {
+  try {
+    const response = await aeonApi.get('/api/v1/hr/interviews');
+    const interviews = response.data;
+    
+    // Ищем активное интервью (status: 'in_progress')
+    const activeInterview = interviews.find((interview: any) => interview.status === 'in_progress');
+    
+    if (activeInterview) {
+      console.log('✅ Найдено активное интервью:', activeInterview.id);
+      return activeInterview;
+    } else {
+      console.log('ℹ️ Активных интервью не найдено');
+      return null;
+    }
+  } catch (error) {
+    console.error('❌ Ошибка при получении интервью:', error);
+    throw error;
+  }
+};
+
 export const createInterview = async (interviewData: { position_id: number }): Promise<{
   id: number;
   position_id: number;
@@ -543,8 +578,33 @@ export const createInterview = async (interviewData: { position_id: number }): P
   score?: number;
   max_score: number;
 }> => {
-  const response = await aeonApi.post('/api/v1/hr/interviews', interviewData);
-  return response.data;
+  try {
+    // Сначала проверяем, есть ли уже активное интервью
+    const currentInterview = await getCurrentInterview();
+    
+    if (currentInterview) {
+      console.log('✅ Возвращаем существующее активное интервью:', currentInterview.id);
+      return currentInterview;
+    }
+    
+    // Если активного интервью нет, создаем новое
+    console.log('🔄 Создаем новое интервью для позиции:', interviewData.position_id);
+    const response = await aeonApi.post('/api/v1/hr/interviews', interviewData);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Ошибка при создании/получении интервью:', error);
+    
+    // Если ошибка "У вас уже есть активное интервью", попробуем получить его
+    if (error.response?.status === 400 && error.response?.data?.error?.includes('активное интервью')) {
+      console.log('🔄 Пробуем получить активное интервью после ошибки...');
+      const currentInterview = await getCurrentInterview();
+      if (currentInterview) {
+        return currentInterview;
+      }
+    }
+    
+    throw error;
+  }
 };
 
 export const submitAnswer = async (interviewId: number, questionIndex: number, answer: string): Promise<{ message: string }> => {
