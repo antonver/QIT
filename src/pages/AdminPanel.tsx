@@ -931,10 +931,11 @@ const AdminPanel: React.FC = () => {
               )}
               <Divider sx={{ my: 2 }} />
               <Typography variant="subtitle2" gutterBottom>
-                Ответы (отладка: {JSON.stringify(selectedInterview.answers)}):
+                Ответы ({Object.keys(selectedInterview.answers || {}).length} из {selectedInterview.questions?.length || 0}):
               </Typography>
               {selectedInterview.questions?.map((q, idx) => {
                 const answer = selectedInterview.answers?.[String(idx)];
+                const hasAnswer = answer && answer.trim() !== '';
                 return (
                   <Box key={q.id} sx={{ mb: 2, p: 2, border: '1px solid #e0e0e0', borderRadius: 1 }}>
                     <Typography variant="body2" fontWeight="bold" gutterBottom>
@@ -949,12 +950,12 @@ const AdminPanel: React.FC = () => {
                       />
                     )}
                     <Typography variant="body2" color="text.secondary">
-                      {answer ? (
+                      {hasAnswer ? (
                         <Box sx={{ mt: 1, p: 1, bgcolor: '#f5f5f5', borderRadius: 1 }}>
                           {answer}
                         </Box>
                       ) : (
-                        <i>Нет ответа (индекс: {idx}, ключ: "{String(idx)}")</i>
+                        <i>Нет ответа</i>
                       )}
                     </Typography>
                   </Box>
