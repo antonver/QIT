@@ -129,6 +129,8 @@ const AdminPanel: React.FC = () => {
   const [editingQuality, setEditingQuality] = useState<Quality | null>(null);
   const [newAdminUsername, setNewAdminUsername] = useState('');
   const [adminMessage, setAdminMessage] = useState<{type: 'success' | 'error', message: string} | null>(null);
+  const [selectedInterview, setSelectedInterview] = useState<Interview | null>(null);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
 
   // Проверяем права администратора
   if (!currentUser?.is_admin) {
@@ -615,8 +617,8 @@ const AdminPanel: React.FC = () => {
                         size="small"
                         variant="outlined"
                         onClick={() => {
-                          // TODO: Добавить диалог с деталями интервью
-                          console.log('Interview details:', interview);
+                          setSelectedInterview(interview);
+                          setDetailsDialogOpen(true);
                         }}
                       >
                         Детали
@@ -901,6 +903,44 @@ const AdminPanel: React.FC = () => {
           >
             Назначить
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Диалог деталей интервью */}
+      <Dialog open={detailsDialogOpen} onClose={() => setDetailsDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Детали интервью</DialogTitle>
+        <DialogContent>
+          {selectedInterview && (
+            <Box>
+              <Typography variant="subtitle1" gutterBottom>
+                Кандидат: {selectedInterview.user?.first_name} {selectedInterview.user?.last_name} @{selectedInterview.user?.username}
+              </Typography>
+              <Typography variant="subtitle1" gutterBottom>
+                Позиция: {selectedInterview.position?.title}
+              </Typography>
+              <Typography variant="subtitle2" gutterBottom>
+                Статус: {selectedInterview.status === 'completed' ? 'Завершено' : 'В процессе'}
+              </Typography>
+              <Typography variant="body2" gutterBottom>
+                Балл: {selectedInterview.score}/{selectedInterview.max_score}
+              </Typography>
+              <Divider sx={{ my: 2 }} />
+              <Typography variant="subtitle2" gutterBottom>
+                Ответы:
+              </Typography>
+              {selectedInterview.questions?.map((q, idx) => (
+                <Box key={q.id} sx={{ mb: 2 }}>
+                  <Typography variant="body2" fontWeight="bold">{idx + 1}. {q.text}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Ответ: {selectedInterview.answers?.[String(idx)] || <i>Нет ответа</i>}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDetailsDialogOpen(false)}>Закрыть</Button>
         </DialogActions>
       </Dialog>
     </Container>
