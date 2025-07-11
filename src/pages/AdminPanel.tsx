@@ -687,8 +687,8 @@ const AdminPanel: React.FC = () => {
 
       {/* Диалог создания позиции */}
       <Dialog open={positionDialog} onClose={() => setPositionDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Создать новую позицию</DialogTitle>
-        <DialogContent>
+        <DialogTitle sx={{ bgcolor: '#232B3B', color: 'white', borderTopLeftRadius: 12, borderTopRightRadius: 12 }}>Создать новую позицию</DialogTitle>
+        <DialogContent sx={{ bgcolor: 'rgba(35, 43, 59, 0.95)', color: 'white', borderBottomLeftRadius: 12, borderBottomRightRadius: 12 }}>
           <TextField
             autoFocus
             margin="dense"
@@ -697,53 +697,85 @@ const AdminPanel: React.FC = () => {
             variant="outlined"
             value={newPosition.title}
             onChange={(e) => setNewPosition({ ...newPosition, title: e.target.value })}
-            sx={{ mb: 2 }}
+            sx={{ mb: 2,
+              bgcolor: '#181820',
+              borderRadius: 2,
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': { borderColor: '#7C3AED' },
+                '&:hover fieldset': { borderColor: '#8B5CF6' },
+                '&.Mui-focused fieldset': { borderColor: '#8B5CF6' },
+              },
+              input: { color: 'white' },
+              label: { color: '#B0B0C3' },
+            }}
           />
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+          <Typography variant="subtitle2" sx={{ mb: 1, color: '#B0B0C3' }}>
             Выберите качества для оценки:
           </Typography>
-          <Box sx={{ maxHeight: 200, overflow: 'auto', border: '1px solid #ddd', borderRadius: 1, p: 1 }}>
+          <Box sx={{ maxHeight: 200, overflow: 'auto', border: '1.5px solid #7C3AED', borderRadius: 2, p: 1, bgcolor: '#181820' }}>
             {qualities.length === 0 ? (
-              <Typography variant="body2" color="text.secondary" sx={{ p: 2, textAlign: 'center' }}>
+              <Typography variant="body2" color="#B0B0C3" sx={{ p: 2, textAlign: 'center' }}>
                 Сначала создайте качества в разделе "Качества"
               </Typography>
             ) : (
               qualities.map((quality) => (
-              <FormControlLabel
-                key={quality.id}
-                control={
-                  <Checkbox
-                    checked={newPosition.selectedQualities.includes(quality.id)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setNewPosition({
-                          ...newPosition,
-                          selectedQualities: [...newPosition.selectedQualities, quality.id]
-                        });
-                      } else {
-                        setNewPosition({
-                          ...newPosition,
-                          selectedQualities: newPosition.selectedQualities.filter(id => id !== quality.id)
-                        });
-                      }
-                    }}
-                    size="small"
-                  />
-                }
-                label={
-                  <Typography variant="body2">
-                    {quality.name}
-                  </Typography>
-                }
-                sx={{ width: '100%', margin: 0, mb: 1 }}
-              />
-            ))
+                <FormControlLabel
+                  key={quality.id}
+                  control={
+                    <Checkbox
+                      checked={newPosition.selectedQualities.includes(quality.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setNewPosition({
+                            ...newPosition,
+                            selectedQualities: [...newPosition.selectedQualities, quality.id]
+                          });
+                        } else {
+                          setNewPosition({
+                            ...newPosition,
+                            selectedQualities: newPosition.selectedQualities.filter(id => id !== quality.id)
+                          });
+                        }
+                      }}
+                      size="small"
+                      sx={{
+                        color: '#7C3AED',
+                        '&.Mui-checked': {
+                          color: '#8B5CF6',
+                        },
+                      }}
+                    />
+                  }
+                  label={
+                    <Typography variant="body2" sx={{ color: 'white' }}>
+                      {quality.name}
+                    </Typography>
+                  }
+                  sx={{ width: '100%', margin: 0, mb: 1, borderRadius: 1, px: 1, '&:hover': { bgcolor: 'rgba(124, 58, 237, 0.08)' } }}
+                />
+              ))
             )}
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setPositionDialog(false)} disabled={loading}>Отмена</Button>
-          <Button onClick={handleCreatePosition} variant="contained" disabled={!newPosition.title.trim() || loading}>
+        <DialogActions sx={{ bgcolor: '#232B3B', borderBottomLeftRadius: 12, borderBottomRightRadius: 12 }}>
+          <Button onClick={() => setPositionDialog(false)} disabled={loading} sx={{ color: '#B0B0C3' }}>Отмена</Button>
+          <Button onClick={handleCreatePosition} variant="contained" disabled={!newPosition.title.trim() || loading}
+            sx={{
+              background: 'linear-gradient(90deg, #7C3AED 0%, #8B5CF6 100%)',
+              color: 'white',
+              fontWeight: 700,
+              borderRadius: 2,
+              px: 3,
+              textTransform: 'none',
+              letterSpacing: 0.5,
+              transition: 'all 0.2s',
+              '&:hover': {
+                background: 'linear-gradient(90deg, #6D28D9 0%, #7C3AED 100%)',
+                boxShadow: '0 6px 32px rgba(139, 92, 246, 0.22)',
+                transform: 'translateY(-2px)'
+              }
+            }}
+          >
             {loading ? 'Создание...' : 'Создать'}
           </Button>
         </DialogActions>
@@ -751,8 +783,8 @@ const AdminPanel: React.FC = () => {
 
       {/* Диалог редактирования позиции */}
       <Dialog open={positionEditDialog} onClose={() => setPositionEditDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Редактировать позицию</DialogTitle>
-        <DialogContent>
+        <DialogTitle sx={{ bgcolor: '#232B3B', color: 'white', borderTopLeftRadius: 12, borderTopRightRadius: 12 }}>Редактировать позицию</DialogTitle>
+        <DialogContent sx={{ bgcolor: 'rgba(35, 43, 59, 0.95)', color: 'white', borderBottomLeftRadius: 12, borderBottomRightRadius: 12 }}>
           <TextField
             autoFocus
             margin="dense"
@@ -761,61 +793,91 @@ const AdminPanel: React.FC = () => {
             variant="outlined"
             value={editingPosition?.title || ''}
             onChange={(e) => setEditingPosition(prev => prev ? { ...prev, title: e.target.value } : null)}
-            sx={{ mb: 2 }}
+            sx={{ mb: 2,
+              bgcolor: '#181820',
+              borderRadius: 2,
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': { borderColor: '#7C3AED' },
+                '&:hover fieldset': { borderColor: '#8B5CF6' },
+                '&.Mui-focused fieldset': { borderColor: '#8B5CF6' },
+              },
+              input: { color: 'white' },
+              label: { color: '#B0B0C3' },
+            }}
           />
-          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+          <Typography variant="subtitle2" sx={{ mb: 1, color: '#B0B0C3' }}>
             Выберите качества для оценки:
           </Typography>
-          <Box sx={{ maxHeight: 200, overflow: 'auto', border: '1px solid #ddd', borderRadius: 1, p: 1 }}>
+          <Box sx={{ maxHeight: 200, overflow: 'auto', border: '1.5px solid #7C3AED', borderRadius: 2, p: 1, bgcolor: '#181820' }}>
             {qualities.length === 0 ? (
-              <Typography variant="body2" color="text.secondary" sx={{ p: 2, textAlign: 'center' }}>
+              <Typography variant="body2" color="#B0B0C3" sx={{ p: 2, textAlign: 'center' }}>
                 Сначала создайте качества в разделе "Качества"
               </Typography>
             ) : (
               qualities.map((quality) => {
                 const isChecked = editingPosition?.qualities?.some(q => q.id === quality.id) || false;
-                console.log(`Quality ${quality.name} (${quality.id}) checked:`, isChecked);
                 return (
-              <FormControlLabel
-                key={quality.id}
-                control={
-                  <Checkbox
-                    checked={isChecked}
-                    onChange={(e) => {
-                      if (!editingPosition) return;
-                      
-                      if (e.target.checked) {
-                        setEditingPosition({
-                          ...editingPosition,
-                          qualities: [...(editingPosition.qualities || []), quality]
-                        });
-                      } else {
-                        setEditingPosition({
-                          ...editingPosition,
-                          qualities: (editingPosition.qualities || []).filter(q => q.id !== quality.id)
-                        });
-                      }
-                    }}
-                    size="small"
+                  <FormControlLabel
+                    key={quality.id}
+                    control={
+                      <Checkbox
+                        checked={isChecked}
+                        onChange={(e) => {
+                          if (!editingPosition) return;
+                          if (e.target.checked) {
+                            setEditingPosition({
+                              ...editingPosition,
+                              qualities: [...(editingPosition.qualities || []), quality]
+                            });
+                          } else {
+                            setEditingPosition({
+                              ...editingPosition,
+                              qualities: (editingPosition.qualities || []).filter(q => q.id !== quality.id)
+                            });
+                          }
+                        }}
+                        size="small"
+                        sx={{
+                          color: '#7C3AED',
+                          '&.Mui-checked': {
+                            color: '#8B5CF6',
+                          },
+                        }}
+                      />
+                    }
+                    label={
+                      <Typography variant="body2" sx={{ color: 'white' }}>
+                        {quality.name}
+                      </Typography>
+                    }
+                    sx={{ width: '100%', margin: 0, mb: 1, borderRadius: 1, px: 1, '&:hover': { bgcolor: 'rgba(124, 58, 237, 0.08)' } }}
                   />
-                }
-                label={
-                  <Typography variant="body2">
-                    {quality.name}
-                  </Typography>
-                }
-                sx={{ width: '100%', margin: 0, mb: 1 }}
-              />
-            )})
+                );
+              })
             )}
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setPositionEditDialog(false)} disabled={loading}>Отмена</Button>
+        <DialogActions sx={{ bgcolor: '#232B3B', borderBottomLeftRadius: 12, borderBottomRightRadius: 12 }}>
+          <Button onClick={() => setPositionEditDialog(false)} disabled={loading} sx={{ color: '#B0B0C3' }}>Отмена</Button>
           <Button 
             onClick={handleEditPosition} 
             variant="contained" 
             disabled={!editingPosition?.title.trim() || loading}
+            sx={{
+              background: 'linear-gradient(90deg, #7C3AED 0%, #8B5CF6 100%)',
+              color: 'white',
+              fontWeight: 700,
+              borderRadius: 2,
+              px: 3,
+              textTransform: 'none',
+              letterSpacing: 0.5,
+              transition: 'all 0.2s',
+              '&:hover': {
+                background: 'linear-gradient(90deg, #6D28D9 0%, #7C3AED 100%)',
+                boxShadow: '0 6px 32px rgba(139, 92, 246, 0.22)',
+                transform: 'translateY(-2px)'
+              }
+            }}
           >
             {loading ? 'Сохранение...' : 'Сохранить'}
           </Button>
@@ -824,8 +886,8 @@ const AdminPanel: React.FC = () => {
 
       {/* Диалог создания качества */}
       <Dialog open={qualityDialog} onClose={() => setQualityDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Создать новое качество</DialogTitle>
-        <DialogContent>
+        <DialogTitle sx={{ bgcolor: '#232B3B', color: 'white', borderTopLeftRadius: 12, borderTopRightRadius: 12 }}>Создать новое качество</DialogTitle>
+        <DialogContent sx={{ bgcolor: 'rgba(35, 43, 59, 0.95)', color: 'white', borderBottomLeftRadius: 12, borderBottomRightRadius: 12 }}>
           <TextField
             autoFocus
             margin="dense"
@@ -836,11 +898,41 @@ const AdminPanel: React.FC = () => {
             onChange={(e) => setNewQuality({ ...newQuality, name: e.target.value })}
             placeholder="Например: Коммуникабельность, Лидерство, Аналитическое мышление"
             helperText="Введите название качества для оценки кандидатов"
+            sx={{
+              bgcolor: '#181820',
+              borderRadius: 2,
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': { borderColor: '#7C3AED' },
+                '&:hover fieldset': { borderColor: '#8B5CF6' },
+                '&.Mui-focused fieldset': { borderColor: '#8B5CF6' },
+              },
+              input: { color: 'white' },
+              label: { color: '#B0B0C3' },
+              '& .MuiFormHelperText-root': {
+                color: '#B0B0C3',
+              },
+            }}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setQualityDialog(false)} disabled={loading}>Отмена</Button>
-          <Button onClick={handleCreateQuality} variant="contained" disabled={!newQuality.name.trim() || loading}>
+        <DialogActions sx={{ bgcolor: '#232B3B', borderBottomLeftRadius: 12, borderBottomRightRadius: 12 }}>
+          <Button onClick={() => setQualityDialog(false)} disabled={loading} sx={{ color: '#B0B0C3' }}>Отмена</Button>
+          <Button onClick={handleCreateQuality} variant="contained" disabled={!newQuality.name.trim() || loading}
+            sx={{
+              background: 'linear-gradient(90deg, #7C3AED 0%, #8B5CF6 100%)',
+              color: 'white',
+              fontWeight: 700,
+              borderRadius: 2,
+              px: 3,
+              textTransform: 'none',
+              letterSpacing: 0.5,
+              transition: 'all 0.2s',
+              '&:hover': {
+                background: 'linear-gradient(90deg, #6D28D9 0%, #7C3AED 100%)',
+                boxShadow: '0 6px 32px rgba(139, 92, 246, 0.22)',
+                transform: 'translateY(-2px)'
+              }
+            }}
+          >
             {loading ? 'Создание...' : 'Создать'}
           </Button>
         </DialogActions>
@@ -848,8 +940,8 @@ const AdminPanel: React.FC = () => {
 
       {/* Диалог редактирования качества */}
       <Dialog open={qualityEditDialog} onClose={() => setQualityEditDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Редактировать качество</DialogTitle>
-        <DialogContent>
+        <DialogTitle sx={{ bgcolor: '#232B3B', color: 'white', borderTopLeftRadius: 12, borderTopRightRadius: 12 }}>Редактировать качество</DialogTitle>
+        <DialogContent sx={{ bgcolor: 'rgba(35, 43, 59, 0.95)', color: 'white', borderBottomLeftRadius: 12, borderBottomRightRadius: 12 }}>
           <TextField
             autoFocus
             margin="dense"
@@ -859,15 +951,41 @@ const AdminPanel: React.FC = () => {
             value={editingQuality?.name || ''}
             onChange={(e) => setEditingQuality(prev => prev ? { ...prev, name: e.target.value } : null)}
             placeholder="Например: Коммуникабельность, Лидерство, Аналитическое мышление"
-            helperText="Введите новое название качества"
+            helperText="Введите название качества для оценки кандидатов"
+            sx={{
+              bgcolor: '#181820',
+              borderRadius: 2,
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': { borderColor: '#7C3AED' },
+                '&:hover fieldset': { borderColor: '#8B5CF6' },
+                '&.Mui-focused fieldset': { borderColor: '#8B5CF6' },
+              },
+              input: { color: 'white' },
+              label: { color: '#B0B0C3' },
+              '& .MuiFormHelperText-root': {
+                color: '#B0B0C3',
+              },
+            }}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setQualityEditDialog(false)} disabled={loading}>Отмена</Button>
-          <Button 
-            onClick={handleEditQuality} 
-            variant="contained" 
-            disabled={!editingQuality?.name.trim() || loading}
+        <DialogActions sx={{ bgcolor: '#232B3B', borderBottomLeftRadius: 12, borderBottomRightRadius: 12 }}>
+          <Button onClick={() => setQualityEditDialog(false)} disabled={loading} sx={{ color: '#B0B0C3' }}>Отмена</Button>
+          <Button onClick={handleEditQuality} variant="contained" disabled={!editingQuality?.name.trim() || loading}
+            sx={{
+              background: 'linear-gradient(90deg, #7C3AED 0%, #8B5CF6 100%)',
+              color: 'white',
+              fontWeight: 700,
+              borderRadius: 2,
+              px: 3,
+              textTransform: 'none',
+              letterSpacing: 0.5,
+              transition: 'all 0.2s',
+              '&:hover': {
+                background: 'linear-gradient(90deg, #6D28D9 0%, #7C3AED 100%)',
+                boxShadow: '0 6px 32px rgba(139, 92, 246, 0.22)',
+                transform: 'translateY(-2px)'
+              }
+            }}
           >
             {loading ? 'Сохранение...' : 'Сохранить'}
           </Button>

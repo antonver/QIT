@@ -348,14 +348,20 @@ const HRBotNew: React.FC = () => {
               {positions.map((position) => (
                 <Card 
                   key={position.id}
-                  elevation={3}
+                  elevation={0}
                   sx={{ 
                     height: '100%',
                     cursor: 'pointer',
-                    transition: 'all 0.3s ease',
+                    border: '2px solid #7C3AED',
+                    borderRadius: 4,
+                    bgcolor: 'rgba(35, 43, 59, 0.95)',
+                    color: 'white',
+                    transition: 'all 0.3s',
+                    boxShadow: '0 2px 16px 0 rgba(124, 58, 237, 0.10)',
                     '&:hover': {
-                      transform: 'translateY(-4px)',
-                      boxShadow: 6
+                      transform: 'translateY(-4px) scale(1.03)',
+                      boxShadow: '0 8px 32px 0 rgba(139, 92, 246, 0.18)',
+                      borderColor: '#8B5CF6',
                     }
                   }}
                   onClick={() => handlePositionSelect(position)}
@@ -367,19 +373,19 @@ const HRBotNew: React.FC = () => {
                         height: 60, 
                         mx: 'auto', 
                         mb: 2,
-                        bgcolor: 'primary.main'
+                        bgcolor: '#7C3AED',
+                        color: 'white',
+                        fontSize: 32
                       }}
                     >
                       <WorkIcon />
                     </Avatar>
-                    
-                    <Typography variant="h6" gutterBottom>
+                    <Typography variant="h6" gutterBottom sx={{ color: 'white', fontWeight: 700 }}>
                       {position.title}
                     </Typography>
-                    
                     {position.qualities && position.qualities.length > 0 && (
                       <Box sx={{ mt: 2 }}>
-                        <Typography variant="body2" color="text.secondary" gutterBottom>
+                        <Typography variant="body2" color="#B0B0C3" gutterBottom>
                           Ключевые качества:
                         </Typography>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, justifyContent: 'center' }}>
@@ -389,18 +395,34 @@ const HRBotNew: React.FC = () => {
                               label={quality.name}
                               size="small"
                               variant="outlined"
-                              sx={{ fontSize: '0.7rem' }}
+                              sx={{ fontSize: '0.7rem', bgcolor: '#232B3B', color: 'white', borderColor: '#7C3AED', fontWeight: 500 }}
                             />
                           ))}
                         </Box>
                       </Box>
                     )}
-                    
                     <Button
                       variant="contained"
                       fullWidth
                       startIcon={<QuestionIcon />}
-                      sx={{ mt: 2 }}
+                      sx={{
+                        mt: 2,
+                        background: 'linear-gradient(90deg, #7C3AED 0%, #8B5CF6 100%)',
+                        color: 'white',
+                        fontWeight: 700,
+                        fontSize: '1.1rem',
+                        borderRadius: '16px',
+                        py: 1.5,
+                        boxShadow: 'none',
+                        textTransform: 'none',
+                        letterSpacing: 0.5,
+                        transition: 'all 0.2s',
+                        '&:hover': {
+                          background: 'linear-gradient(90deg, #6D28D9 0%, #7C3AED 100%)',
+                          boxShadow: '0 6px 32px rgba(139, 92, 246, 0.22)',
+                          transform: 'translateY(-2px)'
+                        }
+                      }}
                     >
                       Начать интервью
                     </Button>

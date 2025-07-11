@@ -26,6 +26,7 @@ import {
   Download,
   Refresh
 } from '@mui/icons-material';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { getStats } from '../services/api';
 
 interface Candidate {
@@ -249,7 +250,7 @@ const HRPanel: React.FC = () => {
         </Typography>
 
         {/* Filters */}
-        <Card sx={{ mb: 3 }}>
+        <Card sx={{ mb: 3, bgcolor: 'rgba(35, 43, 59, 0.95)', borderRadius: 4, border: '2px solid #7C3AED', boxShadow: 'none' }}>
           <CardContent>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
               <Box sx={{ flex: '1 1 200px', minWidth: 200 }}>
@@ -260,6 +261,17 @@ const HRPanel: React.FC = () => {
                   onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
                   InputLabelProps={{ shrink: true }}
                   fullWidth
+                  sx={{
+                    bgcolor: '#181820',
+                    borderRadius: 2,
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': { borderColor: '#7C3AED' },
+                      '&:hover fieldset': { borderColor: '#8B5CF6' },
+                      '&.Mui-focused fieldset': { borderColor: '#8B5CF6' },
+                    },
+                    input: { color: 'white' },
+                    label: { color: '#B0B0C3' },
+                  }}
                 />
               </Box>
               <Box sx={{ flex: '1 1 200px', minWidth: 200 }}>
@@ -270,6 +282,17 @@ const HRPanel: React.FC = () => {
                   onChange={(e) => handleFilterChange('dateTo', e.target.value)}
                   InputLabelProps={{ shrink: true }}
                   fullWidth
+                  sx={{
+                    bgcolor: '#181820',
+                    borderRadius: 2,
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': { borderColor: '#7C3AED' },
+                      '&:hover fieldset': { borderColor: '#8B5CF6' },
+                      '&.Mui-focused fieldset': { borderColor: '#8B5CF6' },
+                    },
+                    input: { color: 'white' },
+                    label: { color: '#B0B0C3' },
+                  }}
                 />
               </Box>
               <Box sx={{ flex: '1 1 150px', minWidth: 150 }}>
@@ -279,15 +302,44 @@ const HRPanel: React.FC = () => {
                   value={filters.minScore}
                   onChange={(e) => handleFilterChange('minScore', Number(e.target.value))}
                   fullWidth
+                  sx={{
+                    bgcolor: '#181820',
+                    borderRadius: 2,
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': { borderColor: '#7C3AED' },
+                      '&:hover fieldset': { borderColor: '#8B5CF6' },
+                      '&.Mui-focused fieldset': { borderColor: '#8B5CF6' },
+                    },
+                    input: { color: 'white' },
+                    label: { color: '#B0B0C3' },
+                  }}
                 />
               </Box>
               <Box sx={{ flex: '1 1 150px', minWidth: 150 }}>
-                <FormControl fullWidth>
-                  <InputLabel>Status</InputLabel>
+                <FormControl fullWidth sx={{ bgcolor: '#181820', borderRadius: 2 }}>
+                  <InputLabel sx={{ color: '#B0B0C3' }}>Status</InputLabel>
                   <Select
                     value={filters.status}
                     onChange={(e) => handleFilterChange('status', e.target.value)}
                     label="Status"
+                    IconComponent={KeyboardArrowDownIcon}
+                    sx={{
+                      color: 'white',
+                      borderRadius: 2,
+                      '.MuiOutlinedInput-notchedOutline': { borderColor: '#7C3AED' },
+                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#8B5CF6' },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#8B5CF6' },
+                      bgcolor: '#181820',
+                    }}
+                    MenuProps={{
+                      PaperProps: {
+                        sx: {
+                          bgcolor: '#232B3B',
+                          color: 'white',
+                          borderRadius: 2,
+                        },
+                      },
+                    }}
                   >
                     <MenuItem value="all">All</MenuItem>
                     <MenuItem value="completed">Completed</MenuItem>
@@ -297,14 +349,26 @@ const HRPanel: React.FC = () => {
               </Box>
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <Tooltip title="Export Data">
-                  <IconButton onClick={handleExport}>
-                    <Download />
-                  </IconButton>
+                  <Button onClick={handleExport} sx={{
+                    bgcolor: 'linear-gradient(90deg, #7C3AED 0%, #8B5CF6 100%)',
+                    color: 'white',
+                    borderRadius: 2,
+                    px: 2,
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    '&:hover': { bgcolor: 'linear-gradient(90deg, #6D28D9 0%, #7C3AED 100%)' }
+                  }}>Export</Button>
                 </Tooltip>
                 <Tooltip title="Refresh">
-                  <IconButton onClick={handleRefresh}>
-                    <Refresh />
-                  </IconButton>
+                  <Button onClick={handleRefresh} sx={{
+                    bgcolor: 'linear-gradient(90deg, #7C3AED 0%, #8B5CF6 100%)',
+                    color: 'white',
+                    borderRadius: 2,
+                    px: 2,
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    '&:hover': { bgcolor: 'linear-gradient(90deg, #6D28D9 0%, #7C3AED 100%)' }
+                  }}>Refresh</Button>
                 </Tooltip>
               </Box>
             </Box>
@@ -345,27 +409,34 @@ const HRPanel: React.FC = () => {
             </TableHead>
             <TableBody>
               {filteredCandidates.map((candidate) => (
-                <TableRow key={candidate.id}>
-                  <TableCell>{candidate.name}</TableCell>
-                  <TableCell>{candidate.email}</TableCell>
-                  <TableCell>
+                <TableRow key={candidate.id}
+                  sx={{
+                    bgcolor: 'rgba(124, 58, 237, 0.08)',
+                    boxShadow: '0 2px 12px 0 rgba(124, 58, 237, 0.10)',
+                    transition: 'background 0.2s',
+                    '&:hover': {
+                      bgcolor: 'rgba(139, 92, 246, 0.18)',
+                    },
+                  }}
+                >
+                  <TableCell sx={{ borderTopLeftRadius: 12, borderBottomLeftRadius: 12, bgcolor: 'inherit' }}>{candidate.name}</TableCell>
+                  <TableCell sx={{ bgcolor: 'inherit' }}>{candidate.email}</TableCell>
+                  <TableCell sx={{ bgcolor: 'inherit' }}>
                     <Chip 
                       label={`${candidate.score}%`}
                       color={candidate.score >= 80 ? 'success' : candidate.score >= 60 ? 'warning' : 'error'}
                       size="small"
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ bgcolor: 'inherit' }}>
                     <Chip 
                       label={candidate.status === 'completed' ? 'Completed' : 'In Progress'}
                       color={candidate.status === 'completed' ? 'success' : 'default'}
                       size="small"
                     />
                   </TableCell>
-                  <TableCell>
-                    {new Date(candidate.startedAt).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ bgcolor: 'inherit' }}>{new Date(candidate.startedAt).toLocaleDateString()}</TableCell>
+                  <TableCell sx={{ borderTopRightRadius: 12, borderBottomRightRadius: 12, bgcolor: 'inherit' }}>
                     {candidate.completedAt 
                       ? new Date(candidate.completedAt).toLocaleDateString()
                       : '-'
